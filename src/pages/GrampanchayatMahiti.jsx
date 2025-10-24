@@ -17,28 +17,20 @@ const GrampanchayatMahiti = () => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Fetch details and photo from the 'mainInfo' document
-                const mainInfoDocRef = doc(db, 'grampanchayat', 'mainInfo');
-                const mainInfoSnap = await getDoc(mainInfoDocRef);
-                const mainInfoData = mainInfoSnap.exists()
-                  ? mainInfoSnap.data()
-                  : { details: "माहिती उपलब्ध नाही. कृपया Admin Panel मधून माहिती अपडेट करा.", photo: "", photos: [] };
+                // Fetch combined info from 'home/grampanchayat-info'
+                const infoRef = doc(db, 'home', 'grampanchayat-info');
+                const infoSnap = await getDoc(infoRef);
+                const data = infoSnap.exists()
+                  ? infoSnap.data()
+                  : { gpName: 'ग्रामपंचायत', details: "माहिती उपलब्ध नाही. कृपया Admin Panel मधून माहिती अपडेट करा.", photo: "", photos: [] };
 
-                // Fetch the title from the 'profile' document
-                const profileDocRef = doc(db, 'grampanchayat', 'profile');
-                const profileSnap = await getDoc(profileDocRef);
-                const profileData = profileSnap.exists()
-                  ? profileSnap.data()
-                  : { title: "ग्रामपंचायत" };
-
-                // Combine data from both documents into a single state object
-                const photosArray = Array.isArray(mainInfoData.photos)
-                  ? mainInfoData.photos
-                  : (mainInfoData.photo ? [mainInfoData.photo] : []);
+                const photosArray = Array.isArray(data.photos)
+                  ? data.photos
+                  : (data.photo ? [data.photo] : []);
 
                 setInfo({
-                    title: profileData.title,
-                    details: mainInfoData.details,
+                    title: data.gpName || 'ग्रामपंचायत',
+                    details: data.details || '',
                     photos: photosArray,
                 });
 

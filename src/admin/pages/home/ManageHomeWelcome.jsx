@@ -108,7 +108,7 @@ const ManageHomeWelcome = () => {
 
           <Box>
             <Button variant="contained" onClick={saveChanges} disabled={saving}>
-              {saving ? 'सेव्ह होत आहे...' :'सेव्ह करा'}
+              {saving ? 'सेव्ह होत आहे...' : 'सेव्ह करा'}
             </Button>
           </Box>
         </Stack>

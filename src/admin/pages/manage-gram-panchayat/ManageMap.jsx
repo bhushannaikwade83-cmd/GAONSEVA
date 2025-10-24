@@ -16,7 +16,7 @@ import { db } from '../../../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 // Cloudinary Uploader
-import CloudinaryUploader from '../../components/CloudinaryUploader';
+// Cloudinary uploader not used here; editing happens via URL field
 
 const ManageMap = () => {
   const [mapUrl, setMapUrl] = useState('');
@@ -45,10 +45,7 @@ const ManageMap = () => {
     fetchMapUrl();
   }, []);
 
-  const handleMapUpload = (imageUrl) => {
-    setMapUrl(imageUrl);
-    setNotification({ open: true, message: 'नकाशा यशस्वीरित्या अपलोड झाला!', severity: 'success' });
-  };
+  // Map URL is edited directly via the text field in edit mode
 
   const handleSubmit = async () => {
     if (!mapUrl.trim()) {
@@ -91,23 +88,16 @@ const ManageMap = () => {
           येथे ग्रामपंचायतीच्या नकाशाचा URL टाका. हा नकाशा वेबसाईटवर दिसेल.
         </Typography>
 
-        {isEditing ? (
-          <CloudinaryUploader
-            folder="grampanchayat_images/maps"
-            onUpload={handleMapUpload}
-          />
-        ) : (
-          <TextField
-            fullWidth
-            label="Google Maps URL"
-            name="mapUrl"
-            value={mapUrl}
-            onChange={(e) => setMapUrl(e.target.value)}
-            variant="outlined"
-            disabled={!isEditing}
-            helperText="Google Maps वरून 'Embed a map' option निवडून URL कॉपी करा आणि येथे पेस्ट करा."
-          />
-        )}
+        <TextField
+          fullWidth
+          label="Google Maps URL"
+          name="mapUrl"
+          value={mapUrl}
+          onChange={(e) => setMapUrl(e.target.value)}
+          variant="outlined"
+          disabled={!isEditing}
+          helperText="Google Maps वरून 'Embed a map' option निवडून URL कॉपी करा आणि येथे पेस्ट करा."
+        />
 
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
           {isEditing ? (
