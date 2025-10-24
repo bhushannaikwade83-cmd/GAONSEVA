@@ -14,7 +14,6 @@ import GrampanchayatInfo from "./components/GrampanchayatInfo";
 import DigitalSlogans from "./components/DigitalSlogans";
 import GovLogosSection from "./components/GovLogosSection";
 import Footer from "./components/Footer";
-import ChatBot from "./components/ChatBot";
 
 // Public Pages
 import GrampanchayatMahiti from "./pages/GrampanchayatMahiti";
@@ -180,7 +179,6 @@ const MainLayout = ({ isMobile, navbarHeight }) => (
       </Routes>
     </Box>
     <Footer />
-    <ChatBot />
   </>
 );
 
