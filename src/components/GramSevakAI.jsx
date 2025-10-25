@@ -137,7 +137,7 @@ const GramSevakAI = () => {
 
 मी **GramSevak AI** आहे - आपला डिजिटल ग्राम सेवक!
 
-मी **Live Database** मधून माहिती आणतो:
+मी आपल्याला यात मदत करू शकतो:
 • ग्रामपंचायत माहिती
 • सदस्य माहिती (Real-time)
 • सरकारी योजना
@@ -441,7 +441,7 @@ const GramSevakAI = () => {
                   GramSevak AI
                   <Sparkles className="w-4 h-4 text-yellow-300" />
                 </h3>
-                <p className="text-xs text-blue-100">🔴 Live Database Connected</p>
+                <p className="text-xs text-blue-100">ऑनलाइन • तुम्हाला मदत करण्यासाठी तयार</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -485,11 +485,10 @@ const GramSevakAI = () => {
             {isTyping && (
               <div className="flex justify-start mb-4">
                 <div className="bg-white rounded-2xl px-4 py-3 shadow-md border border-gray-100">
-                  <div className="flex gap-1 items-center">
+                  <div className="flex gap-1">
                     <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></span>
                     <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
                     <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                    <span className="ml-2 text-xs text-gray-500">Fetching from database...</span>
                   </div>
                 </div>
               </div>
