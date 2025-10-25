@@ -14,6 +14,7 @@ import GrampanchayatInfo from "./components/GrampanchayatInfo";
 import DigitalSlogans from "./components/DigitalSlogans";
 import GovLogosSection from "./components/GovLogosSection";
 import Footer from "./components/Footer";
+import GramSevakAI from "./components/GramSevakAI";
 
 // Public Pages
 import GrampanchayatMahiti from "./pages/GrampanchayatMahiti";
@@ -176,9 +177,11 @@ const MainLayout = ({ isMobile, navbarHeight }) => (
         <Route path="/e-shikshan" element={<EShikshan />} />
         <Route path="/batmya" element={<Batmya />} />
         <Route path="/sampark" element={<Sampark />} />
+        
       </Routes>
     </Box>
     <Footer />
+    <GramSevakAI />
   </>
 );
 
