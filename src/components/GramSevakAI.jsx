@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, X, Maximize2, Minimize2, Sparkles, MessageSquare } from 'lucide-react';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const GramSevakAI = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,199 +11,123 @@ const GramSevakAI = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const quickSuggestions = [
-    { icon: '👥', text: 'सरपंच कोण आहे', category: 'members' },
-    { icon: '🏆', text: 'पुरस्कार', category: 'awards' },
-    { icon: '💻', text: 'ई-सेवा', category: 'eseva' },
-    { icon: '🏥', text: 'आरोग्य शिबिर', category: 'health' },
-    { icon: '📜', text: 'ग्रामसभा निर्णय', category: 'decisions' },
-    { icon: '🌆', text: 'पर्यटन स्थळे', category: 'tourism' },
-    { icon: '📞', text: 'संपर्क', category: 'contact' },
-    { icon: '💰', text: 'योजना', category: 'schemes' }
-  ];
-
-  const responseTemplates = {
-    members: {
-      keywords: ['सरपंच', 'सदस्य', 'उपसरपंच', 'ग्राम सेवक', 'member', 'sarpanch'],
-      response: `👥 **ग्रामपंचायत सदस्य माहिती**
-
-**सरपंच:** श्री राजेंद्र पाटील
-📞 संपर्क: +91 98765 43210
-
-**उपसरपंच:** श्रीमती सुनीता देशमुख
-📞 संपर्क: +91 98765 43211
-
-**ग्राम सेवक:** श्री संदीप कुलकर्णी
-📞 संपर्क: +91 98765 43212
-
-**पंचायत सदस्य:**
-1. श्री विनोद शिंदे - वॉर्ड १
-2. श्रीमती मीना जाधव - वॉर्ड २
-3. श्री अनिल काळे - वॉर्ड ३
-4. श्रीमती रेखा पवार - वॉर्ड ४
-
-💡 अधिक माहितीसाठी ग्रामपंचायत कार्यालयात भेट द्या.`
+  // Database mapping configuration - LIVE DATA FROM FIREBASE
+  const databaseMapping = {
+    'members': {
+      path: 'members',
+      keywords: [
+        'सदस्य', 'सरपंच', 'उपसरपंच', 'ग्राम सेवक', 'सदस्यांची यादी', 'members', 'gram sevak',
+        'sarpanch', 'upsarpanch', 'member list', 'who is sarpanch', 'gram sevak info',
+        'members list', 'ग्रामपंचायत सदस्य', 'ग्रामपंचायत सदस्य कोण आहेत', 'ग्राम सेवकाची माहिती',
+        'सरपंच कोण आहे', 'सदस्यांची यादी दाखवा', 'ग्राम सेवक माहिती', 'सरपंच माहिती',
+        'panchayat members', 'village head', 'gram panchayat members', 'leadership'
+      ],
+      fields: ['name', 'designation', 'order', 'imageURL']
     },
-    awards: {
-      keywords: ['पुरस्कार', 'award', 'prize', 'विजेता'],
-      response: `🏆 **ग्रामपंचायत पुरस्कार**
-
-**२०२४**
-🥇 आदर्श ग्रामपंचायत पुरस्कार
-   जिल्हा स्तरावर प्रथम क्रमांक
-
-🥈 स्वच्छता अभियान पुरस्कार
-   राज्य स्तरावर द्वितीय क्रमांक
-
-🏅 जलयुक्त शिवार उत्कृष्ट कामगिरी
-   तालुका स्तरावर विशेष पुरस्कार
-
-**२०२३**
-🏆 डिजिटल ग्रामपंचायत पुरस्कार
-   राज्य स्तरावर सन्मानित
-
-आमच्या ग्रामपंचायतीला मिळालेल्या या पुरस्कारांवर आम्हाला अभिमान आहे! 🎉`
+    'awards': {
+      path: 'awards',
+      keywords: [
+        'पुरस्कार', 'विजेता', 'award', 'ग्रामपंचायतीला कोणते पुरस्कार मिळाले आहेत',
+        'prize', 'recognition', 'achievement', 'honor', 'certificate',
+        'पुरस्कार माहिती', 'विजेते', 'यश', 'प्रशस्ती', 'सन्मान'
+      ],
+      fields: ['title', 'recipient', 'date', 'description']
     },
-    eseva: {
-      keywords: ['ई-सेवा', 'e-seva', 'ऑनलाइन', 'प्रमाणपत्र', 'अर्ज'],
-      response: `💻 **उपलब्ध ई-सेवा**
-
-📄 **प्रमाणपत्रे:**
-• जन्म प्रमाणपत्र
-• मृत्यू प्रमाणपत्र
-• रहिवासी दाखला
-• उत्पन्न प्रमाणपत्र
-• जातीचा दाखला
-
-📝 **अर्ज:**
-• नवीन वीज जोडणी
-• पाणी जोडणी
-• मालमत्ता कर
-• दुकान परवाना
-
-🌐 **ऑनलाइन:**
-esheva.grampanchayat.gov.in
-
-⏰ **वेळ:** सकाळी ८ ते संध्याकाळी ६
-📞 **हेल्पलाईन:** 1800-123-4567`
+    'decisions': {
+      path: 'decisions',
+      keywords: [
+        'निर्णय', 'ग्रामसभा', 'ठराव', 'ग्रामसभेचे निर्णय काय आहेत',
+        'decision', 'resolution', 'meeting', 'gram sabha', 'panchayat decision',
+        'ग्रामसभा निर्णय', 'पंचायत निर्णय', 'ठराव माहिती', 'निर्णय सूची'
+      ],
+      fields: ['title', 'description', 'date', 'status']
     },
-    health: {
-      keywords: ['आरोग्य', 'health', 'शिबिर', 'डॉक्टर', 'रुग्णालय'],
-      response: `🏥 **आरोग्य सेवा**
-
-**आगामी शिबिर:**
-📅 २८ ऑक्टोबर २०२५
-🏥 मोफत आरोग्य तपासणी शिबिर
-👨‍⚕️ डॉ. प्रशांत देशमुख
-📍 ग्रामपंचायत सभागृह
-⏰ सकाळी ९ ते दुपारी ४
-
-**उपलब्ध सेवा:**
-• रक्तदाब तपासणी
-• मधुमेह तपासणी
-• वजन आणि उंची मोजमाप
-• मोफत औषधे
-• आरोग्य सल्ला
-
-📞 **रुग्णालय संपर्क:**
-ग्रामीण रुग्णालय: +91 98765 00000
-जिल्हा रुग्णालय: 108 (आणीबाणी)`
+    'eseva': {
+      path: 'eseva',
+      keywords: [
+        'ई-सेवा', 'अर्ज', 'प्रमाणपत्र', 'ऑनलाइन सेवा', 'कोणत्या ई-सेवा उपलब्ध आहेत',
+        'e-seva', 'e-service', 'online service', 'application', 'certificate', 'digital service',
+        'ई-सेवा माहिती', 'डिजिटल सेवा', 'ऑनलाइन अर्ज', 'प्रमाणपत्र सेवा'
+      ],
+      fields: ['name', 'type', 'link']
     },
-    decisions: {
-      keywords: ['निर्णय', 'ग्रामसभा', 'decision', 'ठराव', 'meeting'],
-      response: `📜 **ग्रामसभा निर्णय**
-
-**नवीनतम निर्णय (२० ऑक्टोबर २०२५):**
-
-✅ **निर्णय १:** 
-गावातील मुख्य रस्त्याची दुरुस्ती
-बजेट: ₹५,००,०००
-
-✅ **निर्णय २:**
-सार्वजनिक शौचालय बांधकाम
-स्थान: बाजारपेठ
-बजेट: ₹३,००,०००
-
-✅ **निर्णय ३:**
-खेळाचे मैदान विकास
-सुविधा: क्रीडा साहित्य, बेंच, प्रकाश व्यवस्था
-
-✅ **निर्णय ४:**
-पाणी टाकी वाढीव क्षमता
-नवीन क्षमता: ५०,००० लिटर
-
-📅 **पुढील ग्रामसभा:** १५ नोव्हेंबर २०२५`
+    'aarogyashibir': {
+      path: 'program/aarogyashibir/items',
+      keywords: [
+        'आरोग्य', 'शिबिर', 'डॉक्टर', 'health camp', 'आरोग्य शिबिरांची माहिती द्या',
+        'health', 'medical', 'doctor', 'camp', 'healthcare', 'medical camp',
+        'आरोग्य सेवा', 'वैद्यकीय शिबिर', 'डॉक्टर माहिती', 'आरोग्य केंद्र'
+      ],
+      fields: ['title', 'campType', 'campDate', 'doctorName']
     },
-    tourism: {
-      keywords: ['पर्यटन', 'tourism', 'temple', 'मंदिर', 'दर्शनीय'],
-      response: `🌆 **पर्यटन स्थळे**
-
-🛕 **धार्मिक स्थळे:**
-• श्री गणेश मंदिर (१५०० वर्ष जुनं)
-• हनुमान मंदिर
-• मारुती मंदिर
-
-🏞️ **नैसर्गिक सौंदर्य:**
-• कृष्णा नदी घाट
-• सूर्योदय व्ह्यू पॉइंट
-• गडकोट टेकडी
-
-🏛️ **ऐतिहासिक:**
-• प्राचीन वाडा (२०० वर्षांपूर्वीचा)
-• शिवाजी महाराज स्मारक
-
-🎪 **वार्षिक उत्सव:**
-• गणेशोत्सव (सप्टेंबर)
-• दसरा उत्सव (ऑक्टोबर)
-• होळी मेळावा (मार्च)
-
-📸 अनुभव घ्या आणि आठवणी साठवा!`
+    'hospitals': {
+      path: 'hospitals',
+      keywords: [
+        'रुग्णालय', 'हॉस्पिटल', 'आरोग्य केंद्र', 'doctor', 'गावात कोणती रुग्णालये आहेत',
+        'hospital', 'medical center', 'health center', 'clinic', 'medical facility'
+      ],
+      fields: ['name', 'contact', 'type', 'address', 'services']
     },
-    contact: {
-      keywords: ['संपर्क', 'contact', 'phone', 'फोन', 'पत्ता'],
-      response: `📞 **संपर्क माहिती**
-
-🏢 **ग्रामपंचायत कार्यालय**
-📍 मुख्य रस्ता, गाव - ४१५०१०
-📞 फोन: +91 2345-678901
-📧 ईमेल: grampanchayat@gov.in
-
-⏰ **कार्यालयीन वेळ:**
-सोमवार - शुक्रवार: ९:३० - ५:३०
-शनिवार: ९:३० - १:०० (पहिली आणि तिसरी)
-
-📞 **आपत्कालीन नंबर:**
-• पोलीस: 100
-• आणीबाणी: 108
-• अग्निशामक: 101
-• महिला हेल्पलाईन: 1091
-
-💬 व्हॉट्सअॅप: +91 98765 43210`
+    'helplines': {
+      path: 'helplines',
+      keywords: [
+        'हेल्पलाईन', 'नंबर', 'police', 'emergency', 'महत्वाचे हेल्पलाईन नंबर सांगा',
+        'helpline', 'emergency number', 'police number', 'urgent contact'
+      ],
+      fields: ['serviceName', 'department', 'number', 'description']
     },
-    schemes: {
-      keywords: ['योजना', 'scheme', 'yojana', 'सरकार'],
-      response: `💰 **सरकारी योजना**
-
-**केंद्र सरकार योजना:**
-🏠 प्रधानमंत्री आवास योजना
-💰 जनधन खाते
-👨‍🌾 PM किसान सन्मान निधी
-🚰 जल जीवन मिशन
-
-**राज्य सरकार योजना:**
-👩‍👧 माझी कन्या भाग्यश्री
-🌾 शेतकरी संमान योजना
-💡 सौर ऊर्जा योजना
-🏥 महात्मा ज्योतिबा फुले योजना
-
-**अर्ज प्रक्रिया:**
-१. ग्रामसेवक कार्यालयात भेट द्या
-२. आवश्यक कागदपत्रे जमा करा
-३. अर्ज भरा आणि सबमिट करा
-
-📞 माहितीसाठी: +91 98765 43212`
+    'tourism': {
+      path: 'tourism',
+      keywords: [
+        'पर्यटन', 'स्थळ', 'temple', 'attraction', 'पर्यटन स्थळांची माहिती द्या',
+        'tourism', 'tourist places', 'attractions', 'places to visit', 'मंदिर'
+      ],
+      fields: ['name', 'type', 'description', 'location']
+    },
+    'state-yojana': {
+      path: 'yojana/state/items',
+      keywords: [
+        'राज्य सरकार योजना', 'scheme', 'yojana', 'राज्य सरकारच्या योजना कोणत्या आहेत',
+        'state government scheme', 'state yojana', 'state scheme'
+      ],
+      fields: ['title', 'department', 'eligibility', 'benefits']
+    },
+    'central-yojana': {
+      path: 'yojana/central/items',
+      keywords: [
+        'केंद्र सरकार योजना', 'scheme', 'yojana', 'केंद्र सरकारच्या योजना सांगा',
+        'central government scheme', 'central yojana', 'government scheme'
+      ],
+      fields: ['title', 'department', 'benefits', 'eligibility']
+    },
+    'batmya': {
+      path: 'extra/batmya/items',
+      keywords: [
+        'बातम्या', 'news', 'घोषणा', 'नवीनतम बातम्या कोणत्या आहेत',
+        'announcement', 'latest news', 'village news', 'updates'
+      ],
+      fields: ['title', 'date', 'content', 'description']
+    },
+    'contacts': {
+      path: 'contacts',
+      keywords: [
+        'संपर्क', 'contact', 'फोन', 'phone', 'संपर्क माहिती',
+        'contact info', 'phone numbers', 'address', 'contact details'
+      ],
+      fields: ['name', 'designation', 'phone', 'email', 'address']
     }
   };
+
+  const quickSuggestions = [
+    { icon: '👥', text: 'सरपंच कोण आहे' },
+    { icon: '🏆', text: 'पुरस्कार' },
+    { icon: '💻', text: 'ई-सेवा' },
+    { icon: '🏥', text: 'आरोग्य शिबिर' },
+    { icon: '📜', text: 'ग्रामसभा निर्णय' },
+    { icon: '🌆', text: 'पर्यटन स्थळे' },
+    { icon: '📞', text: 'संपर्क' },
+    { icon: '💰', text: 'योजना' }
+  ];
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -211,9 +137,9 @@ esheva.grampanchayat.gov.in
 
 मी **GramSevak AI** आहे - आपला डिजिटल ग्राम सेवक!
 
-मी आपल्याला यात मदत करू शकतो:
+मी **Live Database** मधून माहिती आणतो:
 • ग्रामपंचायत माहिती
-• सदस्य माहिती
+• सदस्य माहिती (Real-time)
 • सरकारी योजना
 • आरोग्य सेवा
 • ई-सेवा
@@ -231,32 +157,148 @@ esheva.grampanchayat.gov.in
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const findResponse = (query) => {
-    const lowerQuery = query.toLowerCase();
-    
-    for (const [key, template] of Object.entries(responseTemplates)) {
-      if (template.keywords.some(keyword => lowerQuery.includes(keyword))) {
-        return template.response;
+  // Find matching database
+  const findMatchingDatabase = (query) => {
+    const queryLower = query.toLowerCase().trim();
+    const matches = [];
+
+    Object.entries(databaseMapping).forEach(([key, config]) => {
+      let score = 0;
+      
+      config.keywords.forEach(keyword => {
+        const keywordLower = keyword.toLowerCase();
+        
+        if (queryLower === keywordLower) {
+          score += 20;
+        } else if (queryLower.includes(keywordLower) || keywordLower.includes(queryLower)) {
+          score += 10;
+        } else if (queryLower.split(' ').some(word => keywordLower.includes(word) && word.length > 3)) {
+          score += 5;
+        }
+      });
+      
+      if (score >= 5) {
+        matches.push({ key, config, score });
       }
+    });
+
+    return matches.sort((a, b) => b.score - a.score);
+  };
+
+  // Fetch data from Firebase
+  const fetchDataFromFirebase = async (path, limitCount = 5) => {
+    try {
+      console.log('🔍 Fetching from Firebase:', path);
+      
+      const pathParts = path.split('/');
+      const collectionRef = collection(db, ...pathParts);
+      
+      let querySnapshot;
+      
+      if (path === 'members') {
+        try {
+          const q = query(collectionRef, orderBy('order', 'asc'));
+          querySnapshot = await getDocs(q);
+        } catch {
+          querySnapshot = await getDocs(collectionRef);
+        }
+      } else {
+        const orderFields = ['date', 'createdAt', 'timestamp', 'order'];
+        
+        for (const orderField of orderFields) {
+          try {
+            const q = query(collectionRef, orderBy(orderField, 'desc'), limit(limitCount));
+            querySnapshot = await getDocs(q);
+            if (querySnapshot.size > 0) break;
+          } catch {
+            continue;
+          }
+        }
+        
+        if (!querySnapshot || querySnapshot.size === 0) {
+          const simpleQuery = query(collectionRef, limit(limitCount));
+          querySnapshot = await getDocs(simpleQuery);
+        }
+      }
+      
+      const data = [];
+      querySnapshot.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() });
+      });
+      
+      console.log('✅ Fetched:', data.length, 'items');
+      return data;
+    } catch (error) {
+      console.error('❌ Firebase Error:', error);
+      return [];
+    }
+  };
+
+  // Format response for members
+  const formatMembersResponse = (data) => {
+    if (!data || data.length === 0) {
+      return "क्षमस्व, सदस्यांची माहिती डेटाबेसमध्ये सध्या उपलब्ध नाही. 😔";
+    }
+
+    let response = `👥 **ग्रामपंचायत सदस्य** (${data.length} सदस्य)\n\n`;
+    
+    data.forEach((member, index) => {
+      response += `${index + 1}. **${member.name}**\n`;
+      response += `   🏛️ ${member.designation}\n`;
+      if (member.phone) response += `   📞 ${member.phone}\n`;
+      response += '\n';
+    });
+    
+    return response;
+  };
+
+  // Format general response
+  const formatResponse = (data, config) => {
+    if (!data || data.length === 0) {
+      return "क्षमस्व, या विषयाची माहिती डेटाबेसमध्ये सध्या उपलब्ध नाही. 😔";
+    }
+
+    if (config.path === 'members') {
+      return formatMembersResponse(data);
+    }
+
+    let response = `✅ **${data.length} माहिती सापडली:**\n\n`;
+    
+    data.slice(0, 5).forEach((item, index) => {
+      response += `📋 **${index + 1}.**\n`;
+      
+      if (item.title) response += `   📌 ${item.title}\n`;
+      if (item.name) response += `   👤 ${item.name}\n`;
+      if (item.description) response += `   📝 ${item.description}\n`;
+      if (item.date) response += `   📅 ${item.date}\n`;
+      if (item.designation) response += `   🏛️ ${item.designation}\n`;
+      if (item.location) response += `   📍 ${item.location}\n`;
+      if (item.contact) response += `   📞 ${item.contact}\n`;
+      if (item.phone) response += `   📞 ${item.phone}\n`;
+      if (item.email) response += `   📧 ${item.email}\n`;
+      if (item.address) response += `   🏠 ${item.address}\n`;
+      if (item.doctorName) response += `   👨‍⚕️ ${item.doctorName}\n`;
+      if (item.campType) response += `   🏥 ${item.campType}\n`;
+      if (item.campDate) response += `   📅 ${item.campDate}\n`;
+      if (item.department) response += `   🏛️ ${item.department}\n`;
+      if (item.benefits) response += `   💰 ${item.benefits}\n`;
+      if (item.eligibility) response += `   ✅ ${item.eligibility}\n`;
+      if (item.type) response += `   🏷️ ${item.type}\n`;
+      if (item.link) response += `   🔗 ${item.link}\n`;
+      
+      response += '\n';
+    });
+
+    if (data.length > 5) {
+      response += `... आणि ${data.length - 5} आणखी माहिती उपलब्ध आहे.\n`;
     }
     
-    return `मला माफ करा, मला "${query}" बद्दल माहिती सापडली नाही. 😔
-
-आपण हे विचारू शकता:
-• सदस्य माहिती
-• पुरस्कार
-• ई-सेवा
-• आरोग्य सेवा
-• योजना
-• पर्यटन स्थळे
-• संपर्क माहिती
-
-किंवा खालील सूचनांपैकी एक निवडा! 👇`;
+    return response;
   };
 
   const simulateTyping = async (response) => {
     setIsTyping(true);
-    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     setIsTyping(false);
     
     const botMessage = {
@@ -283,8 +325,44 @@ esheva.grampanchayat.gov.in
     const query = inputValue;
     setInputValue('');
 
-    const response = findResponse(query);
-    await simulateTyping(response);
+    // Find matching database and fetch live data
+    const matches = findMatchingDatabase(query);
+    
+    if (matches.length > 0) {
+      const bestMatch = matches[0];
+      
+      setIsTyping(true);
+      const data = await fetchDataFromFirebase(bestMatch.config.path);
+      const response = formatResponse(data, bestMatch.config);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setIsTyping(false);
+      
+      const botMessage = {
+        id: Date.now(),
+        text: response,
+        isUser: false,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, botMessage]);
+    } else {
+      const response = `मला माफ करा, मला "${query}" बद्दल माहिती सापडली नाही. 😔
+
+आपण हे विचारू शकता:
+• सदस्य माहिती
+• पुरस्कार
+• ई-सेवा
+• आरोग्य शिबिर
+• ग्रामसभा निर्णय
+• योजना
+• पर्यटन स्थळे
+• संपर्क माहिती
+
+किंवा खालील सूचनांपैकी एक निवडा! 👇`;
+      
+      await simulateTyping(response);
+    }
   };
 
   const handleSuggestionClick = async (suggestion) => {
@@ -297,8 +375,28 @@ esheva.grampanchayat.gov.in
 
     setMessages(prev => [...prev, userMessage]);
     
-    const response = findResponse(suggestion.text);
-    await simulateTyping(response);
+    // Fetch live data based on suggestion
+    const matches = findMatchingDatabase(suggestion.text);
+    
+    if (matches.length > 0) {
+      const bestMatch = matches[0];
+      
+      setIsTyping(true);
+      const data = await fetchDataFromFirebase(bestMatch.config.path);
+      const response = formatResponse(data, bestMatch.config);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setIsTyping(false);
+      
+      const botMessage = {
+        id: Date.now(),
+        text: response,
+        isUser: false,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, botMessage]);
+    }
   };
 
   const formatTime = (date) => {
@@ -343,7 +441,7 @@ esheva.grampanchayat.gov.in
                   GramSevak AI
                   <Sparkles className="w-4 h-4 text-yellow-300" />
                 </h3>
-                <p className="text-xs text-blue-100">ऑनलाइन • तुम्हाला मदत करण्यासाठी तयार</p>
+                <p className="text-xs text-blue-100">🔴 Live Database Connected</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -387,10 +485,11 @@ esheva.grampanchayat.gov.in
             {isTyping && (
               <div className="flex justify-start mb-4">
                 <div className="bg-white rounded-2xl px-4 py-3 shadow-md border border-gray-100">
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 items-center">
                     <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></span>
                     <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
                     <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                    <span className="ml-2 text-xs text-gray-500">Fetching from database...</span>
                   </div>
                 </div>
               </div>
