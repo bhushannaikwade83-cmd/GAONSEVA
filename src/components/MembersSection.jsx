@@ -10,6 +10,7 @@ import {
   Stack,
   CircularProgress,
   Alert,
+  Divider,
 } from "@mui/material";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import TwitterIcon from "@mui/icons-material/Twitter";
@@ -38,7 +39,10 @@ const MembersSection = () => {
         setError(null);
 
         // Fetch members data (name, image, role)
-        const membersQuery = query(collection(db, "members"), orderBy("order", "asc"));
+        const membersQuery = query(
+          collection(db, "members"),
+          orderBy("order", "asc")
+        );
         const membersSnapshot = await getDocs(membersQuery);
         const membersData = membersSnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -68,7 +72,12 @@ const MembersSection = () => {
           };
         });
 
-        setMembers(combinedMembers);
+        // Filter for Sarpanch, Upsarpanch, and Gramsevak
+        const officeBearers = combinedMembers.filter((m) =>
+          ["सरपंच", "उपसरपंच", "ग्राम सेवक"].includes(m.designation)
+        );
+
+        setMembers(officeBearers);
       } catch (err) {
         console.error("Error fetching members data:", err);
         setError("सदस्यांची माहिती आणण्यात त्रुटी आली");
@@ -96,7 +105,7 @@ const MembersSection = () => {
       >
         <CircularProgress size={60} sx={{ mb: 2 }} />
         <Typography variant="h6" color="text.secondary">
-          सदस्यांची माहिती आणत आहे...
+          पदाधिकाऱ्यांची माहिती आणत आहे...
         </Typography>
       </Box>
     );
@@ -122,7 +131,7 @@ const MembersSection = () => {
     <Box
       sx={{
         padding: { xs: "20px 10px", md: "40px 20px" },
-        backgroundColor: "#f5f7fa",
+        backgroundColor: "#FFFFFF",
       }}
     >
       <Typography
@@ -132,11 +141,10 @@ const MembersSection = () => {
         sx={{
           fontWeight: "bold",
           marginBottom: 5,
-          color: "#333",
-          textShadow: "1px 1px 2px rgba(0,0,0,0.1)",
+          color: "#2c3e50",
         }}
       >
-        आमच्या ग्राम पंचायतीचे पदाधिकारी
+        ग्रामपंचायत पदाधिकारी
       </Typography>
 
       {members.length === 0 ? (
@@ -149,84 +157,76 @@ const MembersSection = () => {
         >
           <PersonIcon sx={{ fontSize: 80, mb: 2, opacity: 0.5 }} />
           <Typography variant="h6" gutterBottom>
-            अजून कोणतेही सदस्य जोडलेले नाहीत
+            पदाधिकारी माहिती उपलब्ध नाही
           </Typography>
           <Typography variant="body2">
             कृपया प्रशासकांशी संपर्क साधा
           </Typography>
         </Box>
       ) : (
-        <Grid container spacing={3} justifyContent="center">
+        <Grid container spacing={4} justifyContent="center">
           {members.map((member) => (
-            <Grid item xs={12} sm={6} md={4} key={member.id}>
+            <Grid item xs={12} sm={10} md={6} lg={4} key={member.id}>
               <Card
                 sx={{
-                  textAlign: "center",
-                  padding: { xs: "20px 10px", sm: "30px 20px" },
-                  borderRadius: "15px",
-                  boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
-                  transition: "transform 0.3s ease-in-out",
-                  maxWidth: "100%",
+                  borderRadius: "16px",
+                  boxShadow: "0 12px 24px rgba(0,0,0,0.12)",
+                  transition: "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
                   height: "100%",
                   display: "flex",
                   flexDirection: "column",
                   "&:hover": {
-                    transform: "translateY(-10px)",
+                    transform: "translateY(-12px)",
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
                   },
                 }}
               >
-                <Avatar
-                  src={member.imageURL || member.photoURL}
-                  alt={member.name}
-                  sx={{
-                    width: 120,
-                    height: 120,
-                    margin: "0 auto 20px",
-                    border: "4px solid #fff",
-                    boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
-                  }}
-                >
-                  {!(member.imageURL || member.photoURL) && (
-                    <PersonIcon sx={{ fontSize: 60 }} />
-                  )}
-                </Avatar>
-                <CardContent sx={{ padding: 0, flexGrow: 1, display: "flex", flexDirection: "column" }}>
+                <Box sx={{ position: "relative", p: 3, background: 'linear-gradient(45deg, #3498db 30%, #2196f3 90%)', color: 'white' }}>
+                  <Avatar
+                    src={member.imageURL || member.photoURL}
+                    alt={member.name}
+                    sx={{
+                      width: 120,
+                      height: 120,
+                      margin: "0 auto",
+                      border: "5px solid #fff",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    {!(member.imageURL || member.photoURL) && (
+                      <PersonIcon sx={{ fontSize: 70 }} />
+                    )}
+                  </Avatar>
+                </Box>
+                <CardContent sx={{ textAlign: 'center', p: 3, flexGrow: 1 }}>
                   <Typography
-                    variant="h6"
-                    sx={{ fontWeight: "bold", color: "#444", marginBottom: 1 }}
+                    variant="h5"
+                    sx={{ fontWeight: "bold", color: "#2c3e50", mb: 0.5 }}
                   >
                     {member.name}
                   </Typography>
                   <Typography
-                    variant="subtitle1"
+                    variant="h6"
                     color="primary.main"
                     sx={{
-                      fontStyle: "italic",
-                      marginBottom: 2,
                       fontWeight: 600,
+                      mb: 2,
                     }}
                   >
                     {member.designation || member.role}
                   </Typography>
+                  <Divider sx={{ my: 2 }}/>
                   <Typography
-                    variant="body2"
+                    variant="body1"
                     color="text.secondary"
-                    sx={{ marginBottom: 2, flexGrow: 1 }}
+                    sx={{ mb: 3, minHeight: '60px' }}
                   >
                     {member.bio}
                   </Typography>
                   <Stack
                     direction="row"
-                    spacing={1}
+                    spacing={1.5}
                     justifyContent="center"
-                    sx={{
-                      marginTop: 2,
-                      flexWrap: "wrap",
-                      "& .MuiIconButton-root:hover": {
-                        transform: "scale(1.2)",
-                        transition: "transform 0.2s",
-                      },
-                    }}
                   >
                     {Object.entries(member.social)
                       .filter(([_, link]) => link && link.trim() !== "")
@@ -236,7 +236,15 @@ const MembersSection = () => {
                           href={link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          size="large"
+                          sx={{ 
+                            border: '1px solid #ddd', 
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              transform: 'scale(1.2)',
+                              borderColor: socialIconMap[platform].props.sx.color,
+                              color: socialIconMap[platform].props.sx.color
+                            }
+                          }}
                         >
                           {socialIconMap[platform]}
                         </IconButton>
