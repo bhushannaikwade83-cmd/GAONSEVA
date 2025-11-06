@@ -505,6 +505,7 @@ const Navbar = () => {
     { name: "बातम्या", to: "/batmya" },
     { name: "संपर्क", to: "/sampark" },
     { name: "तक्रार नोंदणी", to: "/तक्रार-नोंदणी" },
+    { name: "अर्थसंकल्प आणि पारदर्शकता", to: "/अर्थसंकल्प-पारदर्शकता" }
   ];
 
   // Create searchable items array

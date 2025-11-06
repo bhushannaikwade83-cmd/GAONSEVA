@@ -52,6 +52,7 @@ import PragatShetkari from "./pages/PragatShetkari";
 import EShikshan from "./pages/EShikshan";
 import Batmya from "./pages/Batmya";
 import Sampark from "./pages/Sampark";
+import ArthsankalpParadarkshita from "./pages/ArthsankalpParadarkshita";
 
 // Admin Components
 import AdminLogin from "./admin/AdminLogin";
@@ -172,6 +173,7 @@ const MainLayout = ({ isMobile, navbarHeight }) => (
         <Route path="/योजना-राज्य-सरकार-योजना" element={<GramRajyaSarkarYojna />} />
         <Route path="/योजना-केंद्र-सरकार-योजना" element={<GramKendraSarkarYojana />} />
         <Route path="/तक्रार-नोंदणी" element={<TakrarNondani />} />
+        <Route path="/अर्थसंकल्प-पारदर्शकता" element={<ArthsankalpParadarkshita />} />
         {/* Extra public pages */}
         <Route path="/pragat-shetkari" element={<PragatShetkari />} />
         <Route path="/e-shikshan" element={<EShikshan />} />

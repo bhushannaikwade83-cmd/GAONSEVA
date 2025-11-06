@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Divider, Collapse } from '@mui/material';
+import { 
+  Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, 
+  ListItemText, Toolbar, Typography, Divider, Collapse, 
+  Badge, Tooltip, IconButton, Avatar, Chip 
+} from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -15,12 +19,12 @@ import CelebrationIcon from '@mui/icons-material/Celebration';
 import HomeWorkIcon from '@mui/icons-material/HomeWork';
 import LanguageIcon from '@mui/icons-material/Language';
 import TourIcon from '@mui/icons-material/Tour';
-import AssignmentIcon from '@mui/icons-material/Assignment'; // Icon for Takrar
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import ContactPhoneIcon from '@mui/icons-material/ContactPhone';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
-import NatureIcon from '@mui/icons-material/Nature'; // For programs
+import NatureIcon from '@mui/icons-material/Nature';
 import BusinessIcon from '@mui/icons-material/Business';
 import SchoolIcon from '@mui/icons-material/School';
 import SportsIcon from '@mui/icons-material/Sports';
@@ -41,6 +45,11 @@ import HomeIcon from '@mui/icons-material/Home';
 import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import ChatIcon from '@mui/icons-material/Chat';
+import SearchIcon from '@mui/icons-material/Search';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import SettingsIcon from '@mui/icons-material/Settings';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
 
 const AdminSidebar = ({ drawerWidth }) => {
   const navigate = useNavigate();
@@ -51,20 +60,10 @@ const AdminSidebar = ({ drawerWidth }) => {
   const [openYojana, setOpenYojana] = useState(true);
   const [openHome, setOpenHome] = useState(true);
   const [openExtra, setOpenExtra] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [pendingComplaints] = useState(5);
+  const [notifications] = useState(3);
 
-  const handleGrampanchayatClick = () => {
-    setOpenGrampanchayat(!openGrampanchayat);
-  };
-
-  const handleProgramsClick = () => {
-    setOpenPrograms(!openPrograms);
-  };
-
-  const handleLogout = () => {
-    // Add Firebase auth.signOut() logic here
-    navigate('/admin/login');
-  };
-  
   // Restore persisted open states
   useEffect(() => {
     const persisted = JSON.parse(localStorage.getItem('adminSidebarOpenStates') || '{}');
@@ -81,6 +80,10 @@ const AdminSidebar = ({ drawerWidth }) => {
     const state = { openGrampanchayat, openNirdeshika, openPrograms, openYojana, openHome, openExtra };
     localStorage.setItem('adminSidebarOpenStates', JSON.stringify(state));
   }, [openGrampanchayat, openNirdeshika, openPrograms, openYojana, openHome, openExtra]);
+
+  const handleLogout = () => {
+    navigate('/admin/login');
+  };
 
   const isActive = (path) => location.pathname.startsWith(path);
   
@@ -139,34 +142,190 @@ const AdminSidebar = ({ drawerWidth }) => {
     { text: 'संपर्क', icon: <ContactMailIcon />, path: '/admin/extra/sampark' },
   ];
 
+  const filterItems = (items) => {
+    if (!searchQuery) return items;
+    return items.filter(item => 
+      item.text.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
   return (
     <Drawer
       variant="permanent"
       sx={{
         width: drawerWidth,
         flexShrink: 0,
-        [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' },
+        [`& .MuiDrawer-paper`]: { 
+          width: drawerWidth, 
+          boxSizing: 'border-box', 
+          display: 'flex', 
+          flexDirection: 'column',
+          background: 'linear-gradient(180deg, #000000 0%, #1a1a1a 100%)',
+          color: 'white',
+          borderRight: 'none',
+        },
       }}
     >
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Admin Panel
-        </Typography>
+      {/* Header */}
+      <Toolbar sx={{ 
+        background: 'rgba(255, 255, 255, 0.05)', 
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+      }}>
+        <Avatar 
+          sx={{ 
+            width: 40, 
+            height: 40, 
+            mr: 1.5,
+            background: 'linear-gradient(135deg, #ffffff 0%, #e5e5e5 100%)',
+            color: '#000000',
+            fontWeight: 'bold'
+          }}
+        >
+          GP
+        </Avatar>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
+            Admin Panel
+          </Typography>
+          <Typography variant="caption" sx={{ opacity: 0.8 }}>
+            ग्रामपंचायत व्यवस्थापन
+          </Typography>
+        </Box>
+        <Tooltip title="Settings">
+          <IconButton size="small" sx={{ color: 'white' }}>
+            <SettingsIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Toolbar>
-      <Divider />
-      <Box sx={{ overflow: 'auto', p: 0, flex: 1,
-        ['& .MuiListItemButton']: { borderRadius: 1, mx: 1, my: 0.25 },
-        ['& .MuiListItemButton:hover']: { backgroundColor: 'action.hover' },
-        ['& .MuiListItemButton.Mui-selected']: { backgroundColor: 'action.selected' },
-        ['& .MuiListItemIcon-root']: { minWidth: 36 },
+
+      {/* Search Bar */}
+      <Box sx={{ p: 2, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          background: 'rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          px: 2,
+          py: 1
+        }}>
+          <SearchIcon sx={{ mr: 1, opacity: 0.7 }} />
+          <input
+            type="text"
+            placeholder="शोधा..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              color: 'white',
+              outline: 'none',
+              width: '100%',
+              fontSize: '14px'
+            }}
+          />
+        </Box>
+      </Box>
+
+      <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+
+      {/* Main Navigation */}
+      <Box sx={{ 
+        overflow: 'auto', 
+        p: 1, 
+        flex: 1,
+        '& .MuiListItemButton-root': { 
+          borderRadius: 2, 
+          mb: 0.5,
+          transition: 'all 0.2s',
+          '&:hover': { 
+            background: 'rgba(255, 255, 255, 0.08)',
+            transform: 'translateX(4px)'
+          }
+        },
+        '& .MuiListItemButton-root.Mui-selected': { 
+          background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%)',
+          borderLeft: '3px solid #ffffff',
+          '&:hover': {
+            background: 'rgba(255, 255, 255, 0.2)',
+          }
+        },
+        '& .MuiListItemIcon-root': { 
+          minWidth: 40,
+          color: 'rgba(255, 255, 255, 0.9)'
+        },
+        '& .MuiListItemText-primary': {
+          fontSize: '0.9rem'
+        },
+        '&::-webkit-scrollbar': {
+          width: '6px'
+        },
+        '&::-webkit-scrollbar-track': {
+          background: 'rgba(255, 255, 255, 0.03)'
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: 'rgba(255, 255, 255, 0.15)',
+          borderRadius: '3px'
+        }
       }}>
         <List>
+          {/* Quick Stats Cards */}
+          <Box sx={{ px: 1, mb: 2 }}>
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr', 
+              gap: 1,
+              mb: 2
+            }}>
+              <Tooltip title="Pending Complaints">
+                <Box sx={{ 
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: 2,
+                  p: 1.5,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  '&:hover': {
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    transform: 'scale(1.05)'
+                  }
+                }}>
+                  <AssignmentIcon sx={{ fontSize: 24, mb: 0.5 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{pendingComplaints}</Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>तक्रारी</Typography>
+                </Box>
+              </Tooltip>
+              <Tooltip title="Notifications">
+                <Box sx={{ 
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: 2,
+                  p: 1.5,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  '&:hover': {
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    transform: 'scale(1.05)'
+                  }
+                }}>
+                  <NotificationsIcon sx={{ fontSize: 24, mb: 0.5 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{notifications}</Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>सूचना</Typography>
+                </Box>
+              </Tooltip>
+            </Box>
+          </Box>
+
+          {/* Main Menu Items */}
           <ListItem disablePadding component={Link} to="/admin/panel">
             <ListItemButton selected={isActive('/admin/panel')}>
               <ListItemIcon><DashboardIcon /></ListItemIcon>
               <ListItemText primary="डॅशबोर्ड" />
             </ListItemButton>
           </ListItem>
+
           <ListItem disablePadding component={Link} to="/admin/profile">
             <ListItemButton selected={isActive('/admin/profile')}>
               <ListItemIcon><AccountBalanceIcon /></ListItemIcon>
@@ -174,25 +333,48 @@ const AdminSidebar = ({ drawerWidth }) => {
             </ListItemButton>
           </ListItem>
 
-          <ListItemButton onClick={handleGrampanchayatClick}>
+          {/* Budget Section */}
+          <ListItem disablePadding component={Link} to="/admin/budget">
+            <ListItemButton selected={isActive('/admin/budget')}>
+              <ListItemIcon><AccountBalanceWalletIcon /></ListItemIcon>
+              <ListItemText primary="अर्थसंकल्प व्यवस्थापन" />
+              <Chip label="नवीन" size="small" sx={{ 
+                background: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                fontSize: '0.7rem',
+                height: 20
+              }} />
+            </ListItemButton>
+          </ListItem>
+
+          {/* Analytics Section */}
+          <ListItem disablePadding component={Link} to="/admin/analytics">
+            <ListItemButton selected={isActive('/admin/analytics')}>
+              <ListItemIcon><AnalyticsIcon /></ListItemIcon>
+              <ListItemText primary="अहवाल आणि विश्लेषण" />
+            </ListItemButton>
+          </ListItem>
+
+          {/* Grampanchayat Management */}
+          <ListItemButton onClick={() => setOpenGrampanchayat(!openGrampanchayat)}>
             <ListItemIcon><DescriptionIcon /></ListItemIcon>
             <ListItemText primary="ग्रामपंचायत व्यवस्थापन" />
             {openGrampanchayat ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
           <Collapse in={openGrampanchayat} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {menuItems.map((item) => (
-                 <ListItem key={item.text} disablePadding component={Link} to={item.path}>
-                    <ListItemButton sx={{ pl: 4 }} selected={isActive(item.path)}>
-                      <ListItemIcon>{item.icon}</ListItemIcon>
-                      <ListItemText primary={item.text} />
-                    </ListItemButton>
-                 </ListItem>
+              {filterItems(menuItems).map((item) => (
+                <ListItem key={item.text} disablePadding component={Link} to={item.path}>
+                  <ListItemButton sx={{ pl: 4 }} selected={isActive(item.path)}>
+                    <ListItemIcon>{item.icon}</ListItemIcon>
+                    <ListItemText primary={item.text} />
+                  </ListItemButton>
+                </ListItem>
               ))}
             </List>
           </Collapse>
 
-          {/* होम पेज Section */}
+          {/* Home Page Section */}
           <ListItemButton onClick={() => setOpenHome(!openHome)}>
             <ListItemIcon><HomeIcon /></ListItemIcon>
             <ListItemText primary="होम पेज" />
@@ -200,7 +382,7 @@ const AdminSidebar = ({ drawerWidth }) => {
           </ListItemButton>
           <Collapse in={openHome} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {homePageItems.map((item) => (
+              {filterItems(homePageItems).map((item) => (
                 <ListItem key={item.path} disablePadding component={Link} to={item.path}>
                   <ListItemButton sx={{ pl: 4 }} selected={isActive(item.path)}>
                     <ListItemIcon>{item.icon}</ListItemIcon>
@@ -211,7 +393,7 @@ const AdminSidebar = ({ drawerWidth }) => {
             </List>
           </Collapse>
 
-          {/* निर्देशिका Section */}
+          {/* Nirdeshika Section */}
           <ListItemButton onClick={() => setOpenNirdeshika(!openNirdeshika)}>
             <ListItemIcon><DescriptionIcon /></ListItemIcon>
             <ListItemText primary="निर्देशिका" />
@@ -246,15 +428,15 @@ const AdminSidebar = ({ drawerWidth }) => {
             </List>
           </Collapse>
 
-          {/* कार्यक्रम Section */}
-          <ListItemButton onClick={handleProgramsClick}>
+          {/* Programs Section */}
+          <ListItemButton onClick={() => setOpenPrograms(!openPrograms)}>
             <ListItemIcon><NatureIcon /></ListItemIcon>
             <ListItemText primary="कार्यक्रम व्यवस्थापन" />
             {openPrograms ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
           <Collapse in={openPrograms} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {programItems.map((item) => (
+              {filterItems(programItems).map((item) => (
                 <ListItem key={item.text} disablePadding component={Link} to={item.path}>
                   <ListItemButton sx={{ pl: 4 }} selected={isActive(item.path)}>
                     <ListItemIcon>{item.icon}</ListItemIcon>
@@ -265,7 +447,7 @@ const AdminSidebar = ({ drawerWidth }) => {
             </List>
           </Collapse>
 
-          {/* योजना Section */}
+          {/* Yojana Section */}
           <ListItemButton onClick={() => setOpenYojana(!openYojana)}>
             <ListItemIcon><AssignmentIcon /></ListItemIcon>
             <ListItemText primary="योजना" />
@@ -273,7 +455,7 @@ const AdminSidebar = ({ drawerWidth }) => {
           </ListItemButton>
           <Collapse in={openYojana} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {yojanaItems.map((item) => (
+              {filterItems(yojanaItems).map((item) => (
                 <ListItem key={item.text} disablePadding component={Link} to={item.path}>
                   <ListItemButton sx={{ pl: 4 }} selected={isActive(item.path)}>
                     <ListItemIcon>{item.icon}</ListItemIcon>
@@ -284,7 +466,7 @@ const AdminSidebar = ({ drawerWidth }) => {
             </List>
           </Collapse>
 
-          {/* इतर Section */}
+          {/* Extra Section */}
           <ListItemButton onClick={() => setOpenExtra(!openExtra)}>
             <ListItemIcon><DescriptionIcon /></ListItemIcon>
             <ListItemText primary="इतर" />
@@ -292,7 +474,7 @@ const AdminSidebar = ({ drawerWidth }) => {
           </ListItemButton>
           <Collapse in={openExtra} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {extraItems.map((item) => (
+              {filterItems(extraItems).map((item) => (
                 <ListItem key={item.text} disablePadding component={Link} to={item.path}>
                   <ListItemButton sx={{ pl: 4 }} selected={isActive(item.path)}>
                     <ListItemIcon>{item.icon}</ListItemIcon>
@@ -303,27 +485,48 @@ const AdminSidebar = ({ drawerWidth }) => {
             </List>
           </Collapse>
           
-          {/* ✅ ADDED: New link for Complaint Management */}
+          {/* Complaint Management with Badge */}
           <ListItem disablePadding component={Link} to="/admin/manage/complaints">
             <ListItemButton selected={isActive('/admin/manage/complaints')}>
-              <ListItemIcon><AssignmentIcon /></ListItemIcon>
+              <ListItemIcon>
+                <Badge badgeContent={pendingComplaints} 
+                  sx={{ 
+                    '& .MuiBadge-badge': { 
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      color: 'white' 
+                    } 
+                  }}>
+                  <AssignmentIcon />
+                </Badge>
+              </ListItemIcon>
               <ListItemText primary="तक्रार व्यवस्थापन" />
             </ListItemButton>
           </ListItem>
-
         </List>
       </Box>
-      <Box sx={{}}
-      >
-        <Divider />
+
+      {/* Footer */}
+      <Box sx={{ 
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        background: 'rgba(0, 0, 0, 0.3)'
+      }}>
         <List>
           <ListItem disablePadding>
-            <ListItemButton onClick={handleLogout}>
+            <ListItemButton onClick={handleLogout} sx={{
+              '&:hover': {
+                background: 'rgba(255, 255, 255, 0.1)'
+              }
+            }}>
               <ListItemIcon><LogoutIcon /></ListItemIcon>
               <ListItemText primary="लॉग आउट" />
             </ListItemButton>
           </ListItem>
         </List>
+        <Box sx={{ p: 2, textAlign: 'center', opacity: 0.6 }}>
+          <Typography variant="caption">
+            Version 2.0 • © 2024
+          </Typography>
+        </Box>
       </Box>
     </Drawer>
   );
