@@ -1,7 +1,7 @@
 // src/App.jsx
 import React, { useEffect, useState, createContext } from "react";
 import { Routes, Route } from "react-router-dom";
-import { Grid, Box, useMediaQuery, Typography } from "@mui/material";
+import { Grid, Box, useMediaQuery, Typography, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
 // tenant loader (dynamic import of src/config/<tenant>.json)
@@ -131,7 +131,6 @@ const MainLayout = ({ isMobile, navbarHeight, tenant }) => (
           path="/"
           element={
             <>
-              {/* Pass tenant into components if they accept props, else they can use TenantContext */}
               <Welcome tenant={tenant} />
               <Photosection />
               <Box>
@@ -181,12 +180,10 @@ const MainLayout = ({ isMobile, navbarHeight, tenant }) => (
         <Route path="/योजना-केंद्र-सरकार-योजना" element={<GramKendraSarkarYojana />} />
         <Route path="/तक्रार-नोंदणी" element={<TakrarNondani />} />
         <Route path="/अर्थसंकल्प-पारदर्शकता" element={<ArthsankalpParadarkshita />} />
-        {/* Extra public pages */}
         <Route path="/pragat-shetkari" element={<PragatShetkari />} />
         <Route path="/e-shikshan" element={<EShikshan />} />
         <Route path="/batmya" element={<Batmya />} />
         <Route path="/sampark" element={<Sampark />} />
-        
       </Routes>
     </Box>
     <Footer />
@@ -202,16 +199,26 @@ function App() {
 
   const [tenant, setTenant] = useState(null);
   const [loadingTenant, setLoadingTenant] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     // load tenant config at app start
     async function initTenant() {
       try {
+        console.log("Starting tenant load for:", TENANT_ID);
         const cfg = await loadTenantConfig();
-        console.log("Loaded tenant:", TENANT_ID, cfg);
+        console.log("✅ Loaded tenant config:", cfg);
         setTenant(cfg);
+        setError(null);
       } catch (err) {
-        console.error("Failed loading tenant config", err);
+        console.error("❌ Failed loading tenant config:", err);
+        setError(err.message || "Failed to load tenant configuration");
+        // Set a default/fallback tenant to prevent blank screen
+        setTenant({
+          id: TENANT_ID || 'default',
+          name: 'Default Gram Panchayat',
+          // Add other minimal required fields
+        });
       } finally {
         setLoadingTenant(false);
       }
@@ -219,24 +226,60 @@ function App() {
     initTenant();
   }, []);
 
+  // Show loading state
   if (loadingTenant) {
     return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          minHeight: '100vh',
+          gap: 2
+        }}
+      >
+        <CircularProgress size={60} />
+        <Typography variant="h6">Loading site configuration...</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Tenant ID: {TENANT_ID}
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Show error state if tenant failed to load
+  if (error) {
+    console.warn("⚠️ Tenant loading error, proceeding with fallback:", error);
+  }
+
+  // Ensure tenant exists before rendering
+  if (!tenant) {
+    return (
       <Box sx={{ p: 4 }}>
-        <Typography>Loading site...</Typography>
+        <Typography color="error" variant="h5">
+          Configuration Error
+        </Typography>
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Failed to load tenant configuration. Please check console for details.
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Tenant ID: {TENANT_ID}
+        </Typography>
       </Box>
     );
   }
 
   return (
     <Routes>
-      {/* Admin Section Routes */}
+      {/* Admin Section Routes - Don't need tenant loading */}
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminPanel />} />
         <Route path="panel" element={<AdminPanel />} />
         <Route path="profile" element={<GramPanchayatProfile />} />
         
-        {/* ✅ UPDATED: All management pages now use a consistent '/manage/' prefix */}
+        {/* Management pages */}
         <Route path="manage/info" element={<ManageInfo />} />
         <Route path="manage/map" element={<ManageMap />} />
         <Route path="manage/members" element={<ManageMembers />} />
@@ -282,9 +325,11 @@ function App() {
         <Route path="program/kachryache-niyojan" element={<ManageKachryacheNiyojan />} />
         <Route path="program/biogas-nirmiti" element={<ManageBiogasNirmiti />} />
         <Route path="program/sendriya-khat" element={<ManageSendriyaKhat />} />
+        
         {/* योजना व्यवस्थापन */}
         <Route path="yojana/state" element={<ManageStateYojana />} />
         <Route path="yojana/central" element={<ManageCentralYojana />} />
+        
         {/* अतिरिक्त व्यवस्थापन */}
         <Route path="extra/pragat-shetkari" element={<ManagePragatShetkari />} />
         <Route path="extra/e-shikshan" element={<ManageEShikshan />} />
@@ -293,7 +338,16 @@ function App() {
       </Route>
 
       {/* Main Public Website Routes */}
-      <Route path="/*" element={<MainLayout isMobile={isMobile} navbarHeight={navbarHeight} tenant={tenant} />} />
+      <Route 
+        path="/*" 
+        element={
+          <MainLayout 
+            isMobile={isMobile} 
+            navbarHeight={navbarHeight} 
+            tenant={tenant} 
+          />
+        } 
+      />
     </Routes>
   );
 }
