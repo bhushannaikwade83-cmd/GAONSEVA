@@ -1,7 +1,11 @@
-import React from "react";
+// src/App.jsx
+import React, { useEffect, useState, createContext } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Grid, Box, useMediaQuery, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+
+// tenant loader (dynamic import of src/config/<tenant>.json)
+import { TENANT_ID, loadTenantConfig } from "./tenantLoader";
 
 // Public Components
 import Navbar from "./components/Navbar";
@@ -113,10 +117,12 @@ import ManageHomeDigitalSlogans from "./admin/pages/home/ManageHomeDigitalSlogan
 import ManageHomeGovLogos from "./admin/pages/home/ManageHomeGovLogos";
 import ManageHomeFooter from "./admin/pages/home/ManageHomeFooter";
 
+// Tenant Context (so child components can access tenant)
+export const TenantContext = createContext(null);
 
 // This component wraps all the public-facing pages with Navbar and Footer
-const MainLayout = ({ isMobile, navbarHeight }) => (
-  <>
+const MainLayout = ({ isMobile, navbarHeight, tenant }) => (
+  <TenantContext.Provider value={tenant}>
     <Navbar />
     <Box>
       <Routes>
@@ -125,7 +131,8 @@ const MainLayout = ({ isMobile, navbarHeight }) => (
           path="/"
           element={
             <>
-              <Welcome />
+              {/* Pass tenant into components if they accept props, else they can use TenantContext */}
+              <Welcome tenant={tenant} />
               <Photosection />
               <Box>
                 <RajyaGeetSection />
@@ -184,14 +191,41 @@ const MainLayout = ({ isMobile, navbarHeight }) => (
     </Box>
     <Footer />
     <GramSevakAI />
-  </>
+  </TenantContext.Provider>
 );
 
-// Main App Component that handles all routing
+// Main App Component that handles all routing and tenant loading
 function App() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navbarHeight = 64;
+
+  const [tenant, setTenant] = useState(null);
+  const [loadingTenant, setLoadingTenant] = useState(true);
+
+  useEffect(() => {
+    // load tenant config at app start
+    async function initTenant() {
+      try {
+        const cfg = await loadTenantConfig();
+        console.log("Loaded tenant:", TENANT_ID, cfg);
+        setTenant(cfg);
+      } catch (err) {
+        console.error("Failed loading tenant config", err);
+      } finally {
+        setLoadingTenant(false);
+      }
+    }
+    initTenant();
+  }, []);
+
+  if (loadingTenant) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography>Loading site...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Routes>
@@ -259,7 +293,7 @@ function App() {
       </Route>
 
       {/* Main Public Website Routes */}
-      <Route path="/*" element={<MainLayout isMobile={isMobile} navbarHeight={navbarHeight} />} />
+      <Route path="/*" element={<MainLayout isMobile={isMobile} navbarHeight={navbarHeight} tenant={tenant} />} />
     </Routes>
   );
 }
