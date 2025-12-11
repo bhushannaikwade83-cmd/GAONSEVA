@@ -1,0 +1,9 @@
+{
+  "id": "demo",
+  "name": "Demo Village",
+  "displayName": "Demo Gram Panchayat",
+  "contact": "demo@example.com",
+  "language": "en",
+  "themeColor": "#007bff",
+  "welcome": "This is a demo site — sample data only."
+}
