@@ -236,7 +236,6 @@ const ManageDecisionsInner = () => {
                 label="तारीख" 
                 type="date" 
                 fullWidth 
-                InputLabelProps={{ shrink: true }} 
                 value={current.date} 
                 onChange={(e) => setCurrent({ ...current, date: e.target.value })}
                 InputProps={{

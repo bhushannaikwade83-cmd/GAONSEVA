@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from '@mui/material';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { translatePage, restoreOriginalText, applyStoredTranslations, getTranslationState, setupAutoTranslation, retranslatePage } from '../utils/translationService';
 
 // Mock Link component
 const Link = ({ to, children, ...props }) => (
@@ -463,7 +464,12 @@ const MobileMenu = ({ isOpen, onClose, navLinks, location, language }) => {
 // Navbar Component
 const Navbar = () => {
   const [grampanchayatName, setGrampanchayatName] = useState("ग्रामपंचायत नाव");
-  const [language, setLanguage] = useState("mr");
+  const [language, setLanguage] = useState(() => {
+    // Check if page was previously translated
+    const state = getTranslationState();
+    return state.currentLanguage || "mr";
+  });
+  const [isTranslating, setIsTranslating] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [grampanchayatAnchor, setGrampanchayatAnchor] = useState(null);
   const [directoryAnchor, setDirectoryAnchor] = useState(null);
@@ -492,6 +498,56 @@ const Navbar = () => {
       }
     };
     fetchGpName();
+  }, []);
+
+  // Initialize translation state on mount and apply to current page
+  useEffect(() => {
+    const state = getTranslationState();
+    if (state.isTranslated && state.currentLanguage === 'en') {
+      // Page was previously translated, apply stored translations
+      setLanguage('en');
+      // Wait for DOM to be ready, then apply translations
+      setTimeout(() => {
+        applyStoredTranslations();
+        setupAutoTranslation();
+      }, 500);
+    }
+  }, []);
+
+  // Listen for route changes and apply translations
+  useEffect(() => {
+    const handleRouteChange = () => {
+      const state = getTranslationState();
+      if (state.isTranslated && state.currentLanguage === 'en') {
+        // Wait for React to render new content
+        setTimeout(() => {
+          applyStoredTranslations();
+        }, 300);
+      }
+    };
+
+    // Listen for popstate (browser back/forward)
+    window.addEventListener('popstate', handleRouteChange);
+    
+    // Listen for pushstate/replacestate (programmatic navigation)
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function(...args) {
+      originalPushState.apply(history, args);
+      handleRouteChange();
+    };
+    
+    history.replaceState = function(...args) {
+      originalReplaceState.apply(history, args);
+      handleRouteChange();
+    };
+
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+    };
   }, []);
 
   const navLinks = [
@@ -540,7 +596,37 @@ const Navbar = () => {
     setYojnaAnchor(null);
   };
 
-  const toggleLanguage = () => setLanguage(prev => (prev === "mr" ? "en" : "mr"));
+  const toggleLanguage = async () => {
+    if (isTranslating) return; // Prevent multiple simultaneous translations
+    
+    setIsTranslating(true);
+    const newLanguage = language === "mr" ? "en" : "mr";
+    
+    try {
+      if (newLanguage === "en") {
+        // Translate page to English (includes static content) - immediate
+        await translatePage('mr', 'en');
+        
+        // Quick follow-up for Firebase data (reduced delays)
+        setTimeout(() => {
+          retranslatePage();
+        }, 800); // Reduced from 2000ms
+        
+        setTimeout(() => {
+          retranslatePage();
+        }, 2000); // Reduced from 4000ms
+      } else {
+        // Restore original Marathi text
+        restoreOriginalText();
+      }
+      setLanguage(newLanguage);
+    } catch (error) {
+      console.error('Language toggle error:', error);
+      alert('Translation failed. Please try again.');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
   const handleOpen = setter => event => { 
     handleCloseAllDropdowns(); 
@@ -831,8 +917,29 @@ const Navbar = () => {
               </div>
             )}
 
-            <button onClick={toggleLanguage} style={{ fontWeight: 'bold', color: 'white', background: 'linear-gradient(45deg, #2196f3, #21cbf3)', border: '2px solid transparent', fontSize: isMobile ? '12px' : '14px', padding: isMobile ? '6px 12px' : '8px 16px', borderRadius: '25px', cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)' }}>
-              {language === "mr" ? "मराठी → English" : "English → मराठी"}
+            <button 
+              onClick={toggleLanguage} 
+              disabled={isTranslating}
+              style={{ 
+                fontWeight: 'bold', 
+                color: 'white', 
+                background: isTranslating 
+                  ? 'linear-gradient(45deg, #999, #bbb)' 
+                  : 'linear-gradient(45deg, #2196f3, #21cbf3)', 
+                border: '2px solid transparent', 
+                fontSize: isMobile ? '12px' : '14px', 
+                padding: isMobile ? '6px 12px' : '8px 16px', 
+                borderRadius: '25px', 
+                cursor: isTranslating ? 'wait' : 'pointer', 
+                transition: 'all 0.3s ease', 
+                boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
+                opacity: isTranslating ? 0.7 : 1
+              }}
+            >
+              {isTranslating 
+                ? (language === "mr" ? "Translating..." : "Restoring...") 
+                : (language === "mr" ? "मराठी → English" : "English → मराठी")
+              }
             </button>
 
             {isMobile && <button onClick={() => setMobileOpen(!mobileOpen)} className="mobile-menu" style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'black' }}>☰</button>}

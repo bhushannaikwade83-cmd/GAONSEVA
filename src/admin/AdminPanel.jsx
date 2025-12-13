@@ -42,7 +42,7 @@ const AdminPanel = () => {
                     </Typography>
                     <Typography variant="h4" sx={{ color: '#1a1a1a', fontWeight: 700 }}>
                       {stat.value}
-                    </Typography>
+      </Typography>
                   </Box>
                   <Box sx={{ 
                     backgroundColor: `${stat.color}15`,

@@ -3,6 +3,7 @@ import React, { createContext } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Grid, Box, useMediaQuery, Typography } from "@mui/material"; 
 import { useTheme } from "@mui/material/styles";
+import TranslationManager from "./components/TranslationManager";
 
 // Public Components
 import Navbar from "./components/Navbar";
@@ -122,6 +123,7 @@ export const TenantContext = createContext({ name: "Default Gram Panchayat" });
 // This component wraps all the public-facing pages
 const MainLayout = ({ isMobile, navbarHeight, tenant }) => (
   <TenantContext.Provider value={tenant}>
+    <TranslationManager />
     <Navbar />
     <Box>
       <Routes>
