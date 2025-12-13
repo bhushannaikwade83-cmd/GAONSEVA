@@ -1,10 +1,8 @@
 // src/App.jsx
-import React, { useEffect, useState, createContext } from "react";
+import React, { createContext } from "react"; // Removed useEffect, useState
 import { Routes, Route } from "react-router-dom";
-import { Grid, Box, useMediaQuery, Typography, CircularProgress } from "@mui/material";
+import { Grid, Box, useMediaQuery, Typography } from "@mui/material"; // Removed CircularProgress
 import { useTheme } from "@mui/material/styles";
-
-
 
 // Public Components
 import Navbar from "./components/Navbar";
@@ -117,8 +115,8 @@ import ManageHomeGovLogos from "./admin/pages/home/ManageHomeGovLogos";
 import ManageHomeFooter from "./admin/pages/home/ManageHomeFooter";
 import ManageBudget from "./admin/pages/manage-gram-panchayat/ManageBudget";
 
-// Tenant Context (so child components can access tenant)
-export const TenantContext = createContext(null);
+// Tenant Context (Kept to prevent breaking child components that use it)
+export const TenantContext = createContext({ name: "Default Grampanchayat" });
 
 // This component wraps all the public-facing pages with Navbar and Footer
 const MainLayout = ({ isMobile, navbarHeight, tenant }) => (
@@ -191,88 +189,22 @@ const MainLayout = ({ isMobile, navbarHeight, tenant }) => (
   </TenantContext.Provider>
 );
 
-// Main App Component that handles all routing and tenant loading
+// Main App Component
 function App() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navbarHeight = 64;
 
-  const [tenant, setTenant] = useState(null);
-  const [loadingTenant, setLoadingTenant] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    // load tenant config at app start
-    async function initTenant() {
-      try {
-        console.log("Starting tenant load for:", TENANT_ID);
-        const cfg = await loadTenantConfig();
-        console.log("✅ Loaded tenant config:", cfg);
-        setTenant(cfg);
-        setError(null);
-      } catch (err) {
-        console.error("❌ Failed loading tenant config:", err);
-        setError(err.message || "Failed to load tenant configuration");
-        // Set a default/fallback tenant to prevent blank screen
-        setTenant({
-          id: TENANT_ID || 'default',
-          name: 'Default Gram Panchayat',
-          // Add other minimal required fields
-        });
-      } finally {
-        setLoadingTenant(false);
-      }
-    }
-    initTenant();
-  }, []);
-
-  // Show loading state
-  if (loadingTenant) {
-    return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          flexDirection: 'column',
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          minHeight: '100vh',
-          gap: 2
-        }}
-      >
-        <CircularProgress size={60} />
-        <Typography variant="h6">Loading site configuration...</Typography>
-        <Typography variant="body2" color="text.secondary">
-          Tenant ID: {TENANT_ID}
-        </Typography>
-      </Box>
-    );
-  }
-
-  // Show error state if tenant failed to load
-  if (error) {
-    console.warn("⚠️ Tenant loading error, proceeding with fallback:", error);
-  }
-
-  // Ensure tenant exists before rendering
-  if (!tenant) {
-    return (
-      <Box sx={{ p: 4 }}>
-        <Typography color="error" variant="h5">
-          Configuration Error
-        </Typography>
-        <Typography variant="body1" sx={{ mt: 2 }}>
-          Failed to load tenant configuration. Please check console for details.
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Tenant ID: {TENANT_ID}
-        </Typography>
-      </Box>
-    );
-  }
+  // Since we removed loading logic, we create a static "default" tenant object
+  // so the rest of the code that expects 'tenant' doesn't break.
+  const staticTenant = {
+    name: "Gram Panchayat",
+    // Add any other default properties your components might need
+  };
 
   return (
     <Routes>
-      {/* Admin Section Routes - Don't need tenant loading */}
+      {/* Admin Section Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminPanel />} />
@@ -345,7 +277,7 @@ function App() {
           <MainLayout 
             isMobile={isMobile} 
             navbarHeight={navbarHeight} 
-            tenant={tenant} 
+            tenant={staticTenant} 
           />
         } 
       />
