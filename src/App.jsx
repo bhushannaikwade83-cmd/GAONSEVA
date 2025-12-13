@@ -10,7 +10,7 @@ import Welcome from "./components/Welcome";
 import Photosection from "./components/Photosection";
 import RajyaGeetSection from "./components/RajyaGeetSection";
 import MembersSection from "./components/MembersSection";
-import GeneralMembersSection from "./components/GeneralMembersSection";
+// REMOVED MISSING COMPONENT HERE
 import GrampanchayatInfo from "./components/GrampanchayatInfo";
 import DigitalSlogans from "./components/DigitalSlogans";
 import GovLogosSection from "./components/GovLogosSection";
@@ -116,7 +116,6 @@ import ManageHomeFooter from "./admin/pages/home/ManageHomeFooter";
 import ManageBudget from "./admin/pages/manage-gram-panchayat/ManageBudget";
 
 // Tenant Context
-// We keep this so child components that use useContext(TenantContext) don't break
 export const TenantContext = createContext({ name: "Default Gram Panchayat" });
 
 // This component wraps all the public-facing pages
@@ -137,7 +136,7 @@ const MainLayout = ({ isMobile, navbarHeight, tenant }) => (
                 <Grid container spacing={isMobile ? 2 : 4} sx={{ width: "100%", m: 0, p: 0 }}>
                   <Grid item xs={12} md={12} lg={12} sx={{ pr: { lg: 8 } }}><MembersSection /></Grid>
                 </Grid>
-                <GeneralMembersSection />
+                {/* REMOVED MISSING COMPONENT HERE */}
                 <GrampanchayatInfo />
                 <DigitalSlogans />
                 <GovLogosSection />
@@ -196,7 +195,6 @@ function App() {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navbarHeight = 64;
 
-  // Static Tenant Data (To fix the blank screen)
   const tenant = {
     name: "Gram Panchayat",
     id: "default"
