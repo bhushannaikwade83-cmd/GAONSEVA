@@ -116,6 +116,7 @@ import ManageHomeInfo from "./admin/pages/home/ManageHomeInfo";
 import ManageHomeDigitalSlogans from "./admin/pages/home/ManageHomeDigitalSlogans";
 import ManageHomeGovLogos from "./admin/pages/home/ManageHomeGovLogos";
 import ManageHomeFooter from "./admin/pages/home/ManageHomeFooter";
+import ManageBudget from "./admin/pages/manage-gram-panchayat/ManageBudget";
 
 // Tenant Context (so child components can access tenant)
 export const TenantContext = createContext(null);
@@ -290,6 +291,7 @@ function App() {
         <Route path="manage/eseva" element={<ManageESeva />} />
         <Route path="manage/tourism" element={<ManageTourism />} />
         <Route path="manage/complaints" element={<ManageComplaints />} />
+        <Route path="budget" element={<ManageBudget />} />
 
         {/* होम पेज व्यवस्थापन */}
         <Route path="home/navbar" element={<ManageHomeNavbar />} />

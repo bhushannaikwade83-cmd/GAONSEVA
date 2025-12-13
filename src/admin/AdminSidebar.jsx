@@ -337,7 +337,7 @@ const AdminSidebar = ({ drawerWidth }) => {
           <ListItem disablePadding component={Link} to="/admin/budget">
             <ListItemButton selected={isActive('/admin/budget')}>
               <ListItemIcon><AccountBalanceWalletIcon /></ListItemIcon>
-              <ListItemText primary="अर्थसंकल्प व्यवस्थापन" />
+              <ListItemText primary="अर्थसंकल्प आणि पारदर्शकता" />
               <Chip label="नवीन" size="small" sx={{ 
                 background: 'rgba(255, 255, 255, 0.2)',
                 color: 'white',

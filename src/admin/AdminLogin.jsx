@@ -15,6 +15,13 @@ const AdminLogin = () => {
   const [resetSuccess, setResetSuccess] = useState(false);
   const navigate = useNavigate();
 
+  // Debug: Log when component mounts
+  React.useEffect(() => {
+    console.log('AdminLogin component mounted');
+    // Ensure body doesn't have overflow hidden
+    document.body.style.overflow = 'auto';
+  }, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -92,9 +99,29 @@ const AdminLogin = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
-      <Container maxWidth="xs">
-        <Paper elevation={6} sx={{ padding: 4, borderRadius: 2 }}>
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh', 
+        backgroundColor: '#f0f2f5',
+        position: 'relative',
+        zIndex: 1,
+        width: '100%',
+        padding: 2
+      }}
+    >
+      <Container maxWidth="xs" sx={{ width: '100%' }}>
+        <Paper 
+          elevation={6} 
+          sx={{ 
+            padding: 4, 
+            borderRadius: 2,
+            width: '100%',
+            maxWidth: '100%'
+          }}
+        >
           <Typography variant="h4" component="h1" gutterBottom align="center" fontWeight="bold">
             Admin Login
           </Typography>

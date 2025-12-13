@@ -1,54 +1,204 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Download, TrendingUp, TrendingDown, FileText, Eye, Calendar } from 'lucide-react';
+import { db } from '../firebase';
+import { 
+  collection, 
+  doc, 
+  onSnapshot, 
+  query, 
+  where 
+} from 'firebase/firestore';
 
 const ArthsankalpParadarkshita = () => {
-  const [selectedYear, setSelectedYear] = useState('2024-25');
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(`${currentYear}-${String(currentYear + 1).slice(-2)}`);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  // State for Firebase data
+  const [loading, setLoading] = useState(true);
+  const [budgetSummary, setBudgetSummary] = useState({
+    totalBudget: 0,
+    totalIncome: 0,
+    totalExpenditure: 0,
+    balance: 0
+  });
+  const [incomeCategories, setIncomeCategories] = useState([]);
+  const [expenditureCategories, setExpenditureCategories] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [availableYears, setAvailableYears] = useState([]);
 
-  const budgetData = {
-    '2024-25': {
-      totalBudget: 5000000,
-      income: 4800000,
-      expenditure: 4200000,
-      balance: 600000
-    },
-    '2023-24': {
-      totalBudget: 4500000,
-      income: 4300000,
-      expenditure: 4100000,
-      balance: 200000
-    }
+  // Convert year format from "2024-25" to "2024" for Firebase
+  const getYearForFirebase = (yearStr) => {
+    return yearStr.split('-')[0];
   };
 
-  const incomeCategories = [
-    { name: 'केंद्र सरकार अनुदान', amount: 2000000, percentage: 42 },
-    { name: 'राज्य सरकार अनुदान', amount: 1500000, percentage: 31 },
-    { name: 'स्थानिक कर', amount: 800000, percentage: 17 },
-    { name: 'इतर स्रोत', amount: 500000, percentage: 10 }
-  ];
+  // Fetch data from Firebase
+  useEffect(() => {
+    const firebaseYear = getYearForFirebase(selectedYear);
+    setLoading(true);
 
-  const expenditureCategories = [
-    { name: 'पायाभूत सुविधा', amount: 1500000, percentage: 36, status: 'completed' },
-    { name: 'शिक्षण आणि आरोग्य', amount: 1200000, percentage: 29, status: 'ongoing' },
-    { name: 'पाणीपुरवठा आणि स्वच्छता', amount: 800000, percentage: 19, status: 'completed' },
-    { name: 'प्रशासकीय खर्च', amount: 700000, percentage: 16, status: 'ongoing' }
-  ];
+    // Firebase collections
+    const budgetCollection = collection(db, 'budget');
+    const incomeCollection = collection(db, 'budget-income');
+    const expenditureCollection = collection(db, 'budget-expenditure');
+    const transactionsCollection = collection(db, 'budget-transactions');
+    const documentsCollection = collection(db, 'budget-documents');
 
-  const recentTransactions = [
-    { date: '2024-10-15', description: 'रस्ता बांधकाम', amount: 250000, type: 'expenditure' },
-    { date: '2024-10-10', description: 'राज्य अनुदान प्राप्त', amount: 500000, type: 'income' },
-    { date: '2024-10-05', description: 'शाळा दुरुस्ती', amount: 150000, type: 'expenditure' },
-    { date: '2024-09-28', description: 'स्थानिक कर संकलन', amount: 75000, type: 'income' }
-  ];
+    // Fetch budget summary
+    const budgetDocRef = doc(budgetCollection, `year-${firebaseYear}`);
+    const budgetUnsub = onSnapshot(
+      budgetDocRef,
+      (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const data = docSnapshot.data();
+          const totalBudget = data.totalBudget || 0;
+          const totalIncome = data.totalIncome || 0;
+          const totalExpenditure = data.totalExpenditure || 0;
+          setBudgetSummary({
+            totalBudget,
+            totalIncome,
+            totalExpenditure,
+            balance: totalBudget - totalExpenditure
+          });
+        } else {
+          setBudgetSummary({ totalBudget: 0, totalIncome: 0, totalExpenditure: 0, balance: 0 });
+        }
+      },
+      (error) => {
+        console.error('Error fetching budget summary:', error);
+      }
+    );
 
-  const documents = [
-    { name: 'वार्षिक अर्थसंकल्प 2024-25', date: '2024-04-01', size: '2.4 MB' },
-    { name: 'तिमाही अहवाल Q1', date: '2024-07-15', size: '1.8 MB' },
-    { name: 'लेखापरीक्षण अहवाल 2023-24', date: '2024-06-30', size: '3.2 MB' },
-    { name: 'खर्च तपशील रजिस्टर', date: '2024-10-01', size: '1.5 MB' }
-  ];
+    // Fetch income sources
+    const incomeUnsub = onSnapshot(
+      query(incomeCollection, where('year', '==', firebaseYear)),
+      (snapshot) => {
+        const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        // Sort by amount descending
+        items.sort((a, b) => (b.amount || 0) - (a.amount || 0));
+        setIncomeCategories(items.map(item => ({
+          name: item.source,
+          amount: item.amount || 0,
+          percentage: parseFloat(item.percentage) || 0
+        })));
+      },
+      (error) => {
+        console.error('Error fetching income sources:', error);
+      }
+    );
 
-  const currentData = budgetData[selectedYear];
+    // Fetch expenditure categories
+    const expenditureUnsub = onSnapshot(
+      query(expenditureCollection, where('year', '==', firebaseYear)),
+      (snapshot) => {
+        const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        // Sort by amount descending
+        items.sort((a, b) => (b.amount || 0) - (a.amount || 0));
+        setExpenditureCategories(items.map(item => ({
+          name: item.category,
+          amount: item.amount || 0,
+          percentage: parseFloat(item.percentage) || 0,
+          status: item.status || 'ongoing'
+        })));
+      },
+      (error) => {
+        console.error('Error fetching expenditure categories:', error);
+      }
+    );
+
+    // Fetch transactions
+    const transactionsUnsub = onSnapshot(
+      query(transactionsCollection, where('year', '==', firebaseYear)),
+      (snapshot) => {
+        const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        // Sort by date descending
+        items.sort((a, b) => {
+          const dateA = a.date || '';
+          const dateB = b.date || '';
+          return dateB.localeCompare(dateA);
+        });
+        setRecentTransactions(items.map(item => ({
+          date: item.date,
+          description: item.description,
+          amount: item.amount || 0,
+          type: item.type || 'expense'
+        })));
+      },
+      (error) => {
+        console.error('Error fetching transactions:', error);
+      }
+    );
+
+    // Fetch documents
+    const documentsUnsub = onSnapshot(
+      query(documentsCollection, where('year', '==', firebaseYear)),
+      (snapshot) => {
+        const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        // Sort by date descending
+        items.sort((a, b) => {
+          const dateA = a.date || '';
+          const dateB = b.date || '';
+          return dateB.localeCompare(dateA);
+        });
+        setDocuments(items.map(item => ({
+          name: item.title,
+          date: item.date,
+          size: item.fileSize || 'N/A',
+          url: item.fileUrl
+        })));
+      },
+      (error) => {
+        console.error('Error fetching documents:', error);
+      }
+    );
+
+    // Fetch available years from budget collection
+    const yearsUnsub = onSnapshot(budgetCollection, (snapshot) => {
+      const years = snapshot.docs
+        .map(d => {
+          const data = d.data();
+          const year = data.year || d.id.replace('year-', '');
+          if (year && !isNaN(year)) {
+            const yearNum = parseInt(year);
+            return `${yearNum}-${String(yearNum + 1).slice(-2)}`;
+          }
+          return null;
+        })
+        .filter(Boolean)
+        .sort()
+        .reverse();
+      
+      if (years.length > 0) {
+        setAvailableYears(years);
+        // Set default year if current selection is not available
+        if (!years.includes(selectedYear) && years.length > 0) {
+          setSelectedYear(years[0]);
+        }
+      } else {
+        // Default years if no data
+        const defaultYears = [];
+        for (let i = 0; i < 5; i++) {
+          const year = currentYear - i;
+          defaultYears.push(`${year}-${String(year + 1).slice(-2)}`);
+        }
+        setAvailableYears(defaultYears);
+      }
+    });
+
+    setLoading(false);
+
+    return () => {
+      budgetUnsub();
+      incomeUnsub();
+      expenditureUnsub();
+      transactionsUnsub();
+      documentsUnsub();
+      yearsUnsub();
+    };
+  }, [selectedYear, currentYear]);
+
+  const currentData = budgetSummary;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 p-4 md:p-8">
@@ -72,10 +222,26 @@ const ArthsankalpParadarkshita = () => {
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
             className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            disabled={loading}
           >
-            <option value="2024-25">2024-25</option>
-            <option value="2023-24">2023-24</option>
+            {availableYears.length > 0 ? (
+              availableYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))
+            ) : (
+              <>
+                <option value={`${currentYear}-${String(currentYear + 1).slice(-2)}`}>
+                  {currentYear}-{String(currentYear + 1).slice(-2)}
+                </option>
+                <option value={`${currentYear - 1}-${String(currentYear).slice(-2)}`}>
+                  {currentYear - 1}-{String(currentYear).slice(-2)}
+                </option>
+              </>
+            )}
           </select>
+          {loading && (
+            <p className="text-sm text-gray-500 mt-2">डेटा लोड होत आहे...</p>
+          )}
         </div>
 
         {/* Budget Overview Cards */}
@@ -85,7 +251,9 @@ const ArthsankalpParadarkshita = () => {
               <span className="text-sm opacity-90">एकूण अर्थसंकल्प</span>
               <FileText className="w-5 h-5 opacity-80" />
             </div>
-            <div className="text-2xl font-bold">₹{(currentData.totalBudget / 100000).toFixed(1)}L</div>
+            <div className="text-2xl font-bold">
+              {loading ? '...' : `₹${(currentData.totalBudget / 100000).toFixed(1)}L`}
+            </div>
           </div>
 
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
@@ -93,7 +261,9 @@ const ArthsankalpParadarkshita = () => {
               <span className="text-sm opacity-90">एकूण उत्पन्न</span>
               <TrendingUp className="w-5 h-5 opacity-80" />
             </div>
-            <div className="text-2xl font-bold">₹{(currentData.income / 100000).toFixed(1)}L</div>
+            <div className="text-2xl font-bold">
+              {loading ? '...' : `₹${(currentData.totalIncome / 100000).toFixed(1)}L`}
+            </div>
           </div>
 
           <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
@@ -101,7 +271,9 @@ const ArthsankalpParadarkshita = () => {
               <span className="text-sm opacity-90">एकूण खर्च</span>
               <TrendingDown className="w-5 h-5 opacity-80" />
             </div>
-            <div className="text-2xl font-bold">₹{(currentData.expenditure / 100000).toFixed(1)}L</div>
+            <div className="text-2xl font-bold">
+              {loading ? '...' : `₹${(currentData.totalExpenditure / 100000).toFixed(1)}L`}
+            </div>
           </div>
 
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
@@ -109,7 +281,9 @@ const ArthsankalpParadarkshita = () => {
               <span className="text-sm opacity-90">शिल्लक रक्कम</span>
               <Calendar className="w-5 h-5 opacity-80" />
             </div>
-            <div className="text-2xl font-bold">₹{(currentData.balance / 100000).toFixed(1)}L</div>
+            <div className="text-2xl font-bold">
+              {loading ? '...' : `₹${(currentData.balance / 100000).toFixed(1)}L`}
+            </div>
           </div>
         </div>
 
@@ -122,7 +296,12 @@ const ArthsankalpParadarkshita = () => {
               उत्पन्नाचा तपशील
             </h2>
             <div className="space-y-4">
-              {incomeCategories.map((category, idx) => (
+              {loading ? (
+                <div className="text-center py-4 text-gray-500">लोड होत आहे...</div>
+              ) : incomeCategories.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">उत्पन्न स्रोत उपलब्ध नाहीत</div>
+              ) : (
+                incomeCategories.map((category, idx) => (
                 <div key={idx}>
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-sm font-medium text-gray-700">{category.name}</span>
@@ -138,7 +317,8 @@ const ArthsankalpParadarkshita = () => {
                   </div>
                   <div className="text-xs text-gray-500 mt-1">{category.percentage}%</div>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -149,7 +329,12 @@ const ArthsankalpParadarkshita = () => {
               खर्चाचा तपशील
             </h2>
             <div className="space-y-4">
-              {expenditureCategories.map((category, idx) => (
+              {loading ? (
+                <div className="text-center py-4 text-gray-500">लोड होत आहे...</div>
+              ) : expenditureCategories.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">खर्च श्रेणी उपलब्ध नाहीत</div>
+              ) : (
+                expenditureCategories.map((category, idx) => (
                 <div key={idx}>
                   <div className="flex justify-between items-center mb-1">
                     <div className="flex items-center">
@@ -174,7 +359,8 @@ const ArthsankalpParadarkshita = () => {
                   </div>
                   <div className="text-xs text-gray-500 mt-1">{category.percentage}%</div>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -196,7 +382,20 @@ const ArthsankalpParadarkshita = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {recentTransactions.map((transaction, idx) => (
+                {loading ? (
+                  <tr>
+                    <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
+                      लोड होत आहे...
+                    </td>
+                  </tr>
+                ) : recentTransactions.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
+                      व्यवहार उपलब्ध नाहीत
+                    </td>
+                  </tr>
+                ) : (
+                  recentTransactions.slice(0, 10).map((transaction, idx) => (
                   <tr key={idx} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 text-sm text-gray-700">{transaction.date}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{transaction.description}</td>
@@ -215,7 +414,8 @@ const ArthsankalpParadarkshita = () => {
                       {transaction.type === 'income' ? '+' : '-'}₹{(transaction.amount / 1000).toFixed(0)}K
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -228,23 +428,40 @@ const ArthsankalpParadarkshita = () => {
             कागदपत्रे आणि अहवाल
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {documents.map((doc, idx) => (
-              <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800 mb-1">{doc.name}</h3>
-                    <div className="flex items-center text-xs text-gray-500 space-x-3">
-                      <span>{doc.date}</span>
-                      <span>•</span>
-                      <span>{doc.size}</span>
+            {loading ? (
+              <div className="col-span-2 text-center py-8 text-gray-500">लोड होत आहे...</div>
+            ) : documents.length === 0 ? (
+              <div className="col-span-2 text-center py-8 text-gray-500">दस्तावेज उपलब्ध नाहीत</div>
+            ) : (
+              documents.map((doc, idx) => (
+                <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800 mb-1">{doc.name}</h3>
+                      <div className="flex items-center text-xs text-gray-500 space-x-3">
+                        <span>{doc.date}</span>
+                        <span>•</span>
+                        <span>{doc.size}</span>
+                      </div>
                     </div>
+                    {doc.url ? (
+                      <a
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-3 p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                      >
+                        <Download className="w-5 h-5" />
+                      </a>
+                    ) : (
+                      <button className="ml-3 p-2 text-gray-400 cursor-not-allowed rounded-lg">
+                        <Download className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
-                  <button className="ml-3 p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors">
-                    <Download className="w-5 h-5" />
-                  </button>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
