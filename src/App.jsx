@@ -4,8 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import { Grid, Box, useMediaQuery, Typography, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
-// tenant loader (dynamic import of src/config/<tenant>.json)
-import { TENANT_ID, loadTenantConfig } from "./tenantLoader";
+
 
 // Public Components
 import Navbar from "./components/Navbar";
