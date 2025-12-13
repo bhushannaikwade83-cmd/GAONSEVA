@@ -1,6 +1,7 @@
-import React from "react";
+// src/App.jsx
+import React, { createContext } from "react"; 
 import { Routes, Route } from "react-router-dom";
-import { Grid, Box, useMediaQuery, Typography } from "@mui/material";
+import { Grid, Box, useMediaQuery, Typography } from "@mui/material"; 
 import { useTheme } from "@mui/material/styles";
 
 // Public Components
@@ -8,8 +9,8 @@ import Navbar from "./components/Navbar";
 import Welcome from "./components/Welcome";
 import Photosection from "./components/Photosection";
 import RajyaGeetSection from "./components/RajyaGeetSection";
-import MessagesSection from "./components/MessagesSection";
 import MembersSection from "./components/MembersSection";
+import GeneralMembersSection from "./components/GeneralMembersSection";
 import GrampanchayatInfo from "./components/GrampanchayatInfo";
 import DigitalSlogans from "./components/DigitalSlogans";
 import GovLogosSection from "./components/GovLogosSection";
@@ -70,7 +71,7 @@ import ManageFestivals from "./admin/pages/manage-gram-panchayat/ManageFestivals
 import ManageFacilities from "./admin/pages/manage-gram-panchayat/ManageFacilities";
 import ManageESeva from "./admin/pages/manage-gram-panchayat/ManageESeva";
 import ManageTourism from "./admin/pages/manage-gram-panchayat/ManageTourism";
-const ManageComplaints = () => <Box p={4}><Typography variant="h4">तक्रार व्यवस्थापन पेज</Typography></Box>;
+import ManageComplaints from "./admin/pages/manage-gram-panchayat/ManageComplaints";
 
 // Admin Pages: निर्देशिका
 import Janaganana from "./admin/pages/manage-nirdeshika/Janaganana";
@@ -112,11 +113,15 @@ import ManageHomeInfo from "./admin/pages/home/ManageHomeInfo";
 import ManageHomeDigitalSlogans from "./admin/pages/home/ManageHomeDigitalSlogans";
 import ManageHomeGovLogos from "./admin/pages/home/ManageHomeGovLogos";
 import ManageHomeFooter from "./admin/pages/home/ManageHomeFooter";
+import ManageBudget from "./admin/pages/manage-gram-panchayat/ManageBudget";
 
+// Tenant Context
+// We keep this so child components that use useContext(TenantContext) don't break
+export const TenantContext = createContext({ name: "Default Gram Panchayat" });
 
-// This component wraps all the public-facing pages with Navbar and Footer
-const MainLayout = ({ isMobile, navbarHeight }) => (
-  <>
+// This component wraps all the public-facing pages
+const MainLayout = ({ isMobile, navbarHeight, tenant }) => (
+  <TenantContext.Provider value={tenant}>
     <Navbar />
     <Box>
       <Routes>
@@ -125,14 +130,14 @@ const MainLayout = ({ isMobile, navbarHeight }) => (
           path="/"
           element={
             <>
-              <Welcome />
+              <Welcome tenant={tenant} />
               <Photosection />
               <Box>
                 <RajyaGeetSection />
                 <Grid container spacing={isMobile ? 2 : 4} sx={{ width: "100%", m: 0, p: 0 }}>
-                  <Grid item xs={12} md={6} lg={5}><MessagesSection /></Grid>
-                  <Grid item xs={12} md={6} lg={7} sx={{ pr: { lg: 8 } }}><MembersSection /></Grid>
+                  <Grid item xs={12} md={12} lg={12} sx={{ pr: { lg: 8 } }}><MembersSection /></Grid>
                 </Grid>
+                <GeneralMembersSection />
                 <GrampanchayatInfo />
                 <DigitalSlogans />
                 <GovLogosSection />
@@ -174,24 +179,28 @@ const MainLayout = ({ isMobile, navbarHeight }) => (
         <Route path="/योजना-केंद्र-सरकार-योजना" element={<GramKendraSarkarYojana />} />
         <Route path="/तक्रार-नोंदणी" element={<TakrarNondani />} />
         <Route path="/अर्थसंकल्प-पारदर्शकता" element={<ArthsankalpParadarkshita />} />
-        {/* Extra public pages */}
         <Route path="/pragat-shetkari" element={<PragatShetkari />} />
         <Route path="/e-shikshan" element={<EShikshan />} />
         <Route path="/batmya" element={<Batmya />} />
         <Route path="/sampark" element={<Sampark />} />
-        
       </Routes>
     </Box>
     <Footer />
     <GramSevakAI />
-  </>
+  </TenantContext.Provider>
 );
 
-// Main App Component that handles all routing
+// Main App Component
 function App() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navbarHeight = 64;
+
+  // Static Tenant Data (To fix the blank screen)
+  const tenant = {
+    name: "Gram Panchayat",
+    id: "default"
+  };
 
   return (
     <Routes>
@@ -202,7 +211,7 @@ function App() {
         <Route path="panel" element={<AdminPanel />} />
         <Route path="profile" element={<GramPanchayatProfile />} />
         
-        {/* ✅ UPDATED: All management pages now use a consistent '/manage/' prefix */}
+        {/* Management pages */}
         <Route path="manage/info" element={<ManageInfo />} />
         <Route path="manage/map" element={<ManageMap />} />
         <Route path="manage/members" element={<ManageMembers />} />
@@ -213,8 +222,9 @@ function App() {
         <Route path="manage/eseva" element={<ManageESeva />} />
         <Route path="manage/tourism" element={<ManageTourism />} />
         <Route path="manage/complaints" element={<ManageComplaints />} />
+        <Route path="budget" element={<ManageBudget />} />
 
-        {/* होम पेज व्यवस्थापन */}
+        {/* Home management */}
         <Route path="home/navbar" element={<ManageHomeNavbar />} />
         <Route path="home/welcome" element={<ManageHomeWelcome />} />
         <Route path="home/photos" element={<ManageHomePhotos />} />
@@ -226,13 +236,13 @@ function App() {
         <Route path="home/gov-logos" element={<ManageHomeGovLogos />} />
         <Route path="home/footer" element={<ManageHomeFooter />} />
 
-        {/* निर्देशिका */}
+        {/* Directory (Nirdeshika) */}
         <Route path="manage-nirdeshika/janaganana" element={<Janaganana />} />
         <Route path="manage-nirdeshika/contacts" element={<Contacts />} />
         <Route path="manage-nirdeshika/helpline" element={<Helpline />} />
         <Route path="manage-nirdeshika/hospitals" element={<Hospitals />} />
 
-        {/* कार्यक्रम व्यवस्थापन */}
+        {/* Programs */}
         <Route path="program/svachh-gaav" element={<ManageSvachhGaav />} />
         <Route path="program/vikel-te-pikel" element={<ManageVikelTePikel />} />
         <Route path="program/maajhe-kutumb" element={<ManageMaajheKutumb />} />
@@ -248,10 +258,12 @@ function App() {
         <Route path="program/kachryache-niyojan" element={<ManageKachryacheNiyojan />} />
         <Route path="program/biogas-nirmiti" element={<ManageBiogasNirmiti />} />
         <Route path="program/sendriya-khat" element={<ManageSendriyaKhat />} />
-        {/* योजना व्यवस्थापन */}
+        
+        {/* Schemes */}
         <Route path="yojana/state" element={<ManageStateYojana />} />
         <Route path="yojana/central" element={<ManageCentralYojana />} />
-        {/* अतिरिक्त व्यवस्थापन */}
+        
+        {/* Extra */}
         <Route path="extra/pragat-shetkari" element={<ManagePragatShetkari />} />
         <Route path="extra/e-shikshan" element={<ManageEShikshan />} />
         <Route path="extra/batmya" element={<ManageBatmya />} />
@@ -259,7 +271,16 @@ function App() {
       </Route>
 
       {/* Main Public Website Routes */}
-      <Route path="/*" element={<MainLayout isMobile={isMobile} navbarHeight={navbarHeight} />} />
+      <Route 
+        path="/*" 
+        element={
+          <MainLayout 
+            isMobile={isMobile} 
+            navbarHeight={navbarHeight} 
+            tenant={tenant} 
+          />
+        } 
+      />
     </Routes>
   );
 }
