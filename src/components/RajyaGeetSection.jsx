@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Grid, Card, CardContent, Typography, Avatar } from "@mui/material";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
+import MessagesSection from "./MessagesSection";
 
 const RajyaGeetSection = () => {
   const [data, setData] = useState(null);
@@ -49,16 +50,17 @@ const RajyaGeetSection = () => {
         gutterBottom
         sx={{
           fontWeight: "bold",
-          textAlign: { xs: "center", md: "center" }, // center on mobile, left on desktop
-          mb: 4
+          textAlign: { xs: "center", md: "left" }, // center on mobile, left on desktop
+          mb: 4,
+          ml: { xs: 0, md: 30 } // left aligned on desktop
         }}
       >
         राज्य गीत
       </Typography>
 
-      <Grid container spacing={4} justifyContent="center" alignItems="center">
+      <Grid container spacing={4} justifyContent="center" alignItems="flex-start">
         {/* Left side - YouTube video */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
           <div style={{ position: "relative", paddingTop: "56.25%" /* 16:9 ratio */ }}>
             {loading ? (
               <div style={{ position: "absolute", inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -87,15 +89,15 @@ const RajyaGeetSection = () => {
           </div>
         </Grid>
 
-        {/* Right side - Quote */}
-        <Grid item xs={12} md={6}>
-          <Card elevation={4} sx={{ p: 2 }}>
-            <CardContent>
+        {/* Middle - Quote */}
+        <Grid item xs={12} md={4} sx={{ mt: { xs: 0, md: 0 } }}>
+          <Card elevation={4} sx={{ p: 3 }}>
+            <CardContent sx={{ pt: 2, pb: 2, px: 2 }}>
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  marginBottom: "15px",
+                  marginBottom: "10px",
                   flexDirection: { xs: "column", sm: "row" }, // avatar above text on mobile
                   textAlign: { xs: "center", md: "left" },
                 }}
@@ -103,11 +105,11 @@ const RajyaGeetSection = () => {
                 <Avatar
                   src={data?.avatar || "/tukdoji.jpeg"}
                   alt="Rashtrasant Tukdoji Maharaj"
-                  sx={{ width: 60, height: 60, marginRight: { xs: 0, sm: 2 }, mb: { xs: 1, sm: 0 } }}
+                  sx={{ width: 70, height: 70, marginRight: { xs: 0, sm: 2 }, mb: { xs: 1, sm: 0 } }}
                 />
                 <Typography
                   variant="h6"
-                  sx={{ fontWeight: "bold" }}
+                  sx={{ fontWeight: "bold", fontSize: { xs: '1.1rem', md: '1.25rem' } }}
                 >
                   {loading ? '...' : (data?.name || 'राष्ट्रसंत तुकडोजी महाराज')}
                 </Typography>
@@ -115,12 +117,23 @@ const RajyaGeetSection = () => {
 
               <Typography
                 variant="body1"
-                sx={{ fontStyle: "italic", textAlign: { xs: "center", md: "left" }, whiteSpace: 'pre-wrap' }}
+                sx={{ 
+                  fontStyle: "italic", 
+                  textAlign: { xs: "center", md: "left" }, 
+                  whiteSpace: 'pre-wrap',
+                  fontSize: { xs: '1.15rem', md: '1.3rem' },
+                  lineHeight: 1.6
+                }}
               >
-                {loading ? '...' : (data?.quote || '“ऐसें गाव होतां आदर्शपूर्ण \nशहाराइनीहि नंदनवन \nसर्वां करील आकर्षण \nसुंदर जीवन तुकड्या म्हणे...”')}
+                {loading ? '...' : (data?.quote || '"ऐसें गाव होतां आदर्शपूर्ण \nशहाराइनीहि नंदनवन \nसर्वां करील आकर्षण \nसुंदर जीवन तुकड्या म्हणे..."')}
               </Typography>
             </CardContent>
           </Card>
+        </Grid>
+
+        {/* Right side - Messages Section */}
+        <Grid item xs={12} md={4} sx={{ mt: { xs: 0, md: 0 } }}>
+          <MessagesSection />
         </Grid>
       </Grid>
     </div>

@@ -160,56 +160,63 @@ const AdminSidebar = ({ drawerWidth }) => {
           boxSizing: 'border-box', 
           display: 'flex', 
           flexDirection: 'column',
-          background: 'linear-gradient(180deg, #000000 0%, #1a1a1a 100%)',
-          color: 'white',
-          borderRight: 'none',
+          background: '#ffffff',
+          color: '#1a1a1a',
+          borderRight: '1px solid #e0e0e0',
+          boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
         },
       }}
     >
       {/* Header */}
       <Toolbar sx={{ 
-        background: 'rgba(255, 255, 255, 0.05)', 
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+        background: '#ffffff', 
+        borderBottom: '1px solid #e0e0e0',
+        minHeight: '80px !important'
       }}>
         <Avatar 
           sx={{ 
             width: 40, 
             height: 40, 
             mr: 1.5,
-            background: 'linear-gradient(135deg, #ffffff 0%, #e5e5e5 100%)',
-            color: '#000000',
+            background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+            color: '#ffffff',
             fontWeight: 'bold'
           }}
         >
           GP
         </Avatar>
         <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600, color: '#1a1a1a' }}>
             Admin Panel
           </Typography>
-          <Typography variant="caption" sx={{ opacity: 0.8 }}>
+          <Typography variant="caption" sx={{ color: '#666' }}>
             ग्रामपंचायत व्यवस्थापन
           </Typography>
         </Box>
         <Tooltip title="Settings">
-          <IconButton size="small" sx={{ color: 'white' }}>
+          <IconButton size="small" sx={{ color: '#1976d2' }}>
             <SettingsIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       </Toolbar>
 
       {/* Search Bar */}
-      <Box sx={{ p: 2, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+      <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0' }}>
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
-          background: 'rgba(255, 255, 255, 0.08)',
+          background: '#f5f5f5',
           borderRadius: 2,
           px: 2,
-          py: 1
+          py: 1,
+          border: '1px solid #e0e0e0',
+          transition: 'all 0.2s',
+          '&:focus-within': {
+            borderColor: '#1976d2',
+            background: '#ffffff'
+          }
         }}>
-          <SearchIcon sx={{ mr: 1, opacity: 0.7 }} />
+          <SearchIcon sx={{ mr: 1, color: '#666' }} />
           <input
             type="text"
             placeholder="शोधा..."
@@ -218,7 +225,7 @@ const AdminSidebar = ({ drawerWidth }) => {
             style={{
               border: 'none',
               background: 'transparent',
-              color: 'white',
+              color: '#1a1a1a',
               outline: 'none',
               width: '100%',
               fontSize: '14px'
@@ -227,7 +234,7 @@ const AdminSidebar = ({ drawerWidth }) => {
         </Box>
       </Box>
 
-      <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+      <Divider sx={{ borderColor: '#e0e0e0' }} />
 
       {/* Main Navigation */}
       <Box sx={{ 
@@ -238,34 +245,41 @@ const AdminSidebar = ({ drawerWidth }) => {
           borderRadius: 2, 
           mb: 0.5,
           transition: 'all 0.2s',
+          color: '#1a1a1a',
           '&:hover': { 
-            background: 'rgba(255, 255, 255, 0.08)',
+            background: '#f5f5f5',
             transform: 'translateX(4px)'
           }
         },
         '& .MuiListItemButton-root.Mui-selected': { 
-          background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%)',
-          borderLeft: '3px solid #ffffff',
+          background: '#e3f2fd',
+          borderLeft: '3px solid #1976d2',
+          color: '#1976d2',
           '&:hover': {
-            background: 'rgba(255, 255, 255, 0.2)',
+            background: '#bbdefb',
           }
         },
         '& .MuiListItemIcon-root': { 
           minWidth: 40,
-          color: 'rgba(255, 255, 255, 0.9)'
+          color: 'inherit'
         },
         '& .MuiListItemText-primary': {
-          fontSize: '0.9rem'
+          fontSize: '0.9rem',
+          color: 'inherit',
+          fontWeight: 500
         },
         '&::-webkit-scrollbar': {
           width: '6px'
         },
         '&::-webkit-scrollbar-track': {
-          background: 'rgba(255, 255, 255, 0.03)'
+          background: '#f5f5f5'
         },
         '&::-webkit-scrollbar-thumb': {
-          background: 'rgba(255, 255, 255, 0.15)',
-          borderRadius: '3px'
+          background: '#bdbdbd',
+          borderRadius: '3px',
+          '&:hover': {
+            background: '#9e9e9e'
+          }
         }
       }}>
         <List>
@@ -279,40 +293,40 @@ const AdminSidebar = ({ drawerWidth }) => {
             }}>
               <Tooltip title="Pending Complaints">
                 <Box sx={{ 
-                  background: 'rgba(255, 255, 255, 0.1)',
+                  background: '#fff3e0',
                   borderRadius: 2,
                   p: 1.5,
                   textAlign: 'center',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  border: '1px solid #ffe0b2',
                   '&:hover': {
-                    background: 'rgba(255, 255, 255, 0.15)',
+                    background: '#ffe0b2',
                     transform: 'scale(1.05)'
                   }
                 }}>
-                  <AssignmentIcon sx={{ fontSize: 24, mb: 0.5 }} />
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{pendingComplaints}</Typography>
-                  <Typography variant="caption" sx={{ opacity: 0.8 }}>तक्रारी</Typography>
+                  <AssignmentIcon sx={{ fontSize: 24, mb: 0.5, color: '#f57c00' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1a1a1a' }}>{pendingComplaints}</Typography>
+                  <Typography variant="caption" sx={{ color: '#666' }}>तक्रारी</Typography>
                 </Box>
               </Tooltip>
               <Tooltip title="Notifications">
                 <Box sx={{ 
-                  background: 'rgba(255, 255, 255, 0.1)',
+                  background: '#e3f2fd',
                   borderRadius: 2,
                   p: 1.5,
                   textAlign: 'center',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  border: '1px solid #bbdefb',
                   '&:hover': {
-                    background: 'rgba(255, 255, 255, 0.15)',
+                    background: '#bbdefb',
                     transform: 'scale(1.05)'
                   }
                 }}>
-                  <NotificationsIcon sx={{ fontSize: 24, mb: 0.5 }} />
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{notifications}</Typography>
-                  <Typography variant="caption" sx={{ opacity: 0.8 }}>सूचना</Typography>
+                  <NotificationsIcon sx={{ fontSize: 24, mb: 0.5, color: '#1976d2' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1a1a1a' }}>{notifications}</Typography>
+                  <Typography variant="caption" sx={{ color: '#666' }}>सूचना</Typography>
                 </Box>
               </Tooltip>
             </Box>
@@ -339,19 +353,12 @@ const AdminSidebar = ({ drawerWidth }) => {
               <ListItemIcon><AccountBalanceWalletIcon /></ListItemIcon>
               <ListItemText primary="अर्थसंकल्प आणि पारदर्शकता" />
               <Chip label="नवीन" size="small" sx={{ 
-                background: 'rgba(255, 255, 255, 0.2)',
+                background: '#1976d2',
                 color: 'white',
                 fontSize: '0.7rem',
-                height: 20
+                height: 20,
+                fontWeight: 600
               }} />
-            </ListItemButton>
-          </ListItem>
-
-          {/* Analytics Section */}
-          <ListItem disablePadding component={Link} to="/admin/analytics">
-            <ListItemButton selected={isActive('/admin/analytics')}>
-              <ListItemIcon><AnalyticsIcon /></ListItemIcon>
-              <ListItemText primary="अहवाल आणि विश्लेषण" />
             </ListItemButton>
           </ListItem>
 
@@ -492,7 +499,7 @@ const AdminSidebar = ({ drawerWidth }) => {
                 <Badge badgeContent={pendingComplaints} 
                   sx={{ 
                     '& .MuiBadge-badge': { 
-                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      backgroundColor: '#f57c00',
                       color: 'white' 
                     } 
                   }}>
@@ -507,23 +514,25 @@ const AdminSidebar = ({ drawerWidth }) => {
 
       {/* Footer */}
       <Box sx={{ 
-        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-        background: 'rgba(0, 0, 0, 0.3)'
+        borderTop: '1px solid #e0e0e0',
+        background: '#fafafa'
       }}>
         <List>
           <ListItem disablePadding>
             <ListItemButton onClick={handleLogout} sx={{
+              color: '#d32f2f',
               '&:hover': {
-                background: 'rgba(255, 255, 255, 0.1)'
+                background: '#ffebee',
+                color: '#c62828'
               }
             }}>
-              <ListItemIcon><LogoutIcon /></ListItemIcon>
+              <ListItemIcon sx={{ color: 'inherit' }}><LogoutIcon /></ListItemIcon>
               <ListItemText primary="लॉग आउट" />
             </ListItemButton>
           </ListItem>
         </List>
-        <Box sx={{ p: 2, textAlign: 'center', opacity: 0.6 }}>
-          <Typography variant="caption">
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#666' }}>
             Version 2.0 • © 2024
           </Typography>
         </Box>

@@ -47,9 +47,7 @@ const MessagesSection = () => {
   return (
     <Box
       sx={{
-        width: 350, // fixed small box width
-        mt: 4,
-        ml: 2, // push a little right
+        width: "100%",
         boxShadow: 3,
         borderRadius: 2,
         background: "white",
@@ -80,8 +78,8 @@ const MessagesSection = () => {
       {/* Tab Panels */}
       <Box
         sx={{
-          p: 2,
-          height: 200, // 🔹 fixed height for content area
+          p: 2.5,
+          height: 250, // 🔹 fixed height for content area
           overflowY: "auto", // scroll if content is too much
         }}
       >

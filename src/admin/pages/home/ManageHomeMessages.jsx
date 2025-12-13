@@ -90,12 +90,20 @@ const ManageHomeMessages = () => {
   }
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 2 }, maxWidth: '100%', overflow: 'hidden' }}>
-      <Typography variant="h5" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold' }}>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 4 }, maxWidth: '100%', overflow: 'hidden', backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      <Typography variant="h5" sx={{ mb: 3, textAlign: 'center', fontWeight: 600, color: '#1a1a1a' }}>
         संदेश व्यवस्थापन
       </Typography>
       
-      <Paper elevation={2} sx={{ mb: 2 }}>
+      <Paper 
+        elevation={2} 
+        sx={{ 
+          mb: 3,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e0e0e0',
+          borderRadius: 2
+        }}
+      >
         <Tabs 
           value={tab} 
           onChange={handleTabChange}
@@ -106,6 +114,15 @@ const ManageHomeMessages = () => {
               minWidth: isMobile ? 'auto' : 120,
               fontSize: isMobile ? '0.75rem' : '0.875rem',
               px: isMobile ? 1 : 2,
+              color: '#666',
+              fontWeight: 500,
+              '&.Mui-selected': {
+                color: '#1976d2',
+                fontWeight: 600,
+              }
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#1976d2'
             }
           }}
         >
@@ -117,19 +134,42 @@ const ManageHomeMessages = () => {
 
       {/* नविन संदेश */}
       {tab === 0 && (
-        <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
+        <Paper 
+          elevation={1} 
+          sx={{ 
+            p: 3, 
+            mb: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0e0e0',
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 3, color: '#1976d2', fontWeight: 600 }}>
             नवीन संदेश व्यवस्थापन
           </Typography>
           
           {newMessages.length === 0 && (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="body2" sx={{ textAlign: 'center', py: 2, color: '#666' }}>
               अजून कोणतेही संदेश जोडलेले नाहीत
             </Typography>
           )}
           
           {newMessages.map((item, index) => (
-            <Paper key={index} elevation={1} sx={{ p: 2, mb: 2, border: '1px solid #e0e0e0' }}>
+            <Paper 
+              key={index} 
+              elevation={1} 
+              sx={{ 
+                p: 2, 
+                mb: 2, 
+                border: '1px solid #e0e0e0',
+                backgroundColor: '#fafafa',
+                borderRadius: 2,
+                '&:hover': {
+                  backgroundColor: '#f5f5f5',
+                  boxShadow: 2
+                }
+              }}
+            >
               <Stack spacing={2}>
                 <TextField
                   label="योजना नाव"
@@ -157,11 +197,14 @@ const ManageHomeMessages = () => {
                   
                   <IconButton 
                     onClick={() => removeItem("newMessages", index)}
-                    color="error"
                     size="small"
                     sx={{ 
                       alignSelf: isMobile ? 'flex-start' : 'center',
-                      mt: isMobile ? 1 : 0 
+                      mt: isMobile ? 1 : 0,
+                      color: '#d32f2f',
+                      '&:hover': {
+                        backgroundColor: '#ffebee'
+                      }
                     }}
                   >
                     <DeleteIcon />
@@ -176,7 +219,15 @@ const ManageHomeMessages = () => {
             onClick={() => addItem("newMessages")}
             startIcon={<AddIcon />}
             fullWidth={isMobile}
-            sx={{ mt: 1 }}
+            sx={{ 
+              mt: 1,
+              borderColor: '#1976d2',
+              color: '#1976d2',
+              '&:hover': {
+                borderColor: '#1565c0',
+                backgroundColor: '#e3f2fd'
+              }
+            }}
           >
             नवीन संदेश जोडा
           </Button>
@@ -185,19 +236,42 @@ const ManageHomeMessages = () => {
 
       {/* योजना */}
       {tab === 1 && (
-        <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
+        <Paper 
+          elevation={1} 
+          sx={{ 
+            p: 3, 
+            mb: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0e0e0',
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 3, color: '#1976d2', fontWeight: 600 }}>
             योजना व्यवस्थापन
           </Typography>
           
           {yojana.length === 0 && (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="body2" sx={{ textAlign: 'center', py: 2, color: '#666' }}>
               अजून कोणतीही योजना जोडलेली नाही
             </Typography>
           )}
           
           {yojana.map((item, index) => (
-            <Paper key={index} elevation={1} sx={{ p: 2, mb: 2, border: '1px solid #e0e0e0' }}>
+            <Paper 
+              key={index} 
+              elevation={1} 
+              sx={{ 
+                p: 2, 
+                mb: 2, 
+                border: '1px solid #e0e0e0',
+                backgroundColor: '#fafafa',
+                borderRadius: 2,
+                '&:hover': {
+                  backgroundColor: '#f5f5f5',
+                  boxShadow: 2
+                }
+              }}
+            >
               <Stack spacing={2}>
                 <TextField
                   label="योजना नाव"
@@ -226,8 +300,13 @@ const ManageHomeMessages = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <IconButton 
                     onClick={() => removeItem("yojana", index)}
-                    color="error"
                     size="small"
+                    sx={{
+                      color: '#d32f2f',
+                      '&:hover': {
+                        backgroundColor: '#ffebee'
+                      }
+                    }}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -250,19 +329,42 @@ const ManageHomeMessages = () => {
 
       {/* निविदा */}
       {tab === 2 && (
-        <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
+        <Paper 
+          elevation={1} 
+          sx={{ 
+            p: 3, 
+            mb: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0e0e0',
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 3, color: '#1976d2', fontWeight: 600 }}>
             निविदा व्यवस्थापन
           </Typography>
           
           {tenders.length === 0 && (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="body2" sx={{ textAlign: 'center', py: 2, color: '#666' }}>
               अजून कोणतीही निविदा जोडलेली नाही
             </Typography>
           )}
           
           {tenders.map((item, index) => (
-            <Paper key={index} elevation={1} sx={{ p: 2, mb: 2, border: '1px solid #e0e0e0' }}>
+            <Paper 
+              key={index} 
+              elevation={1} 
+              sx={{ 
+                p: 2, 
+                mb: 2, 
+                border: '1px solid #e0e0e0',
+                backgroundColor: '#fafafa',
+                borderRadius: 2,
+                '&:hover': {
+                  backgroundColor: '#f5f5f5',
+                  boxShadow: 2
+                }
+              }}
+            >
               <Stack spacing={2}>
                 <TextField
                   label="निविदा नाव"
@@ -314,7 +416,16 @@ const ManageHomeMessages = () => {
       )}
 
       {/* Save Button */}
-      <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
+      <Paper 
+        elevation={2} 
+        sx={{ 
+          p: 3, 
+          mt: 3,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e0e0e0',
+          borderRadius: 2
+        }}
+      >
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <Button 
             variant="contained" 
@@ -326,7 +437,9 @@ const ManageHomeMessages = () => {
               minWidth: 150,
               py: 1.5,
               fontSize: '1.1rem',
-              fontWeight: 'bold'
+              fontWeight: 600,
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
             }}
           >
             {saving ? 'सेव्ह होत आहे...' : 'सेव्ह करा'}

@@ -133,69 +133,84 @@ const ManageSvachhGaav = () => {
   };
 
   return (
-    <Box p={3}>
-      <Typography variant="h4" gutterBottom>
-        स्वच्छ गाव कार्यक्रम व्यवस्थापन
-      </Typography>
-      
-      <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h6">
-          एकूण कार्यक्रम: {programs.length}
+    <Box sx={{ p: 4, backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      <Paper 
+        elevation={2} 
+        sx={{ 
+          p: 3, 
+          backgroundColor: '#ffffff', 
+          border: '1px solid #e0e0e0', 
+          borderRadius: 2,
+          mb: 3
+        }}
+      >
+        <Typography variant="h4" gutterBottom sx={{ color: '#1a1a1a', fontWeight: 600, mb: 3 }}>
+          स्वच्छ गाव कार्यक्रम व्यवस्थापन
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => handleOpenDialog()}
-        >
-          नवीन कार्यक्रम जोडा
-        </Button>
-      </Box>
+        
+        <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6" sx={{ color: '#666' }}>
+            एकूण कार्यक्रम: <strong style={{ color: '#1a1a1a' }}>{programs.length}</strong>
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => handleOpenDialog()}
+            sx={{
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
+            }}
+          >
+            नवीन कार्यक्रम जोडा
+          </Button>
+        </Box>
+      </Paper>
 
       <Grid container spacing={3}>
         {/* Statistics Cards */}
         <Grid item xs={12} md={3}>
-          <Card>
+          <Card sx={{ backgroundColor: '#e3f2fd', border: '1px solid #bbdefb' }}>
             <CardContent>
-              <Typography color="textSecondary" gutterBottom>
+              <Typography sx={{ color: '#666', mb: 1 }} gutterBottom>
                 सक्रिय कार्यक्रम
               </Typography>
-              <Typography variant="h4">
+              <Typography variant="h4" sx={{ color: '#1976d2', fontWeight: 700 }}>
                 {programs.filter(p => p.status === 'active').length}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Card>
+          <Card sx={{ backgroundColor: '#e8f5e9', border: '1px solid #c8e6c9' }}>
             <CardContent>
-              <Typography color="textSecondary" gutterBottom>
+              <Typography sx={{ color: '#666', mb: 1 }} gutterBottom>
                 पूर्ण कार्यक्रम
               </Typography>
-              <Typography variant="h4">
+              <Typography variant="h4" sx={{ color: '#2e7d32', fontWeight: 700 }}>
                 {programs.filter(p => p.status === 'completed').length}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Card>
+          <Card sx={{ backgroundColor: '#fff3e0', border: '1px solid #ffe0b2' }}>
             <CardContent>
-              <Typography color="textSecondary" gutterBottom>
+              <Typography sx={{ color: '#666', mb: 1 }} gutterBottom>
                 एकूण सहभागी
               </Typography>
-              <Typography variant="h4">
+              <Typography variant="h4" sx={{ color: '#f57c00', fontWeight: 700 }}>
                 {programs.reduce((sum, p) => sum + parseInt(p.participants || 0), 0)}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Card>
+          <Card sx={{ backgroundColor: '#f3e5f5', border: '1px solid #e1bee7' }}>
             <CardContent>
-              <Typography color="textSecondary" gutterBottom>
+              <Typography sx={{ color: '#666', mb: 1 }} gutterBottom>
                 एकूण अंदाज
               </Typography>
-              <Typography variant="h4">
+              <Typography variant="h4" sx={{ color: '#7b1fa2', fontWeight: 700 }}>
                 ₹{programs.reduce((sum, p) => sum + parseInt(p.budget || 0), 0).toLocaleString()}
               </Typography>
             </CardContent>
@@ -204,46 +219,71 @@ const ManageSvachhGaav = () => {
 
         {/* Programs Table */}
         <Grid item xs={12}>
-          <Paper>
+          <Paper 
+            elevation={2}
+            sx={{
+              backgroundColor: '#ffffff',
+              border: '1px solid #e0e0e0',
+              borderRadius: 2
+            }}
+          >
             <TableContainer>
               <Table>
                 <TableHead>
-                  <TableRow>
-                    <TableCell>कार्यक्रम नाव</TableCell>
-                    <TableCell>स्थान</TableCell>
-                    <TableCell>स्थिती</TableCell>
-                    <TableCell>सुरुवात दिनांक</TableCell>
-                    <TableCell>सहभागी</TableCell>
-                    <TableCell>अंदाज</TableCell>
-                    <TableCell>क्रिया</TableCell>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell sx={{ color: '#1a1a1a', fontWeight: 600 }}>कार्यक्रम नाव</TableCell>
+                    <TableCell sx={{ color: '#1a1a1a', fontWeight: 600 }}>स्थान</TableCell>
+                    <TableCell sx={{ color: '#1a1a1a', fontWeight: 600 }}>स्थिती</TableCell>
+                    <TableCell sx={{ color: '#1a1a1a', fontWeight: 600 }}>सुरुवात दिनांक</TableCell>
+                    <TableCell sx={{ color: '#1a1a1a', fontWeight: 600 }}>सहभागी</TableCell>
+                    <TableCell sx={{ color: '#1a1a1a', fontWeight: 600 }}>अंदाज</TableCell>
+                    <TableCell sx={{ color: '#1a1a1a', fontWeight: 600 }}>क्रिया</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {programs.map((program) => (
-                    <TableRow key={program.id}>
+                    <TableRow 
+                      key={program.id}
+                      sx={{
+                        '&:hover': {
+                          backgroundColor: '#fafafa'
+                        }
+                      }}
+                    >
                       <TableCell>
-                        <Typography variant="subtitle2">{program.title}</Typography>
-                        <Typography variant="body2" color="textSecondary">
+                        <Typography variant="subtitle2" sx={{ color: '#1a1a1a', fontWeight: 600 }}>
+                          {program.title}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#666' }}>
                           {program.description}
                         </Typography>
                       </TableCell>
-                      <TableCell>{program.location}</TableCell>
+                      <TableCell sx={{ color: '#666' }}>{program.location}</TableCell>
                       <TableCell>
                         <Chip
                           label={program.status === 'active' ? 'सक्रिय' : 
                                  program.status === 'completed' ? 'पूर्ण' : 'प्रलंबित'}
                           color={getStatusColor(program.status)}
                           size="small"
+                          sx={{ fontWeight: 600 }}
                         />
                       </TableCell>
-                      <TableCell>{program.startDate}</TableCell>
-                      <TableCell>{program.participants}</TableCell>
-                      <TableCell>₹{parseInt(program.budget).toLocaleString()}</TableCell>
+                      <TableCell sx={{ color: '#666' }}>{program.startDate}</TableCell>
+                      <TableCell sx={{ color: '#666' }}>{program.participants}</TableCell>
+                      <TableCell sx={{ color: '#666', fontWeight: 500 }}>
+                        ₹{parseInt(program.budget || 0).toLocaleString()}
+                      </TableCell>
                       <TableCell>
-                        <IconButton onClick={() => handleOpenDialog(program)}>
+                        <IconButton 
+                          onClick={() => handleOpenDialog(program)}
+                          sx={{ color: '#1976d2' }}
+                        >
                           <Edit />
                         </IconButton>
-                        <IconButton onClick={() => handleDelete(program.id)}>
+                        <IconButton 
+                          onClick={() => handleDelete(program.id)}
+                          sx={{ color: '#d32f2f' }}
+                        >
                           <Delete />
                         </IconButton>
                       </TableCell>
@@ -257,8 +297,19 @@ const ManageSvachhGaav = () => {
       </Grid>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
+      <Dialog 
+        open={openDialog} 
+        onClose={handleCloseDialog} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: '#ffffff',
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: '#1a1a1a', fontWeight: 600 }}>
           {editingItem ? 'कार्यक्रम संपादन' : 'नवीन कार्यक्रम जोडा'}
         </DialogTitle>
         <DialogContent>
@@ -361,8 +412,20 @@ const ManageSvachhGaav = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>रद्द करा</Button>
-          <Button onClick={handleSave} variant="contained">
+          <Button 
+            onClick={handleCloseDialog}
+            sx={{ color: '#666' }}
+          >
+            रद्द करा
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            variant="contained"
+            sx={{
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
+            }}
+          >
             {editingItem ? 'अपडेट करा' : 'जोडा'}
           </Button>
         </DialogActions>

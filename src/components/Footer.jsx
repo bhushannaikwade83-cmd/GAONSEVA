@@ -115,7 +115,7 @@ function Footer() {
       sx={{
         bgcolor: "rgba(0,0,0,0.9)",
         color: "rgba(255,255,255,0.87)",
-        mt: 8,
+        mt: 0,
         pt: 6,
         pb: 4,
         fontFamily: "'Roboto', sans-serif",

@@ -107,40 +107,151 @@ const ManageDecisionsInner = () => {
   };
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h4">ग्रामसभेचे निर्णय</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={() => handleOpen()}>नवीन</Button>
+    <Box sx={{ p: 4, backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      <Paper elevation={2} sx={{ p: 3, backgroundColor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" sx={{ color: '#1a1a1a', fontWeight: 600 }}>ग्रामसभेचे निर्णय</Typography>
+          <Button 
+            variant="contained" 
+            startIcon={<Add />} 
+            onClick={() => handleOpen()}
+            sx={{
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
+            }}
+          >
+            नवीन
+          </Button>
         </Box>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
         ) : (
           <List>
             {items.map(item => (
-              <ListItem key={item.id} secondaryAction={
-                <Box>
-                  <IconButton onClick={() => handleOpen(item)}><Edit /></IconButton>
-                  <IconButton onClick={() => handleDelete(item.id)}><Delete /></IconButton>
-                </Box>
-              }>
-                <ListItemText primary={item.title} secondary={`${item.date || ''} • ${item.type || ''} • ${item.status || ''}`} />
+              <ListItem 
+                key={item.id} 
+                sx={{
+                  mb: 2,
+                  backgroundColor: '#fafafa',
+                  borderRadius: 2,
+                  border: '1px solid #e0e0e0',
+                  '&:hover': {
+                    backgroundColor: '#f5f5f5',
+                    boxShadow: 2,
+                  },
+                }}
+                secondaryAction={
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton 
+                      onClick={() => handleOpen(item)}
+                      sx={{ color: '#1976d2' }}
+                    >
+                      <Edit />
+                    </IconButton>
+                    <IconButton 
+                      onClick={() => handleDelete(item.id)}
+                      sx={{ color: '#d32f2f' }}
+                    >
+                      <Delete />
+                    </IconButton>
+                  </Box>
+                }
+              >
+                <ListItemText 
+                  primary={
+                    <Typography variant="h6" sx={{ color: '#1a1a1a', fontWeight: 600, mb: 0.5 }}>
+                      {item.title}
+                    </Typography>
+                  }
+                  secondary={
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 0.5 }}>
+                      {item.date && (
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          तारीख: {item.date}
+                        </Typography>
+                      )}
+                      {item.type && (
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          प्रकार: {item.type}
+                        </Typography>
+                      )}
+                      {item.status && (
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          स्थिती: {item.status}
+                        </Typography>
+                      )}
+                    </Box>
+                  } 
+                />
               </ListItem>
             ))}
-            {items.length === 0 && <Typography sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>कोणतीही नोंद नाही. "नवीन" वर क्लिक करा.</Typography>}
+            {items.length === 0 && (
+              <Typography sx={{ textAlign: 'center', py: 4, color: '#666' }}>
+                कोणतीही नोंद नाही. "नवीन" वर क्लिक करा.
+              </Typography>
+            )}
           </List>
         )}
       </Paper>
 
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>{isEditing ? 'निर्णय संपादन' : 'नवीन निर्णय'}</DialogTitle>
+      <Dialog 
+        open={open} 
+        onClose={() => setOpen(false)} 
+        fullWidth 
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            backgroundColor: '#ffffff',
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: '#1a1a1a', fontWeight: 600 }}>
+          {isEditing ? 'निर्णय संपादन' : 'नवीन निर्णय'}
+        </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0 }}>
             <Grid item xs={12} md={8}>
-              <TextField label="शीर्षक" fullWidth sx={{ mb: 2 }} value={current.title} onChange={(e) => setCurrent({ ...current, title: e.target.value })} />
+              <TextField 
+                label="शीर्षक" 
+                fullWidth 
+                sx={{ mb: 2 }}
+                value={current.title} 
+                onChange={(e) => setCurrent({ ...current, title: e.target.value })}
+                InputProps={{
+                  sx: {
+                    '&:hover fieldset': { borderColor: '#1976d2' },
+                    '&.Mui-focused fieldset': { borderColor: '#1976d2' }
+                  }
+                }}
+                InputLabelProps={{
+                  sx: {
+                    '&.Mui-focused': { color: '#1976d2' }
+                  }
+                }}
+              />
             </Grid>
             <Grid item xs={12} md={4}>
-              <TextField label="तारीख" type="date" fullWidth InputLabelProps={{ shrink: true }} value={current.date} onChange={(e) => setCurrent({ ...current, date: e.target.value })} />
+              <TextField 
+                label="तारीख" 
+                type="date" 
+                fullWidth 
+                InputLabelProps={{ shrink: true }} 
+                value={current.date} 
+                onChange={(e) => setCurrent({ ...current, date: e.target.value })}
+                InputProps={{
+                  sx: {
+                    '&:hover fieldset': { borderColor: '#1976d2' },
+                    '&.Mui-focused fieldset': { borderColor: '#1976d2' }
+                  }
+                }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: {
+                    '&.Mui-focused': { color: '#1976d2' }
+                  }
+                }}
+              />
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
@@ -186,8 +297,22 @@ const ManageDecisionsInner = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>रद्द</Button>
-          <Button variant="contained" onClick={handleSave}>सेव्ह</Button>
+          <Button 
+            onClick={() => setOpen(false)}
+            sx={{ color: '#666' }}
+          >
+            रद्द
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleSave}
+            sx={{
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
+            }}
+          >
+            सेव्ह
+          </Button>
         </DialogActions>
       </Dialog>
 

@@ -91,48 +91,90 @@ const ManageAwards = () => {
   };
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h4">पुरस्कार व्यवस्थापन</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={() => handleOpen()}>नवीन</Button>
+    <Box sx={{ p: 4, backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      <Paper elevation={2} sx={{ p: 3, backgroundColor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" sx={{ color: '#1a1a1a', fontWeight: 600 }}>पुरस्कार व्यवस्थापन</Typography>
+          <Button 
+            variant="contained" 
+            startIcon={<Add />} 
+            onClick={() => handleOpen()}
+            sx={{
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
+            }}
+          >
+            नवीन
+          </Button>
         </Box>
 
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
         ) : (
-          <TableContainer component={Paper} variant="outlined">
+          <TableContainer 
+            component={Paper} 
+            variant="outlined"
+            sx={{ 
+              border: '1px solid #e0e0e0',
+              borderRadius: 2,
+              backgroundColor: '#ffffff'
+            }}
+          >
             <Table size="small">
               <TableHead>
-                <TableRow>
-                  <TableCell>शीर्षक</TableCell>
-                  <TableCell>प्राप्तकर्ता</TableCell>
-                  <TableCell>तारीख</TableCell>
-                  <TableCell>प्रकार</TableCell>
-                  <TableCell align="right">क्रिया</TableCell>
+                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                  <TableCell sx={{ color: '#1a1a1a', fontWeight: 600 }}>शीर्षक</TableCell>
+                  <TableCell sx={{ color: '#1a1a1a', fontWeight: 600 }}>प्राप्तकर्ता</TableCell>
+                  <TableCell sx={{ color: '#1a1a1a', fontWeight: 600 }}>तारीख</TableCell>
+                  <TableCell sx={{ color: '#1a1a1a', fontWeight: 600 }}>प्रकार</TableCell>
+                  <TableCell align="right" sx={{ color: '#1a1a1a', fontWeight: 600 }}>क्रिया</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {rows.map((row) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell>{row.title}</TableCell>
-                    <TableCell>{row.recipient}</TableCell>
-                    <TableCell>{row.date || '-'}</TableCell>
-                    <TableCell>{row.type || '-'}</TableCell>
+                  <TableRow 
+                    key={row.id} 
+                    hover
+                    sx={{
+                      '&:hover': {
+                        backgroundColor: '#fafafa'
+                      }
+                    }}
+                  >
+                    <TableCell sx={{ color: '#1a1a1a' }}>{row.title}</TableCell>
+                    <TableCell sx={{ color: '#1a1a1a' }}>{row.recipient}</TableCell>
+                    <TableCell sx={{ color: '#666' }}>{row.date || '-'}</TableCell>
+                    <TableCell sx={{ color: '#666' }}>{row.type || '-'}</TableCell>
                     <TableCell align="right">
                       {row.docURL && (
-                        <Tooltip title="View Document"><IconButton size="small" component={Link} href={row.docURL} target="_blank"><PictureAsPdf /></IconButton></Tooltip>
+                        <Tooltip title="View Document">
+                          <IconButton size="small" component={Link} href={row.docURL} target="_blank" sx={{ color: '#1976d2' }}>
+                            <PictureAsPdf />
+                          </IconButton>
+                        </Tooltip>
                       )}
                       {row.imageURL && (
-                        <Tooltip title="View Photo"><IconButton size="small" component={Link} href={row.imageURL} target="_blank"><ImageIcon /></IconButton></Tooltip>
+                        <Tooltip title="View Photo">
+                          <IconButton size="small" component={Link} href={row.imageURL} target="_blank" sx={{ color: '#1976d2' }}>
+                            <ImageIcon />
+                          </IconButton>
+                        </Tooltip>
                       )}
-                      <IconButton size="small" onClick={() => handleOpen(row)}><Edit /></IconButton>
-                      <IconButton size="small" onClick={() => handleDelete(row.id)}><Delete /></IconButton>
+                      <IconButton size="small" onClick={() => handleOpen(row)} sx={{ color: '#1976d2' }}>
+                        <Edit />
+                      </IconButton>
+                      <IconButton size="small" onClick={() => handleDelete(row.id)} sx={{ color: '#d32f2f' }}>
+                        <Delete />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
                 {rows.length === 0 && (
-                  <TableRow><TableCell colSpan={5} align="center">कोणतीही नोंद नाही. "नवीन" वर क्लिक करा.</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4, color: '#666' }}>
+                      कोणतीही नोंद नाही. "नवीन" वर क्लिक करा.
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
@@ -140,18 +182,69 @@ const ManageAwards = () => {
         )}
       </Paper>
 
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>{isEditing ? 'पुरस्कार संपादन' : 'नवीन पुरस्कार'}</DialogTitle>
+      <Dialog 
+        open={open} 
+        onClose={() => setOpen(false)} 
+        fullWidth 
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            backgroundColor: '#ffffff',
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: '#1a1a1a', fontWeight: 600 }}>
+          {isEditing ? 'पुरस्कार संपादन' : 'नवीन पुरस्कार'}
+        </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0 }}>
             <Grid item xs={12} md={6}>
-              <TextField label="पुरस्कार शीर्षक" fullWidth value={current.title} onChange={(e)=>setCurrent({ ...current, title: e.target.value })} />
+              <TextField 
+                label="पुरस्कार शीर्षक" 
+                fullWidth 
+                value={current.title} 
+                onChange={(e)=>setCurrent({ ...current, title: e.target.value })}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': { borderColor: '#1976d2' },
+                    '&.Mui-focused fieldset': { borderColor: '#1976d2' }
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#1976d2' }
+                }}
+              />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField label="प्राप्तकर्ता" fullWidth value={current.recipient} onChange={(e)=>setCurrent({ ...current, recipient: e.target.value })} />
+              <TextField 
+                label="प्राप्तकर्ता" 
+                fullWidth 
+                value={current.recipient} 
+                onChange={(e)=>setCurrent({ ...current, recipient: e.target.value })}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': { borderColor: '#1976d2' },
+                    '&.Mui-focused fieldset': { borderColor: '#1976d2' }
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#1976d2' }
+                }}
+              />
             </Grid>
             <Grid item xs={12} md={4}>
-              <TextField label="तारीख" type="date" fullWidth InputLabelProps={{ shrink: true }} value={current.date} onChange={(e)=>setCurrent({ ...current, date: e.target.value })} />
+              <TextField 
+                label="तारीख" 
+                type="date" 
+                fullWidth 
+                InputLabelProps={{ shrink: true }} 
+                value={current.date} 
+                onChange={(e)=>setCurrent({ ...current, date: e.target.value })}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': { borderColor: '#1976d2' },
+                    '&.Mui-focused fieldset': { borderColor: '#1976d2' }
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#1976d2' }
+                }}
+              />
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
@@ -188,8 +281,22 @@ const ManageAwards = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>रद्द</Button>
-          <Button variant="contained" onClick={handleSave}>सेव्ह</Button>
+          <Button 
+            onClick={() => setOpen(false)}
+            sx={{ color: '#666' }}
+          >
+            रद्द
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleSave}
+            sx={{
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
+            }}
+          >
+            सेव्ह
+          </Button>
         </DialogActions>
       </Dialog>
 

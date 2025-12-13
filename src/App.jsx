@@ -12,8 +12,8 @@ import Navbar from "./components/Navbar";
 import Welcome from "./components/Welcome";
 import Photosection from "./components/Photosection";
 import RajyaGeetSection from "./components/RajyaGeetSection";
-import MessagesSection from "./components/MessagesSection";
 import MembersSection from "./components/MembersSection";
+import GeneralMembersSection from "./components/GeneralMembersSection";
 import GrampanchayatInfo from "./components/GrampanchayatInfo";
 import DigitalSlogans from "./components/DigitalSlogans";
 import GovLogosSection from "./components/GovLogosSection";
@@ -74,7 +74,7 @@ import ManageFestivals from "./admin/pages/manage-gram-panchayat/ManageFestivals
 import ManageFacilities from "./admin/pages/manage-gram-panchayat/ManageFacilities";
 import ManageESeva from "./admin/pages/manage-gram-panchayat/ManageESeva";
 import ManageTourism from "./admin/pages/manage-gram-panchayat/ManageTourism";
-const ManageComplaints = () => <Box p={4}><Typography variant="h4">तक्रार व्यवस्थापन पेज</Typography></Box>;
+import ManageComplaints from "./admin/pages/manage-gram-panchayat/ManageComplaints";
 
 // Admin Pages: निर्देशिका
 import Janaganana from "./admin/pages/manage-nirdeshika/Janaganana";
@@ -137,9 +137,9 @@ const MainLayout = ({ isMobile, navbarHeight, tenant }) => (
               <Box>
                 <RajyaGeetSection />
                 <Grid container spacing={isMobile ? 2 : 4} sx={{ width: "100%", m: 0, p: 0 }}>
-                  <Grid item xs={12} md={6} lg={5}><MessagesSection /></Grid>
-                  <Grid item xs={12} md={6} lg={7} sx={{ pr: { lg: 8 } }}><MembersSection /></Grid>
+                  <Grid item xs={12} md={12} lg={12} sx={{ pr: { lg: 8 } }}><MembersSection /></Grid>
                 </Grid>
+                <GeneralMembersSection />
                 <GrampanchayatInfo />
                 <DigitalSlogans />
                 <GovLogosSection />

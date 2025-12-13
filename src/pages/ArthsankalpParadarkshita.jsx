@@ -13,7 +13,7 @@ const ArthsankalpParadarkshita = () => {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(`${currentYear}-${String(currentYear + 1).slice(-2)}`);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  
+
   // State for Firebase data
   const [loading, setLoading] = useState(true);
   const [budgetSummary, setBudgetSummary] = useState({
@@ -434,16 +434,16 @@ const ArthsankalpParadarkshita = () => {
               <div className="col-span-2 text-center py-8 text-gray-500">दस्तावेज उपलब्ध नाहीत</div>
             ) : (
               documents.map((doc, idx) => (
-                <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-800 mb-1">{doc.name}</h3>
-                      <div className="flex items-center text-xs text-gray-500 space-x-3">
-                        <span>{doc.date}</span>
-                        <span>•</span>
-                        <span>{doc.size}</span>
-                      </div>
+              <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-800 mb-1">{doc.name}</h3>
+                    <div className="flex items-center text-xs text-gray-500 space-x-3">
+                      <span>{doc.date}</span>
+                      <span>•</span>
+                      <span>{doc.size}</span>
                     </div>
+                  </div>
                     {doc.url ? (
                       <a
                         href={doc.url}
@@ -455,8 +455,8 @@ const ArthsankalpParadarkshita = () => {
                       </a>
                     ) : (
                       <button className="ml-3 p-2 text-gray-400 cursor-not-allowed rounded-lg">
-                        <Download className="w-5 h-5" />
-                      </button>
+                    <Download className="w-5 h-5" />
+                  </button>
                     )}
                   </div>
                 </div>

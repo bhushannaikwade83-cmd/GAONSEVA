@@ -154,62 +154,162 @@ const ManageMembers = () => {
   };
   
   return (
-    <Box sx={{ p: 4 }}>
-      <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, borderRadius: 2 }}>
+    <Box sx={{ p: 4, backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      <Paper elevation={2} sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, backgroundColor: '#ffffff', border: '1px solid #e0e0e0' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" fontWeight="bold">सदस्य व्यवस्थापन</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={() => handleOpen()} sx={{ borderRadius: 2, boxShadow: 'none' }}>नवीन सदस्य</Button>
+          <Typography variant="h4" sx={{ color: '#1a1a1a', fontWeight: 600 }}>सदस्य व्यवस्थापन</Typography>
+          <Button 
+            variant="contained" 
+            startIcon={<Add />} 
+            onClick={() => handleOpen()} 
+            sx={{ 
+              borderRadius: 2,
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
+            }}
+          >
+            नवीन सदस्य
+          </Button>
         </Box>
         {loading ? <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}><CircularProgress /></Box> : (
           <List sx={{ p: 0 }}>
             {members.length > 0 ? members.map((member, index) => (
               <Grow in={true} key={member.id} timeout={300 * (index + 1)}>
-                <Card variant="outlined" sx={{ 
-                  mb: 2,
-                  transition: 'box-shadow 0.3s, transform 0.3s',
-                  '&:hover': {
-                    boxShadow: 3,
-                    transform: 'translateY(-4px)'
-                  }
-                }}>
+                <Card 
+                  variant="outlined" 
+                  sx={{ 
+                    mb: 2,
+                    backgroundColor: '#fafafa',
+                    border: '1px solid #e0e0e0',
+                    transition: 'all 0.3s',
+                    '&:hover': {
+                      boxShadow: 4,
+                      transform: 'translateY(-4px)',
+                      backgroundColor: '#ffffff'
+                    }
+                  }}
+                >
                   <ListItem>
                      <ListItemAvatar>
                        <Avatar 
                          src={member.imageURL || member.photoURL} 
                          alt={member.name} 
-                         sx={{ width: 56, height: 56, mr: 2 }}
+                         sx={{ width: 56, height: 56, mr: 2, border: '2px solid #e0e0e0' }}
                        >
                          {!(member.imageURL || member.photoURL) && <Person />}
                        </Avatar>
                      </ListItemAvatar>
                     <ListItemText 
-                      primary={<Typography variant="h6" component="div">{member.name}</Typography>} 
-                      secondary={member.designation} 
+                      primary={
+                        <Typography variant="h6" component="div" sx={{ color: '#1a1a1a', fontWeight: 600 }}>
+                          {member.name}
+                        </Typography>
+                      } 
+                      secondary={
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          {member.designation}
+                        </Typography>
+                      } 
                     />
-                    <Box>
-                      <IconButton edge="end" aria-label="edit" onClick={() => handleOpen(member)}><Edit /></IconButton>
-                      <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(member.id, member.photoURL)}><Delete /></IconButton>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <IconButton 
+                        edge="end" 
+                        aria-label="edit" 
+                        onClick={() => handleOpen(member)}
+                        sx={{ color: '#1976d2' }}
+                      >
+                        <Edit />
+                      </IconButton>
+                      <IconButton 
+                        edge="end" 
+                        aria-label="delete" 
+                        onClick={() => handleDelete(member.id, member.photoURL)}
+                        sx={{ color: '#d32f2f' }}
+                      >
+                        <Delete />
+                      </IconButton>
                     </Box>
                   </ListItem>
                 </Card>
               </Grow>
-            )) : <Typography sx={{ textAlign: 'center', p: 4, color: 'text.secondary' }}>सदस्य आढळले नाहीत. "नवीन सदस्य" वर क्लिक करून सुरुवात करा.</Typography>}
+            )) : (
+              <Typography sx={{ textAlign: 'center', p: 4, color: '#666' }}>
+                सदस्य आढळले नाहीत. "नवीन सदस्य" वर क्लिक करून सुरुवात करा.
+              </Typography>
+            )}
           </List>
         )}
       </Paper>
       
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" TransitionComponent={Fade}>
+      <Dialog 
+        open={open} 
+        onClose={handleClose} 
+        fullWidth 
+        maxWidth="sm" 
+        TransitionComponent={Fade}
+        PaperProps={{
+          sx: {
+            backgroundColor: '#ffffff',
+            borderRadius: 2
+          }
+        }}
+      >
         <form onSubmit={handleSubmit}>
-          <DialogTitle sx={{ fontWeight: 'bold' }}>{isEditing ? 'सदस्य संपादित करा' : 'नवीन सदस्य जोडा'}</DialogTitle>
+          <DialogTitle sx={{ color: '#1a1a1a', fontWeight: 600 }}>
+            {isEditing ? 'सदस्य संपादित करा' : 'नवीन सदस्य जोडा'}
+          </DialogTitle>
           <DialogContent>
-            <TextField autoFocus margin="dense" label="नाव" fullWidth required variant="outlined" value={currentMember.name} onChange={(e) => setCurrentMember({ ...currentMember, name: e.target.value })} sx={{ mb: 2 }} />
+            <TextField 
+              autoFocus 
+              margin="dense" 
+              label="नाव" 
+              fullWidth 
+              required 
+              variant="outlined" 
+              value={currentMember.name} 
+              onChange={(e) => setCurrentMember({ ...currentMember, name: e.target.value })} 
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': { borderColor: '#1976d2' },
+                  '&.Mui-focused fieldset': { borderColor: '#1976d2' }
+                },
+                '& .MuiInputLabel-root.Mui-focused': { color: '#1976d2' }
+              }} 
+            />
             <FormControl fullWidth margin="dense" required sx={{ mb: 2 }}>
-              <InputLabel>पद</InputLabel>
-              <Select value={currentMember.designation} label="पद" onChange={(e) => setCurrentMember({ ...currentMember, designation: e.target.value })}>
+              <InputLabel sx={{ '&.Mui-focused': { color: '#1976d2' } }}>पद</InputLabel>
+              <Select 
+                value={currentMember.designation} 
+                label="पद" 
+                onChange={(e) => setCurrentMember({ ...currentMember, designation: e.target.value })}
+                sx={{
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#1976d2' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#1976d2' }
+                }}
+              >
                 {getAvailableRoles().map(role => (<MenuItem key={role} value={role}>{role}</MenuItem>))}
               </Select>
             </FormControl>
-            <TextField margin="dense" label="क्रम" type="number" fullWidth required variant="outlined" value={currentMember.order} onChange={(e) => setCurrentMember({ ...currentMember, order: Number(e.target.value) })} helperText="कमी क्रमांक आधी दिसेल." sx={{ mb: 2 }} />
+            <TextField 
+              margin="dense" 
+              label="क्रम" 
+              type="number" 
+              fullWidth 
+              required 
+              variant="outlined" 
+              value={currentMember.order} 
+              onChange={(e) => setCurrentMember({ ...currentMember, order: Number(e.target.value) })} 
+              helperText="कमी क्रमांक आधी दिसेल." 
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': { borderColor: '#1976d2' },
+                  '&.Mui-focused fieldset': { borderColor: '#1976d2' }
+                },
+                '& .MuiInputLabel-root.Mui-focused': { color: '#1976d2' }
+              }} 
+            />
             
             <Box sx={{ mt: 2 }}>
               <CloudinaryUploader
@@ -221,8 +321,23 @@ const ManageMembers = () => {
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: '16px 24px' }}>
-            <Button onClick={handleClose}>रद्द करा</Button>
-            <Button type="submit" variant="contained" disabled={saving}>{saving ? 'सेव्ह होत आहे...' : 'सेव्ह करा'}</Button>
+            <Button 
+              onClick={handleClose}
+              sx={{ color: '#666' }}
+            >
+              रद्द करा
+            </Button>
+            <Button 
+              type="submit" 
+              variant="contained" 
+              disabled={saving}
+              sx={{
+                backgroundColor: '#1976d2',
+                '&:hover': { backgroundColor: '#1565c0' },
+              }}
+            >
+              {saving ? 'सेव्ह होत आहे...' : 'सेव्ह करा'}
+            </Button>
           </DialogActions>
         </form>
       </Dialog>

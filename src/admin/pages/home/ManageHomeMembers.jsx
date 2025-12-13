@@ -242,27 +242,45 @@ const ManageHomeMembers = () => {
   }
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 2 }, maxWidth: '100%', overflow: 'hidden' }}>
-      <Typography variant="h4" sx={{ mb: 3, textAlign: 'center', fontWeight: 'bold' }}>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 4 }, maxWidth: '100%', overflow: 'hidden', backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      <Typography variant="h4" sx={{ mb: 3, textAlign: 'center', fontWeight: 600, color: '#1a1a1a' }}>
         सदस्य माहिती व्यवस्थापन
       </Typography>
 
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
+      <Paper 
+        elevation={2} 
+        sx={{ 
+          p: 3, 
+          mb: 3,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e0e0e0',
+          borderRadius: 2
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 2, color: '#1976d2', fontWeight: 600 }}>
           सदस्यांची माहिती आणि सोशल मीडिया लिंक्स
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
           येथे सदस्यांची बायो आणि सोशल मीडिया लिंक्स व्यवस्थापित करा
         </Typography>
       </Paper>
 
       {members.length === 0 ? (
-        <Paper elevation={1} sx={{ p: 4, textAlign: 'center' }}>
-          <Person sx={{ fontSize: 80, mb: 2, opacity: 0.5, color: 'text.secondary' }} />
-          <Typography variant="h6" gutterBottom>
+        <Paper 
+          elevation={1} 
+          sx={{ 
+            p: 4, 
+            textAlign: 'center',
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0e0e0',
+            borderRadius: 2
+          }}
+        >
+          <Person sx={{ fontSize: 80, mb: 2, opacity: 0.5, color: '#999' }} />
+          <Typography variant="h6" gutterBottom sx={{ color: '#1a1a1a' }}>
             अजून कोणतेही सदस्य जोडलेले नाहीत
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: '#666' }}>
             प्रथम सदस्य जोडण्यासाठी "सदस्य व्यवस्थापन" पेज वापरा
           </Typography>
         </Paper>
@@ -275,10 +293,14 @@ const ManageHomeMembers = () => {
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  backgroundColor: '#fafafa',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 2,
+                  transition: 'all 0.3s',
                   '&:hover': {
                     transform: 'translateY(-4px)',
                     boxShadow: 4,
+                    backgroundColor: '#ffffff'
                   },
                 }}
               >
@@ -291,18 +313,18 @@ const ManageHomeMembers = () => {
                       {!(member.imageURL || member.photoURL) && <Person />}
                     </Avatar>
                     <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a1a' }}>
                         {member.name}
                       </Typography>
-                      <Typography variant="body2" color="primary.main">
+                      <Typography variant="body2" sx={{ color: '#1976d2', fontWeight: 500 }}>
                         {member.designation}
                       </Typography>
                     </Box>
                   </Box>
 
-                  <Divider sx={{ my: 1 }} />
+                  <Divider sx={{ my: 1, borderColor: '#e0e0e0' }} />
 
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
                     {member.bio || 'बायो उपलब्ध नाही'}
                   </Typography>
 
@@ -338,16 +360,31 @@ const ManageHomeMembers = () => {
                       startIcon={<Edit />}
                       onClick={() => handleOpenDialog(member)}
                       fullWidth={isMobile}
+                      sx={{
+                        borderColor: '#1976d2',
+                        color: '#1976d2',
+                        '&:hover': {
+                          borderColor: '#1565c0',
+                          backgroundColor: '#e3f2fd'
+                        }
+                      }}
                     >
                       संपादित करा
                     </Button>
                     <Button
                       variant="outlined"
-                      color="error"
                       size="small"
                       startIcon={<Delete />}
                       onClick={() => handleDelete(member.id)}
                       fullWidth={isMobile}
+                      sx={{
+                        borderColor: '#d32f2f',
+                        color: '#d32f2f',
+                        '&:hover': {
+                          borderColor: '#c62828',
+                          backgroundColor: '#ffebee'
+                        }
+                      }}
                     >
                       हटवा
                     </Button>
@@ -366,8 +403,14 @@ const ManageHomeMembers = () => {
         fullWidth 
         maxWidth="md"
         fullScreen={isMobile}
+        PaperProps={{
+          sx: {
+            backgroundColor: '#ffffff',
+            borderRadius: 2
+          }
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
+        <DialogTitle sx={{ fontWeight: 600, color: '#1a1a1a' }}>
           {editingMember ? `${editingMember.name} - माहिती संपादित करा` : 'नवीन सदस्य'}
         </DialogTitle>
         
@@ -437,6 +480,12 @@ const ManageHomeMembers = () => {
             onClick={handleCloseDialog} 
             startIcon={<Cancel />}
             disabled={saving}
+            sx={{
+              color: '#666',
+              '&:hover': {
+                backgroundColor: '#f5f5f5'
+              }
+            }}
           >
             रद्द करा
           </Button>
@@ -445,6 +494,10 @@ const ManageHomeMembers = () => {
             variant="contained" 
             startIcon={<Save />}
             disabled={saving}
+            sx={{
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
+            }}
           >
             {saving ? 'सेव्ह होत आहे...' : 'सेव्ह करा'}
           </Button>

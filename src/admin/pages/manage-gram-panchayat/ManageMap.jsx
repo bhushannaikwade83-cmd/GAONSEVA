@@ -79,12 +79,22 @@ const ManageMap = () => {
   }
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
-        <Typography variant="h4" gutterBottom>
+    <Box sx={{ p: 4, backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      <Paper 
+        elevation={2} 
+        sx={{ 
+          p: 4, 
+          maxWidth: 800, 
+          mx: 'auto',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e0e0e0',
+          borderRadius: 2
+        }}
+      >
+        <Typography variant="h4" gutterBottom sx={{ color: '#1a1a1a', fontWeight: 600 }}>
           नकाशा व्यवस्थापन (Map Management)
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        <Typography variant="body2" sx={{ mb: 3, color: '#666' }}>
           येथे ग्रामपंचायतीच्या नकाशाचा URL टाका. हा नकाशा वेबसाईटवर दिसेल.
         </Typography>
 
@@ -97,28 +107,61 @@ const ManageMap = () => {
           variant="outlined"
           disabled={!isEditing}
           helperText="Google Maps वरून 'Embed a map' option निवडून URL कॉपी करा आणि येथे पेस्ट करा."
+          sx={{
+            mb: 3,
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: isEditing ? '#ffffff' : '#fafafa',
+              '&:hover fieldset': { borderColor: '#1976d2' },
+              '&.Mui-focused fieldset': { borderColor: '#1976d2' }
+            },
+            '& .MuiInputLabel-root.Mui-focused': { color: '#1976d2' }
+          }}
         />
 
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
           {isEditing ? (
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              startIcon={saving ? <CircularProgress size={20} /> : <Save />}
-              onClick={handleSubmit}
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save'}
-            </Button>
+            <>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => setIsEditing(false)}
+                sx={{
+                  borderColor: '#666',
+                  color: '#666',
+                  '&:hover': {
+                    borderColor: '#1a1a1a',
+                    backgroundColor: '#f5f5f5'
+                  }
+                }}
+              >
+                रद्द करा
+              </Button>
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={saving ? <CircularProgress size={20} /> : <Save />}
+                onClick={handleSubmit}
+                disabled={saving}
+                sx={{
+                  backgroundColor: '#1976d2',
+                  '&:hover': { backgroundColor: '#1565c0' },
+                }}
+              >
+                {saving ? 'सेव्ह होत आहे...' : 'सेव्ह करा'}
+              </Button>
+            </>
           ) : (
             <Button
               variant="contained"
               size="large"
               startIcon={<Edit />}
               onClick={() => setIsEditing(true)}
+              sx={{
+                backgroundColor: '#1976d2',
+                '&:hover': { backgroundColor: '#1565c0' },
+              }}
             >
-              Edit
+              संपादन करा
             </Button>
           )}
         </Box>

@@ -105,7 +105,7 @@ const AdminLogin = () => {
         justifyContent: 'center', 
         alignItems: 'center', 
         minHeight: '100vh', 
-        backgroundColor: '#f0f2f5',
+        backgroundColor: '#ffffff',
         position: 'relative',
         zIndex: 1,
         width: '100%',
@@ -114,15 +114,17 @@ const AdminLogin = () => {
     >
       <Container maxWidth="xs" sx={{ width: '100%' }}>
         <Paper 
-          elevation={6} 
+          elevation={3} 
           sx={{ 
             padding: 4, 
-            borderRadius: 2,
+            borderRadius: 3,
             width: '100%',
-            maxWidth: '100%'
+            maxWidth: '100%',
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0e0e0'
           }}
         >
-          <Typography variant="h4" component="h1" gutterBottom align="center" fontWeight="bold">
+          <Typography variant="h4" component="h1" gutterBottom align="center" fontWeight="bold" sx={{ color: '#1976d2', mb: 3 }}>
             Admin Login
           </Typography>
           
@@ -146,6 +148,19 @@ const AdminLogin = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: '#1976d2'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#1976d2'
+                  }
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#1976d2'
+                }
+              }}
             />
             <TextField
               margin="normal"
@@ -159,12 +174,35 @@ const AdminLogin = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: '#1976d2'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#1976d2'
+                  }
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#1976d2'
+                }
+              }}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 1 }}
+              sx={{ 
+                mt: 3, 
+                mb: 1,
+                backgroundColor: '#1976d2',
+                color: '#ffffff',
+                fontWeight: 600,
+                py: 1.5,
+                '&:hover': {
+                  backgroundColor: '#1565c0'
+                }
+              }}
               disabled={loading}
             >
               {loading ? 'Signing In...' : 'Sign In'}
@@ -175,17 +213,32 @@ const AdminLogin = () => {
               variant="text"
               onClick={() => setForgotPasswordOpen(true)}
               disabled={loading}
-              sx={{ mt: 1, textTransform: 'none' }}
+              sx={{ 
+                mt: 1, 
+                textTransform: 'none',
+                color: '#1976d2',
+                '&:hover': {
+                  backgroundColor: '#e3f2fd'
+                }
+              }}
             >
               Forgot Password?
             </Button>
 
-            <Divider sx={{ my: 2 }} />
+            <Divider sx={{ my: 2, borderColor: '#e0e0e0' }} />
             <Button
               fullWidth
               variant="outlined"
               startIcon={<ArrowBackIcon />}
               onClick={handleBack}
+              sx={{
+                borderColor: '#1976d2',
+                color: '#1976d2',
+                '&:hover': {
+                  borderColor: '#1565c0',
+                  backgroundColor: '#e3f2fd'
+                }
+              }}
             >
               Back to Website
             </Button>
@@ -194,10 +247,19 @@ const AdminLogin = () => {
       </Container>
 
       {/* Forgot Password Dialog */}
-      <Dialog open={forgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)}>
-        <DialogTitle>Reset Password</DialogTitle>
+      <Dialog 
+        open={forgotPasswordOpen} 
+        onClose={() => setForgotPasswordOpen(false)}
+        PaperProps={{
+          sx: {
+            backgroundColor: '#ffffff',
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: '#1a1a1a', fontWeight: 600 }}>Reset Password</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography variant="body2" sx={{ color: '#666', mb: 2 }}>
             Enter your email address and we'll send you a link to reset your password.
           </Typography>
           <TextField
@@ -209,11 +271,32 @@ const AdminLogin = () => {
             variant="outlined"
             value={resetEmail}
             onChange={(e) => setResetEmail(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: '#1976d2'
+                }
+              }
+            }}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setForgotPasswordOpen(false)}>Cancel</Button>
-          <Button onClick={handleForgotPassword} variant="contained">
+          <Button 
+            onClick={() => setForgotPasswordOpen(false)}
+            sx={{ color: '#666' }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleForgotPassword} 
+            variant="contained"
+            sx={{
+              backgroundColor: '#1976d2',
+              '&:hover': {
+                backgroundColor: '#1565c0'
+              }
+            }}
+          >
             Send Reset Email
           </Button>
         </DialogActions>
