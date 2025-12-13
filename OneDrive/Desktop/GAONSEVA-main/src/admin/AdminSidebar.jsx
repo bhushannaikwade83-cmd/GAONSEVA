@@ -10,6 +10,8 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebase';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import InfoIcon from '@mui/icons-material/Info';
 import MapIcon from '@mui/icons-material/Map';
@@ -81,8 +83,18 @@ const AdminSidebar = ({ drawerWidth }) => {
     localStorage.setItem('adminSidebarOpenStates', JSON.stringify(state));
   }, [openGrampanchayat, openNirdeshika, openPrograms, openYojana, openHome, openExtra]);
 
-  const handleLogout = () => {
-    navigate('/admin/login');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      // Clear any stored data
+      localStorage.removeItem('adminSidebarOpenStates');
+      // Navigate to login page
+      navigate('/admin/login', { replace: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if there's an error, navigate to login
+      navigate('/admin/login', { replace: true });
+    }
   };
 
   const isActive = (path) => location.pathname.startsWith(path);

@@ -1,18 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useLocation, Link } from "react-router-dom";
 import { Button } from '@mui/material';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { translatePage, restoreOriginalText, applyStoredTranslations, getTranslationState, setupAutoTranslation, retranslatePage } from '../utils/translationService';
 
-// Mock Link component
-const Link = ({ to, children, ...props }) => (
-  <a href={to} {...props} style={{ textDecoration: 'none', ...props.style }}>
-    {children}
-  </a>
-);
-
-// Mock useLocation hook
-const useLocation = () => ({ pathname: "/" });
+// Using react-router-dom Link component
 
 // Translation dictionary
 const translations = {
@@ -354,110 +347,243 @@ const DropdownButton = ({ title, anchor, handleOpen, handleClose, items, parentN
   );
 };
 
-// Mobile Menu
+// Mobile Menu with swipe gestures
 const MobileMenu = ({ isOpen, onClose, navLinks, location, language }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const menuRef = useRef(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    if (isLeftSwipe) {
+      onClose();
+    }
+  };
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      right: 0,
-      width: '280px',
-      height: '100vh',
-      background: '#f8f9fa',
-      boxShadow: '-4px 0 20px rgba(0,0,0,0.15)',
-      zIndex: 2000,
-      transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-      transition: 'transform 0.3s ease',
-      overflowY: 'auto'
-    }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '16px 20px',
-        borderBottom: '1px solid #ddd',
-        background: 'white'
-      }}>
-        <h3 style={{ margin: 0, color: 'black' }}>{translate("मेनू", language)}</h3>
-        <button
-          onClick={onClose}
-          style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'black' }}
-        >
-          ✕
-        </button>
-      </div>
+    <>
+      {/* Backdrop */}
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0,0,0,0.5)',
+          zIndex: 1999,
+          opacity: isOpen ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+          backdropFilter: 'blur(2px)'
+        }}
+        onClick={onClose}
+      />
+      
+      {/* Menu */}
+      <div 
+        ref={menuRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          width: '85%',
+          maxWidth: '320px',
+          height: '100vh',
+          background: '#ffffff',
+          boxShadow: '-4px 0 20px rgba(0,0,0,0.15)',
+          zIndex: 2000,
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '20px',
+          borderBottom: '2px solid #e0e0e0',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10
+        }}>
+          <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>{translate("मेनू", language)}</h3>
+          <button
+            onClick={onClose}
+            style={{ 
+              background: 'rgba(255,255,255,0.2)', 
+              border: 'none', 
+              fontSize: '24px', 
+              cursor: 'pointer', 
+              color: 'white',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              minWidth: '44px',
+              minHeight: '44px'
+            }}
+            onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.3)'}
+            onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
+          >
+            ✕
+          </button>
+        </div>
 
-      <div style={{ padding: '20px 0' }}>
-        {navLinks.map((link, i) => (
-          <div key={i}>
-            {link.dropdown ? (
-              <div>
-                <button
-                  onClick={() => setOpenDropdown(openDropdown === link.name ? null : link.name)}
+        {/* Menu Items */}
+        <div style={{ padding: '10px 0' }}>
+          {navLinks.map((link, i) => (
+            <div key={i} style={{ borderBottom: '1px solid #f0f0f0' }}>
+              {link.dropdown ? (
+                <div>
+                  <button
+                    onClick={() => setOpenDropdown(openDropdown === link.name ? null : link.name)}
+                    style={{
+                      width: '100%',
+                      background: 'none',
+                      border: 'none',
+                      padding: '16px 20px',
+                      textAlign: 'left',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      color: '#333',
+                      transition: 'all 0.2s ease',
+                      minHeight: '48px',
+                      WebkitTapHighlightColor: 'transparent'
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
+                    onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                  >
+                    <span>{translate(link.name, language)}</span>
+                    <span style={{
+                      transition: 'transform 0.3s ease',
+                      transform: openDropdown === link.name ? 'rotate(180deg)' : 'rotate(0)',
+                      fontSize: '12px',
+                      color: '#666'
+                    }}>▼</span>
+                  </button>
+                  {openDropdown === link.name && (
+                    <div style={{ 
+                      background: '#f8f9fa',
+                      animation: 'slideDown 0.3s ease-out'
+                    }}>
+                      {link.dropdown.map((item, j) => (
+                        <Link
+                          key={j}
+                          to={getLinkPath(link.name, item)}
+                          onClick={onClose}
+                          style={{
+                            display: 'block',
+                            padding: '14px 40px',
+                            color: isPathMatch(location.pathname, link.name, item) ? '#2196f3' : '#666',
+                            fontWeight: isPathMatch(location.pathname, link.name, item) ? '600' : '400',
+                            fontSize: '15px',
+                            textDecoration: 'none',
+                            transition: 'all 0.2s ease',
+                            minHeight: '44px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            borderLeft: isPathMatch(location.pathname, link.name, item) ? '4px solid #2196f3' : '4px solid transparent',
+                            background: isPathMatch(location.pathname, link.name, item) ? 'rgba(33, 150, 243, 0.05)' : 'transparent'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isPathMatch(location.pathname, link.name, item)) {
+                              e.target.style.background = '#f0f0f0';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isPathMatch(location.pathname, link.name, item)) {
+                              e.target.style.background = 'transparent';
+                            }
+                          }}
+                        >
+                          {translate(item, language)}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  to={link.to}
+                  onClick={onClose}
                   style={{
-                    width: '100%',
-                    background: 'none',
-                    border: 'none',
-                    padding: '12px 20px',
-                    textAlign: 'left',
+                    display: 'block',
+                    padding: '16px 20px',
                     fontSize: '16px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
+                    fontWeight: location.pathname === link.to ? '600' : '400',
+                    color: location.pathname === link.to ? '#2196f3' : '#333',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s ease',
+                    minHeight: '48px',
                     display: 'flex',
-                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    color: 'black'
+                    borderLeft: location.pathname === link.to ? '4px solid #2196f3' : '4px solid transparent',
+                    background: location.pathname === link.to ? 'rgba(33, 150, 243, 0.05)' : 'transparent'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (location.pathname !== link.to) {
+                      e.target.style.background = '#f5f5f5';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (location.pathname !== link.to) {
+                      e.target.style.background = 'transparent';
+                    }
                   }}
                 >
                   {translate(link.name, language)}
-                  <span style={{
-                    transition: 'transform 0.3s',
-                    transform: openDropdown === link.name ? 'rotate(180deg)' : 'rotate(0)'
-                  }}>▼</span>
-                </button>
-                {openDropdown === link.name && (
-                  <div style={{ background: '#f0f0f0' }}>
-                    {link.dropdown.map((item, j) => (
-                      <Link
-                        key={j}
-                        to={getLinkPath(link.name, item)}
-                        onClick={onClose}
-                        style={{
-                          display: 'block',
-                          padding: '10px 40px',
-                          color: isPathMatch(location.pathname, link.name, item) ? '#2196f3' : '#666',
-                          fontWeight: isPathMatch(location.pathname, link.name, item) ? 'bold' : 'normal'
-                        }}
-                      >
-                        {translate(item, language)}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                to={link.to}
-                onClick={onClose}
-                style={{
-                  display: 'block',
-                  padding: '12px 20px',
-                  fontSize: '16px',
-                  fontWeight: location.pathname === link.to ? 'bold' : 'normal',
-                  color: location.pathname === link.to ? '#2196f3' : 'black'
-                }}
-              >
-                {translate(link.name, language)}
-              </Link>
-            )}
-          </div>
-        ))}
+                </Link>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -732,25 +858,43 @@ const Navbar = () => {
           flexWrap: isMobile ? 'nowrap' : 'wrap'
         }}>
           {/* Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '12px', textDecoration: 'none', flex: isMobile ? 1 : 'none' }}>
             <div style={{
-              width: '50px', height: '50px', background: 'linear-gradient(45deg, #3498db, #2196f3)',
-              borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontWeight: 'bold', fontSize: '18px', animation: 'pulse 2s infinite'
+              width: isMobile ? '40px' : '50px', 
+              height: isMobile ? '40px' : '50px', 
+              background: 'linear-gradient(45deg, #3498db, #2196f3)',
+              borderRadius: '8px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              color: 'white', 
+              fontWeight: 'bold', 
+              fontSize: isMobile ? '16px' : '18px', 
+              animation: 'pulse 2s infinite',
+              flexShrink: 0
             }}>🏛️</div>
-            <div>
-              <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'black', margin: 0 }}>{grampanchayatName}</h1>
-              <p style={{ fontSize: '12px', color: '#666', margin: 0, fontWeight: '500' }}>Grampanchayat Name</p>
-            </div>
+            {!isMobile && (
+              <div>
+                <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'black', margin: 0 }}>{grampanchayatName}</h1>
+                <p style={{ fontSize: '12px', color: '#666', margin: 0, fontWeight: '500' }}>Grampanchayat Name</p>
+              </div>
+            )}
+            {isMobile && (
+              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <h1 style={{ fontSize: '16px', fontWeight: 'bold', color: 'black', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{grampanchayatName}</h1>
+              </div>
+            )}
           </Link>
 
           {/* Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginLeft: 'auto' }}>
-            <Link to="/admin/login" style={{ textDecoration: 'none' }}>
-               <Button variant="contained" color="primary" sx={{ mr: 2 }}>
-                 Admin Login
-              </Button>
-             </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '15px', marginLeft: 'auto', flexShrink: 0 }}>
+            {!isMobile && (
+              <Link to="/admin/login" style={{ textDecoration: 'none' }}>
+                <Button variant="contained" color="primary" sx={{ mr: 2 }}>
+                  Admin Login
+                </Button>
+              </Link>
+            )}
             {!isMobile && (
               <div style={{
                 position: 'relative', 
@@ -927,22 +1071,196 @@ const Navbar = () => {
                   ? 'linear-gradient(45deg, #999, #bbb)' 
                   : 'linear-gradient(45deg, #2196f3, #21cbf3)', 
                 border: '2px solid transparent', 
-                fontSize: isMobile ? '12px' : '14px', 
-                padding: isMobile ? '6px 12px' : '8px 16px', 
+                fontSize: isMobile ? '11px' : '14px', 
+                padding: isMobile ? '8px 12px' : '8px 16px', 
                 borderRadius: '25px', 
                 cursor: isTranslating ? 'wait' : 'pointer', 
                 transition: 'all 0.3s ease', 
                 boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
-                opacity: isTranslating ? 0.7 : 1
+                opacity: isTranslating ? 0.7 : 1,
+                minHeight: '44px',
+                minWidth: isMobile ? 'auto' : '120px',
+                whiteSpace: 'nowrap',
+                WebkitTapHighlightColor: 'transparent'
               }}
             >
-              {isTranslating 
-                ? (language === "mr" ? "Translating..." : "Restoring...") 
-                : (language === "mr" ? "मराठी → English" : "English → मराठी")
+              {isMobile 
+                ? (isTranslating 
+                    ? (language === "mr" ? "..." : "...") 
+                    : (language === "mr" ? "EN" : "MR"))
+                : (isTranslating 
+                    ? (language === "mr" ? "Translating..." : "Restoring...") 
+                    : (language === "mr" ? "मराठी → English" : "English → मराठी"))
               }
             </button>
+            
+            {/* Mobile Search */}
+            {isMobile && (
+              <button
+                onClick={handleSearchToggle}
+                style={{
+                  background: 'rgba(33, 150, 243, 0.1)',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  color: '#2196f3',
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  minWidth: '44px',
+                  minHeight: '44px'
+                }}
+                onMouseEnter={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.2)'}
+                onMouseLeave={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.1)'}
+                aria-label="Search"
+              >
+                🔍
+              </button>
+            )}
+            
+            {/* Mobile Search Overlay */}
+            {isMobile && searchOpen && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'rgba(0,0,0,0.5)',
+                zIndex: 3000,
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'center',
+                paddingTop: '80px'
+              }} onClick={() => setSearchOpen(false)}>
+                <div style={{
+                  background: 'white',
+                  width: '90%',
+                  maxWidth: '500px',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+                }} onClick={(e) => e.stopPropagation()}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '16px'
+                  }}>
+                    <input 
+                      ref={searchInputRef} 
+                      type="text" 
+                      value={searchQuery} 
+                      onChange={handleSearchChange}
+                      onKeyDown={handleKeyDown}
+                      placeholder={translate("शोधा...", language)} 
+                      style={{ 
+                        flex: 1,
+                        fontSize: '16px', 
+                        color: '#333', 
+                        background: '#f5f5f5', 
+                        border: '2px solid #e0e0e0', 
+                        borderRadius: '8px',
+                        padding: '12px 16px',
+                        outline: 'none',
+                        fontFamily: 'inherit'
+                      }} 
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => setSearchOpen(false)}
+                      style={{
+                        background: '#f5f5f5',
+                        border: 'none',
+                        fontSize: '20px',
+                        cursor: 'pointer',
+                        color: '#666',
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  
+                  {searchResults.length > 0 && (
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                      {searchResults.map((result, index) => (
+                        <div
+                          key={index}
+                          onClick={() => handleResultClick(result.path)}
+                          style={{
+                            padding: '14px',
+                            cursor: 'pointer',
+                            background: selectedIndex === index ? '#f0f8ff' : 'white',
+                            borderLeft: selectedIndex === index ? '3px solid #2196f3' : '3px solid transparent',
+                            transition: 'all 0.15s ease',
+                            borderRadius: '8px',
+                            marginBottom: '8px',
+                            minHeight: '44px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <span style={{ fontSize: '18px', opacity: 0.6 }}>🔍</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '15px', color: '#333', fontWeight: '500', marginBottom: '4px' }}>
+                              {translate(result.title, language)}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#666' }}>
+                              {translate(result.category, language)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {searchQuery && searchResults.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                      {translate("कोणतेही परिणाम सापडले नाहीत", language)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
-            {isMobile && <button onClick={() => setMobileOpen(!mobileOpen)} className="mobile-menu" style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'black' }}>☰</button>}
+            {isMobile && (
+              <button 
+                onClick={() => setMobileOpen(!mobileOpen)} 
+                className="mobile-menu" 
+                style={{ 
+                  background: 'rgba(33, 150, 243, 0.1)', 
+                  border: 'none', 
+                  fontSize: '24px', 
+                  cursor: 'pointer', 
+                  color: '#2196f3',
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  minWidth: '44px',
+                  minHeight: '44px'
+                }}
+                onMouseEnter={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.2)'}
+                onMouseLeave={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.1)'}
+                aria-label="Menu"
+              >
+                ☰
+              </button>
+            )}
           </div>
         </div>
 

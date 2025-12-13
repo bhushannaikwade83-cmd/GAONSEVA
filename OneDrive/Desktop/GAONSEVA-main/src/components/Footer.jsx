@@ -124,7 +124,7 @@ function Footer() {
     >
       <Container maxWidth="lg">
         {/* Main Links Grid */}
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
           {footerLinks.map(({ title, links }, idx) => (
             <Grid item xs={12} sm={6} md={3} key={idx}>
               <Typography
@@ -135,12 +135,23 @@ function Footer() {
                   fontWeight: "700",
                   borderBottom: "2px solid #64b5f6",
                   pb: 0.5,
+                  fontSize: { xs: "1rem", sm: "1.25rem" },
                 }}
               >
                 {title}
               </Typography>
               {links.map((link, i) => (
-                <Typography key={i} variant="body2" sx={{ mb: 1 }}>
+                <Typography 
+                  key={i} 
+                  variant="body2" 
+                  sx={{ 
+                    mb: 1.5,
+                    fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                    minHeight: "44px",
+                    display: "flex",
+                    alignItems: "center"
+                  }}
+                >
                   <Link
                     href={link.url}
                     underline="hover"
@@ -150,6 +161,8 @@ function Footer() {
                     sx={{
                       transition: "color 0.3s",
                       "&:hover": { color: "#90caf9" },
+                      display: "block",
+                      padding: { xs: "4px 0", sm: "0" },
                     }}
                   >
                     {link.name}

@@ -80,6 +80,11 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
     return data.translatedText || text;
   } catch (error) {
     console.error('Translation error:', error);
+    // Check if it's a network error (server not running)
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      console.error('Translation server is not reachable. Make sure the backend server is running on port 5000.');
+      throw new Error('Translation server is not available. Please ensure the backend server is running.');
+    }
     // Return original text if translation fails
     return text;
   }
@@ -334,7 +339,16 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
     if (loadingEl) {
       loadingEl.remove();
     }
-    alert('Translation failed. Please try again.');
+    
+    // Show more specific error message
+    let errorMessage = 'Translation failed. Please try again.';
+    if (error.message && error.message.includes('server is not available')) {
+      errorMessage = 'Translation server is not running. Please start the backend server (npm run server) and try again.';
+    } else if (error.message && error.message.includes('Translation service is not configured')) {
+      errorMessage = 'Translation service is not configured. Please check the server configuration.';
+    }
+    
+    alert(errorMessage);
   }
 };
 

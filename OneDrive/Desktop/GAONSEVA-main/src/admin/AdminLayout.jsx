@@ -1,17 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { Box, CssBaseline, Button, Tooltip } from '@mui/material';
 import AdminSidebar from './AdminSidebar';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import TranslationManager from '../components/TranslationManager';
 import { translatePage, restoreOriginalText, applyStoredTranslations, getTranslationState, setupAutoTranslation, retranslatePage } from '../utils/translationService';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase';
 
 const AdminLayout = () => {
   const drawerWidth = 240;
+  const navigate = useNavigate();
   const [language, setLanguage] = useState(() => {
     const state = getTranslationState();
     return state.currentLanguage || "mr";
   });
   const [isTranslating, setIsTranslating] = useState(false);
+
+  // Verify authentication on mount and listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // User is not authenticated, redirect to login
+        navigate('/admin/login', { replace: true });
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   // Initialize translation state on mount
   useEffect(() => {

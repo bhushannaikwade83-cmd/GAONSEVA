@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Container, Typography, TextField, Button, Paper, Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions, Divider } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase'; // तुम्हाला firebase.js फाईल तयार करावी लागेल
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
@@ -14,13 +14,23 @@ const AdminLogin = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Debug: Log when component mounts
-  React.useEffect(() => {
-    console.log('AdminLogin component mounted');
+  // Check if user is already logged in, redirect to admin panel
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is already logged in, redirect to admin panel
+        const from = location.state?.from?.pathname || '/admin/panel';
+        navigate(from, { replace: true });
+      }
+    });
+
     // Ensure body doesn't have overflow hidden
     document.body.style.overflow = 'auto';
-  }, []);
+
+    return () => unsubscribe();
+  }, [navigate, location]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -41,7 +51,9 @@ const AdminLogin = () => {
 
     try {
       await signInWithEmailAndPassword(auth, username, password);
-      navigate('/admin/panel');
+      // Redirect to the page user was trying to access, or default to panel
+      const from = location.state?.from?.pathname || '/admin/panel';
+      navigate(from, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
       switch (error.code) {
