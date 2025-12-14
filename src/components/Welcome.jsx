@@ -71,11 +71,11 @@ const Welcome = () => {
       style={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         color: 'white',
-        padding: isMobile ? '40px 20px' : '60px 40px',
+        padding: isMobile ? '30px 16px' : '60px 40px',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden',
-        minHeight: '400px'
+        minHeight: isMobile ? '350px' : '400px'
       }}
     >
       {/* Animated decorative elements */}
@@ -156,14 +156,17 @@ const Welcome = () => {
 
         {/* Interactive Quick Stats */}
         {loading ? (
-          <p style={{ marginTop: '24px' }}>लोड होत आहे...</p>
+          <p style={{ marginTop: isMobile ? '20px' : '24px', fontSize: isMobile ? '14px' : '16px' }}>
+            लोड होत आहे...
+          </p>
         ) : (fetchedStats && fetchedStats.length > 0 ? (
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            gap: isMobile ? '15px' : '30px',
-            marginTop: '30px',
-            flexWrap: 'wrap'
+            gap: isMobile ? '10px' : '30px',
+            marginTop: isMobile ? '20px' : '30px',
+            flexWrap: 'wrap',
+            padding: isMobile ? '0 8px' : '0'
           }}>
             {fetchedStats.map((item, i) => (
               <div 
@@ -174,15 +177,15 @@ const Welcome = () => {
                   background: hoveredStat === i 
                     ? 'rgba(255,255,255,0.3)' 
                     : 'rgba(255,255,255,0.2)',
-                  padding: isMobile ? '12px 18px' : '15px 25px',
+                  padding: isMobile ? '10px 14px' : '15px 25px',
                   borderRadius: '25px',
-                  fontSize: isMobile ? '13px' : '14px',
+                  fontSize: isMobile ? '12px' : '14px',
                   fontWeight: '600',
                   backdropFilter: 'blur(10px)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '5px',
+                  gap: isMobile ? '4px' : '5px',
                   cursor: 'pointer',
                   transform: hoveredStat === i ? 'translateY(-5px) scale(1.05)' : 'translateY(0)',
                   transition: 'all 0.3s ease',
@@ -191,7 +194,9 @@ const Welcome = () => {
                   boxShadow: hoveredStat === i 
                     ? '0 8px 20px rgba(0,0,0,0.2)' 
                     : '0 2px 8px rgba(0,0,0,0.1)',
-                  minWidth: isMobile ? '120px' : '140px'
+                  minWidth: isMobile ? '100px' : '140px',
+                  maxWidth: isMobile ? '140px' : 'none',
+                  touchAction: 'manipulation'
                 }}
               >
                 <span style={{ 

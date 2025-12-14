@@ -53,11 +53,15 @@ initTranslationState();
  * @returns {Promise<string>} Translated text
  */
 export const translateText = async (text, sourceLanguage = 'mr', targetLanguage = 'en') => {
-  try {
-    if (!text || text.trim() === '') {
-      return text;
-    }
+  if (!text || text.trim() === '') {
+    return text;
+  }
 
+  // Use AbortController for timeout (5 seconds max per request)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  
+  try {
     const response = await fetch(`${API_BASE_URL}/api/translate`, {
       method: 'POST',
       headers: {
@@ -68,7 +72,10 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
         sourceLanguage,
         targetLanguage,
       }),
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -79,7 +86,12 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
     const data = await response.json();
     return data.translatedText || text;
   } catch (error) {
-    console.error('Translation error:', error);
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      console.error('Translation request timeout');
+    } else {
+      console.error('Translation error:', error);
+    }
     // Return original text if translation fails
     return text;
   }
@@ -271,8 +283,9 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
     // Get unique texts to avoid translating duplicates
     const uniqueTexts = Array.from(new Set(marathiTexts.map(({ text }) => text)));
     
-    // Translate in parallel batches for faster processing
-    const batchSize = 15; // Increased batch size
+    // Optimize: Use larger batches and process in parallel for maximum speed
+    // Google Translate API can handle up to ~5000 characters per request efficiently
+    const batchSize = 30; // Larger batch size for fewer API calls
     const batches = [];
     for (let i = 0; i < uniqueTexts.length; i += batchSize) {
       batches.push(uniqueTexts.slice(i, i + batchSize));
@@ -280,52 +293,73 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
 
     const translations = new Map();
     
-    // Translate all batches in parallel for speed
-    const batchPromises = batches.map(async (batch) => {
-      const translated = await translateBatch(batch, sourceLanguage, targetLanguage);
-      return batch.map((text, index) => ({
-        text,
-        translated: translated[index] || text
-      }));
+    // Process all batches in parallel with immediate application (streaming)
+    let firstBatchCompleted = false;
+    const batchPromises = batches.map(async (batch, batchIndex) => {
+      try {
+        const translated = await translateBatch(batch, sourceLanguage, targetLanguage);
+        const batchTranslations = new Map();
+        
+        batch.forEach((text, index) => {
+          const translatedText = translated[index] || text;
+          batchTranslations.set(text, translatedText);
+          translations.set(text, translatedText);
+        });
+        
+        // Apply translations immediately as they arrive (streaming approach)
+        originalTexts.forEach(({ textNode, originalText }) => {
+          const translated = batchTranslations.get(originalText);
+          if (translated && translated !== originalText) {
+            textNode.textContent = translated;
+          }
+        });
+        
+        // Remove loading indicator after first batch completes
+        if (!firstBatchCompleted && batchIndex === 0) {
+          firstBatchCompleted = true;
+          const loadingEl = document.getElementById('translation-loading');
+          if (loadingEl) {
+            loadingEl.remove();
+          }
+        }
+        
+        return batchTranslations;
+      } catch (error) {
+        console.error(`Batch ${batchIndex} translation error:`, error);
+        return new Map();
+      }
     });
     
     // Wait for all batches to complete
-    const results = await Promise.all(batchPromises);
+    await Promise.all(batchPromises);
     
-    // Combine all translations
-    results.forEach(batchResults => {
-      batchResults.forEach(({ text, translated }) => {
-        translations.set(text, translated);
-      });
-    });
-
-    // Apply translations
-    originalTexts.forEach(({ textNode, originalText }) => {
-      const translated = translations.get(originalText);
-      if (translated && translated !== originalText) {
-        textNode.textContent = translated;
-      }
-    });
-
-    // Store translation state globally (before removing loading indicator)
-    translationState.isTranslated = true;
-    translationState.currentLanguage = targetLanguage;
-    translationState.translations = translations;
-    saveTranslationState();
-
-    // Remove loading indicator immediately after translations are applied
+    // Ensure loading indicator is removed even if first batch didn't complete
     const loadingEl = document.getElementById('translation-loading');
     if (loadingEl) {
       loadingEl.remove();
     }
 
+    // Final pass: Apply any remaining translations (already applied during streaming, but ensure completeness)
+    originalTexts.forEach(({ textNode, originalText }) => {
+      const translated = translations.get(originalText);
+      if (translated && translated !== originalText && textNode.textContent === originalText) {
+        textNode.textContent = translated;
+      }
+    });
+
+    // Store translation state globally
+    translationState.isTranslated = true;
+    translationState.currentLanguage = targetLanguage;
+    translationState.translations = translations;
+    saveTranslationState();
+
     // Setup auto-translation for new content (Firebase data, etc.)
     setupAutoTranslation();
 
-    // Quick follow-up for any content that loaded after initial translation
+    // Quick follow-up for any content that loaded after initial translation (reduced delay)
     setTimeout(() => {
       retranslatePage();
-    }, 300); // Reduced to 300ms for faster response
+    }, 100); // Reduced to 100ms for faster response
 
     console.log(`Translated ${translations.size} text nodes`);
   } catch (error) {
@@ -427,8 +461,8 @@ const translateNewContent = async (textNodes) => {
     // Get unique texts
     const uniqueTexts = Array.from(new Set(textNodes.map(({ text }) => text)));
     
-    // Translate in parallel batches for speed
-    const batchSize = 15; // Increased batch size
+    // Translate in parallel batches for speed (larger batches for fewer API calls)
+    const batchSize = 30; // Larger batch size for faster processing
     const batches = [];
     for (let i = 0; i < uniqueTexts.length; i += batchSize) {
       batches.push(uniqueTexts.slice(i, i + batchSize));
@@ -524,7 +558,7 @@ export const setupAutoTranslation = () => {
       // Debounce: minimal delay for React/Firebase to finish rendering
       debounceTimer = setTimeout(() => {
         applyStoredTranslations();
-      }, 100); // Reduced from 300ms to 100ms
+      }, 50); // Reduced to 50ms for faster response
     }
   });
 
@@ -543,7 +577,7 @@ export const setupAutoTranslation = () => {
     } else {
       clearInterval(intervalId);
     }
-  }, 1500); // Check every 1.5 seconds (reduced from 2)
+  }, 1000); // Check every 1 second for faster response
 
   // Store interval ID for cleanup
   translationState.checkInterval = intervalId;

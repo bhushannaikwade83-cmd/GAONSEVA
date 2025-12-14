@@ -16,14 +16,14 @@ const TranslationManager = () => {
       applyStoredTranslations();
       setupAutoTranslation();
 
-      // Quick follow-up for Firebase data (reduced delays)
+      // Quick follow-up for Firebase data (minimal delays for speed)
       const timer1 = setTimeout(() => {
         retranslatePage();
-      }, 500); // Reduced from 1000ms
+      }, 200); // Reduced to 200ms
 
       const timer2 = setTimeout(() => {
         retranslatePage();
-      }, 1500); // Reduced from 2500ms
+      }, 600); // Reduced to 600ms
 
       return () => {
         clearTimeout(timer1);

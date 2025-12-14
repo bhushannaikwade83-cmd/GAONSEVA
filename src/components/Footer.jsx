@@ -116,31 +116,40 @@ function Footer() {
         bgcolor: "rgba(0,0,0,0.9)",
         color: "rgba(255,255,255,0.87)",
         mt: 0,
-        pt: 6,
-        pb: 4,
+        pt: { xs: 4, sm: 5, md: 6 },
+        pb: { xs: 3, sm: 4 },
+        px: { xs: 2, sm: 3 },
         fontFamily: "'Roboto', sans-serif",
         userSelect: "none",
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
         {/* Main Links Grid */}
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 3, sm: 4 }}>
           {footerLinks.map(({ title, links }, idx) => (
             <Grid item xs={12} sm={6} md={3} key={idx}>
               <Typography
                 variant="h6"
                 sx={{
-                  mb: 2,
+                  mb: { xs: 1.5, sm: 2 },
                   color: "#64b5f6",
                   fontWeight: "700",
                   borderBottom: "2px solid #64b5f6",
                   pb: 0.5,
+                  fontSize: { xs: "1rem", sm: "1.25rem" },
                 }}
               >
                 {title}
               </Typography>
               {links.map((link, i) => (
-                <Typography key={i} variant="body2" sx={{ mb: 1 }}>
+                <Typography 
+                  key={i} 
+                  variant="body2" 
+                  sx={{ 
+                    mb: { xs: 0.75, sm: 1 },
+                    fontSize: { xs: "0.8rem", sm: "0.875rem" }
+                  }}
+                >
                   <Link
                     href={link.url}
                     underline="hover"
@@ -150,6 +159,9 @@ function Footer() {
                     sx={{
                       transition: "color 0.3s",
                       "&:hover": { color: "#90caf9" },
+                      display: "inline-block",
+                      padding: { xs: "4px 0", sm: "2px 0" },
+                      minHeight: { xs: "32px", sm: "auto" },
                     }}
                   >
                     {link.name}
@@ -170,9 +182,10 @@ function Footer() {
           sx={{
             display: "flex",
             justifyContent: "center",
-            gap: 4,
+            gap: { xs: 2, sm: 3, md: 4 },
             flexWrap: "wrap",
-            mb: 3,
+            mb: { xs: 2, sm: 3 },
+            px: { xs: 1, sm: 0 },
           }}
         >
           {bottomLinks.map((item, idx) => (
@@ -184,6 +197,11 @@ function Footer() {
                 "&:hover": { color: "#90caf9" },
                 cursor: "pointer",
                 transition: "color 0.3s",
+                fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                padding: { xs: "4px 8px", sm: "2px 4px" },
+                minHeight: { xs: "32px", sm: "auto" },
+                display: "flex",
+                alignItems: "center",
               }}
             >
               <Link href={item.url} underline="none" color="inherit">
@@ -198,8 +216,8 @@ function Footer() {
           sx={{
             display: "flex",
             justifyContent: "center",
-            gap: 3,
-            mb: 3,
+            gap: { xs: 2, sm: 3 },
+            mb: { xs: 2, sm: 3 },
           }}
         >
           {[{
@@ -227,6 +245,9 @@ function Footer() {
                 color: "rgba(255,255,255,0.8)",
                 transition: "color 0.3s",
                 "&:hover": { color },
+                minWidth: { xs: "48px", sm: "40px" },
+                minHeight: { xs: "48px", sm: "40px" },
+                padding: { xs: "12px", sm: "8px" },
               }}
             >
               {icon}
@@ -238,7 +259,11 @@ function Footer() {
         <Typography
           variant="body2"
           align="center"
-          sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.875rem" }}
+          sx={{ 
+            color: "rgba(255,255,255,0.5)", 
+            fontSize: { xs: "0.75rem", sm: "0.875rem" },
+            px: { xs: 2, sm: 0 }
+          }}
         >
           कॉपीराइट © 2025 सर्व हक्क सुरक्षित
         </Typography>

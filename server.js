@@ -16,6 +16,15 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Allow large text payloads
 
+// Mobile-friendly headers
+app.use((req, res, next) => {
+  // Set mobile-friendly headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  next();
+});
+
 // Google Cloud Translation API endpoint
 app.post('/api/translate', async (req, res) => {
   try {
@@ -26,6 +35,10 @@ app.post('/api/translate', async (req, res) => {
         error: 'Text is required and must be a string' 
       });
     }
+
+    // Optimize for mobile: limit text length to prevent timeout
+    const maxLength = 5000;
+    const textToTranslate = text.length > maxLength ? text.substring(0, maxLength) : text;
 
     const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY;
     
@@ -45,7 +58,7 @@ app.post('/api/translate', async (req, res) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        q: text,
+        q: textToTranslate,
         source: sourceLanguage,
         target: targetLanguage,
         format: 'text'
@@ -81,6 +94,61 @@ app.post('/api/translate', async (req, res) => {
     return res.status(500).json({ 
       error: 'Internal server error',
       message: error.message 
+    });
+  }
+});
+
+// Website information endpoint for chatbot
+app.get('/api/website-info', (req, res) => {
+  try {
+    const websiteInfo = {
+      pages: [
+        { name: 'ग्रामपंचायत माहिती', path: '/grampanchayat-mahiti', description: 'ग्रामपंचायत बद्दल सर्व माहिती' },
+        { name: 'ग्रामपंचायत नकाशा', path: '/grampanchayat-naksha', description: 'ग्रामपंचायतचा नकाशा आणि स्थान' },
+        { name: 'ग्रामपंचायत सदस्य', path: '/grampanchayat-sadasya', description: 'सरपंच, उपसरपंच आणि इतर सदस्य' },
+        { name: 'ग्रामसभेचे निर्णय', path: '/gramsabha-nirnay', description: 'ग्रामसभेचे निर्णय आणि ठराव' },
+        { name: 'ग्राम पुरस्कार', path: '/gram-puraskar', description: 'ग्रामपंचायतीला मिळालेले पुरस्कार' },
+        { name: 'सण/उत्सव', path: '/festival', description: 'गावातील सण आणि उत्सव' },
+        { name: 'ग्राम सुविधा', path: '/gram-suvidha', description: 'उपलब्ध सुविधा' },
+        { name: 'पर्यटन स्थळे', path: '/gramparyatansthale', description: 'पर्यटन स्थळे आणि आकर्षणे' },
+        { name: 'ई-सेवा', path: '/gram-eseva', description: 'ऑनलाइन सेवा आणि अर्ज' },
+        { name: 'तक्रार नोंदणी', path: '/तक्रार-नोंदणी', description: 'तक्रार नोंदवा' }
+      ],
+      features: [
+        'मराठी आणि इंग्रजी भाषा समर्थन',
+        'मोबाइल आणि डेस्कटॉप कार्यक्षमता',
+        'AI चॅटबॉट - GramSevak AI',
+        'Firebase वरून रीअल-टाइम डेटा',
+        'सुरक्षित Admin पॅनेल',
+        'PDF आणि दस्तऐवज डाउनलोड',
+        'फोटो गॅलरी',
+        'संपर्क माहिती',
+        'बातम्या आणि घोषणा',
+        'सरकारी योजना माहिती'
+      ],
+      programs: [
+        'स्वच्छ गाव', 'विकेल-ते-पिकेल', 'माझे-कुटुंब माझी-जबाबदारी',
+        'तंटामुक्त गाव', 'जलयुक्त शिवार', 'तुषारगावड',
+        'रोती पूरक व्यवसाय', 'गादोली', 'मतदार नोंदणी',
+        'सर्व शिक्षा अभियान', 'क्रीडा स्पर्धा', 'आरोग्य शिबिर',
+        'कचऱ्याचे नियोजन', 'बायोगॅस निर्मिती', 'सेंद्रिय खत निर्मिती'
+      ],
+      navigation: {
+        main: ['ग्रामपंचायत', 'निर्देशिका', 'उपक्रम', 'योजना'],
+        services: ['ई-सेवा', 'तक्रार नोंदणी', 'संपर्क']
+      }
+    };
+
+    res.json({
+      success: true,
+      data: websiteInfo,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Website info error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch website information'
     });
   }
 });

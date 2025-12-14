@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Container, Typography, TextField, Button, Paper, Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions, Divider } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase'; // तुम्हाला firebase.js फाईल तयार करावी लागेल
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
@@ -14,6 +14,20 @@ const AdminLogin = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect to admin panel if already logged in
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is already logged in, redirect to admin panel
+        const from = location.state?.from?.pathname || '/admin/panel';
+        navigate(from, { replace: true });
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate, location]);
 
   // Debug: Log when component mounts
   React.useEffect(() => {
@@ -41,7 +55,9 @@ const AdminLogin = () => {
 
     try {
       await signInWithEmailAndPassword(auth, username, password);
-      navigate('/admin/panel');
+      // Redirect to the page user was trying to access, or default to panel
+      const from = location.state?.from?.pathname || '/admin/panel';
+      navigate(from, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
       switch (error.code) {
@@ -109,14 +125,14 @@ const AdminLogin = () => {
         position: 'relative',
         zIndex: 1,
         width: '100%',
-        padding: 2
+        padding: { xs: 2, sm: 3 }
       }}
     >
-      <Container maxWidth="xs" sx={{ width: '100%' }}>
+      <Container maxWidth="xs" sx={{ width: '100%', px: { xs: 2, sm: 3 } }}>
         <Paper 
           elevation={3} 
           sx={{ 
-            padding: 4, 
+            padding: { xs: 3, sm: 4 }, 
             borderRadius: 3,
             width: '100%',
             maxWidth: '100%',
@@ -124,7 +140,18 @@ const AdminLogin = () => {
             border: '1px solid #e0e0e0'
           }}
         >
-          <Typography variant="h4" component="h1" gutterBottom align="center" fontWeight="bold" sx={{ color: '#1976d2', mb: 3 }}>
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            gutterBottom 
+            align="center" 
+            fontWeight="bold" 
+            sx={{ 
+              color: '#1976d2', 
+              mb: 3,
+              fontSize: { xs: '1.75rem', sm: '2.125rem' }
+            }}
+          >
             Admin Login
           </Typography>
           

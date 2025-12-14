@@ -145,25 +145,25 @@ const ManageSvachhGaav = () => {
         }}
       >
         <Typography variant="h4" gutterBottom sx={{ color: '#1a1a1a', fontWeight: 600, mb: 3 }}>
-          स्वच्छ गाव कार्यक्रम व्यवस्थापन
-        </Typography>
-        
-        <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
+        स्वच्छ गाव कार्यक्रम व्यवस्थापन
+      </Typography>
+      
+      <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" sx={{ color: '#666' }}>
             एकूण कार्यक्रम: <strong style={{ color: '#1a1a1a' }}>{programs.length}</strong>
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenDialog()}
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          onClick={() => handleOpenDialog()}
             sx={{
               backgroundColor: '#1976d2',
               '&:hover': { backgroundColor: '#1565c0' },
             }}
-          >
-            नवीन कार्यक्रम जोडा
-          </Button>
-        </Box>
+        >
+          नवीन कार्यक्रम जोडा
+        </Button>
+      </Box>
       </Paper>
 
       <Grid container spacing={3}>

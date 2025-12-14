@@ -135,8 +135,8 @@ const ManageInfo = () => {
   }
 
   return (
-    <Box sx={{ p: 4, backgroundColor: '#ffffff', minHeight: '100vh' }}>
-      <Paper elevation={2} sx={{ p: 4, backgroundColor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
+    <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, backgroundColor: '#ffffff', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
+      <Paper elevation={2} sx={{ p: { xs: 2, sm: 3, md: 4 }, backgroundColor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h4" sx={{ color: '#1a1a1a', fontWeight: 600 }}>
               माहिती व्यवस्थापन

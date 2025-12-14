@@ -60,6 +60,7 @@ import ArthsankalpParadarkshita from "./pages/ArthsankalpParadarkshita";
 import AdminLogin from "./admin/AdminLogin";
 import AdminPanel from "./admin/AdminPanel";
 import AdminLayout from "./admin/AdminLayout";
+import ProtectedRoute from "./admin/ProtectedRoute";
 import GramPanchayatProfile from "./admin/Gram-panchayat-profile";
 
 // Admin Pages (Management sections)
@@ -208,7 +209,14 @@ function App() {
     <Routes>
       {/* Admin Section Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<AdminPanel />} />
         <Route path="panel" element={<AdminPanel />} />
         <Route path="profile" element={<GramPanchayatProfile />} />

@@ -180,7 +180,7 @@ const ManageDecisionsInner = () => {
                           स्थिती: {item.status}
                         </Typography>
                       )}
-                    </Box>
+                </Box>
                   } 
                 />
               </ListItem>

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, 
   ListItemText, Toolbar, Typography, Divider, Collapse, 
-  Badge, Tooltip, IconButton, Avatar, Chip 
+  Badge, Tooltip, IconButton, Avatar, Chip, useMediaQuery, useTheme
 } from '@mui/material';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebase';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -51,9 +53,11 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 
-const AdminSidebar = ({ drawerWidth }) => {
+const AdminSidebar = ({ drawerWidth, mobileOpen, onMobileClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [openGrampanchayat, setOpenGrampanchayat] = useState(true);
   const [openNirdeshika, setOpenNirdeshika] = useState(true);
   const [openPrograms, setOpenPrograms] = useState(true);
@@ -81,8 +85,15 @@ const AdminSidebar = ({ drawerWidth }) => {
     localStorage.setItem('adminSidebarOpenStates', JSON.stringify(state));
   }, [openGrampanchayat, openNirdeshika, openPrograms, openYojana, openHome, openExtra]);
 
-  const handleLogout = () => {
-    navigate('/admin/login');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/admin/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still navigate to login even if signOut fails
+      navigate('/admin/login');
+    }
   };
 
   const isActive = (path) => location.pathname.startsWith(path);
@@ -149,24 +160,8 @@ const AdminSidebar = ({ drawerWidth }) => {
     );
   };
 
-  return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: drawerWidth,
-        flexShrink: 0,
-        [`& .MuiDrawer-paper`]: { 
-          width: drawerWidth, 
-          boxSizing: 'border-box', 
-          display: 'flex', 
-          flexDirection: 'column',
-          background: '#ffffff',
-          color: '#1a1a1a',
-          borderRight: '1px solid #e0e0e0',
-          boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
-        },
-      }}
-    >
+  const drawerContent = (
+    <>
       {/* Header */}
       <Toolbar sx={{ 
         background: '#ffffff', 
@@ -201,14 +196,17 @@ const AdminSidebar = ({ drawerWidth }) => {
       </Toolbar>
 
       {/* Search Bar */}
-      <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0' }}>
+      <Box sx={{ 
+        p: { xs: 1.5, sm: 2 }, 
+        borderBottom: '1px solid #e0e0e0' 
+      }}>
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
           background: '#f5f5f5',
           borderRadius: 2,
-          px: 2,
-          py: 1,
+          px: { xs: 1.5, sm: 2 },
+          py: { xs: 0.75, sm: 1 },
           border: '1px solid #e0e0e0',
           transition: 'all 0.2s',
           '&:focus-within': {
@@ -216,7 +214,11 @@ const AdminSidebar = ({ drawerWidth }) => {
             background: '#ffffff'
           }
         }}>
-          <SearchIcon sx={{ mr: 1, color: '#666' }} />
+          <SearchIcon sx={{ 
+            mr: 1, 
+            color: '#666',
+            fontSize: { xs: '18px', sm: '20px' }
+          }} />
           <input
             type="text"
             placeholder="शोधा..."
@@ -284,18 +286,18 @@ const AdminSidebar = ({ drawerWidth }) => {
       }}>
         <List>
           {/* Quick Stats Cards */}
-          <Box sx={{ px: 1, mb: 2 }}>
+          <Box sx={{ px: { xs: 0.5, sm: 1 }, mb: { xs: 1.5, sm: 2 } }}>
             <Box sx={{ 
               display: 'grid', 
               gridTemplateColumns: '1fr 1fr', 
-              gap: 1,
-              mb: 2
+              gap: { xs: 0.75, sm: 1 },
+              mb: { xs: 1.5, sm: 2 }
             }}>
               <Tooltip title="Pending Complaints">
                 <Box sx={{ 
                   background: '#fff3e0',
                   borderRadius: 2,
-                  p: 1.5,
+                  p: { xs: 1, sm: 1.5 },
                   textAlign: 'center',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
@@ -303,18 +305,36 @@ const AdminSidebar = ({ drawerWidth }) => {
                   '&:hover': {
                     background: '#ffe0b2',
                     transform: 'scale(1.05)'
+                  },
+                  '&:active': {
+                    transform: 'scale(0.98)'
                   }
                 }}>
-                  <AssignmentIcon sx={{ fontSize: 24, mb: 0.5, color: '#f57c00' }} />
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1a1a1a' }}>{pendingComplaints}</Typography>
-                  <Typography variant="caption" sx={{ color: '#666' }}>तक्रारी</Typography>
+                  <AssignmentIcon sx={{ 
+                    fontSize: { xs: 20, sm: 24 }, 
+                    mb: { xs: 0.25, sm: 0.5 }, 
+                    color: '#f57c00' 
+                  }} />
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 'bold', 
+                    color: '#1a1a1a',
+                    fontSize: { xs: '1rem', sm: '1.25rem' }
+                  }}>
+                    {pendingComplaints}
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    color: '#666',
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                  }}>
+                    तक्रारी
+                  </Typography>
                 </Box>
               </Tooltip>
               <Tooltip title="Notifications">
                 <Box sx={{ 
                   background: '#e3f2fd',
                   borderRadius: 2,
-                  p: 1.5,
+                  p: { xs: 1, sm: 1.5 },
                   textAlign: 'center',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
@@ -322,11 +342,29 @@ const AdminSidebar = ({ drawerWidth }) => {
                   '&:hover': {
                     background: '#bbdefb',
                     transform: 'scale(1.05)'
+                  },
+                  '&:active': {
+                    transform: 'scale(0.98)'
                   }
                 }}>
-                  <NotificationsIcon sx={{ fontSize: 24, mb: 0.5, color: '#1976d2' }} />
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1a1a1a' }}>{notifications}</Typography>
-                  <Typography variant="caption" sx={{ color: '#666' }}>सूचना</Typography>
+                  <NotificationsIcon sx={{ 
+                    fontSize: { xs: 20, sm: 24 }, 
+                    mb: { xs: 0.25, sm: 0.5 }, 
+                    color: '#1976d2' 
+                  }} />
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 'bold', 
+                    color: '#1a1a1a',
+                    fontSize: { xs: '1rem', sm: '1.25rem' }
+                  }}>
+                    {notifications}
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    color: '#666',
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                  }}>
+                    सूचना
+                  </Typography>
                 </Box>
               </Tooltip>
             </Box>
@@ -537,7 +575,60 @@ const AdminSidebar = ({ drawerWidth }) => {
           </Typography>
         </Box>
       </Box>
-    </Drawer>
+    </>
+  );
+
+  return (
+    <Box
+      component="nav"
+      sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+    >
+      {/* Mobile drawer */}
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={onMobileClose}
+        ModalProps={{
+          keepMounted: true, // Better open performance on mobile.
+        }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: { xs: '85%', sm: drawerWidth },
+            maxWidth: '320px',
+            display: 'flex',
+            flexDirection: 'column',
+            background: '#ffffff',
+            color: '#1a1a1a',
+            borderRight: '1px solid #e0e0e0',
+            boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+      {/* Desktop drawer */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: drawerWidth,
+            display: 'flex',
+            flexDirection: 'column',
+            background: '#ffffff',
+            color: '#1a1a1a',
+            borderRight: '1px solid #e0e0e0',
+            boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
+          },
+        }}
+        open
+      >
+        {drawerContent}
+      </Drawer>
+    </Box>
   );
 };
 

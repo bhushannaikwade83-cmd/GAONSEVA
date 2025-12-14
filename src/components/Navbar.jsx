@@ -361,103 +361,220 @@ const MobileMenu = ({ isOpen, onClose, navLinks, location, language }) => {
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      right: 0,
-      width: '280px',
-      height: '100vh',
-      background: '#f8f9fa',
-      boxShadow: '-4px 0 20px rgba(0,0,0,0.15)',
-      zIndex: 2000,
-      transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-      transition: 'transform 0.3s ease',
-      overflowY: 'auto'
-    }}>
+    <>
+      {/* Backdrop */}
+      <div 
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0,0,0,0.5)',
+          zIndex: 1999,
+          animation: 'fadeIn 0.3s ease'
+        }}
+      />
       <div style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        width: '85%',
+        maxWidth: '320px',
+        height: '100vh',
+        background: '#ffffff',
+        boxShadow: '-4px 0 20px rgba(0,0,0,0.25)',
+        zIndex: 2000,
+        transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflowY: 'auto',
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '16px 20px',
-        borderBottom: '1px solid #ddd',
-        background: 'white'
+        flexDirection: 'column'
       }}>
-        <h3 style={{ margin: 0, color: 'black' }}>{translate("मेनू", language)}</h3>
-        <button
-          onClick={onClose}
-          style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'black' }}
-        >
-          ✕
-        </button>
-      </div>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px 20px',
+          borderBottom: '2px solid #e0e0e0',
+          background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 1
+        }}>
+          <h3 style={{ margin: 0, color: 'white', fontSize: '18px', fontWeight: 'bold' }}>{translate("मेनू", language)}</h3>
+          <button
+            onClick={onClose}
+            style={{ 
+              background: 'rgba(255,255,255,0.2)', 
+              border: 'none', 
+              fontSize: '24px', 
+              cursor: 'pointer', 
+              color: 'white',
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              minWidth: '44px',
+              minHeight: '44px'
+            }}
+            onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.3)'}
+            onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+        </div>
 
-      <div style={{ padding: '20px 0' }}>
-        {navLinks.map((link, i) => (
-          <div key={i}>
-            {link.dropdown ? (
-              <div>
-                <button
-                  onClick={() => setOpenDropdown(openDropdown === link.name ? null : link.name)}
+        <div style={{ 
+          padding: '8px 0', 
+          flex: 1,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch'
+        }}>
+          {/* Admin Login Link for Mobile */}
+          <Link
+            to="/admin/login"
+            onClick={onClose}
+            style={{
+              display: 'block',
+              padding: '14px 20px',
+              margin: '8px 12px',
+              fontSize: '15px',
+              fontWeight: 'bold',
+              color: 'white',
+              background: 'linear-gradient(45deg, #2196f3, #21cbf3)',
+              borderRadius: '8px',
+              textAlign: 'center',
+              textDecoration: 'none',
+              boxShadow: '0 2px 8px rgba(33, 150, 243, 0.3)'
+            }}
+          >
+            Admin Login
+          </Link>
+          
+          {navLinks.map((link, i) => (
+            <div key={i}>
+              {link.dropdown ? (
+                <div>
+                  <button
+                    onClick={() => setOpenDropdown(openDropdown === link.name ? null : link.name)}
+                    style={{
+                      width: '100%',
+                      background: openDropdown === link.name ? '#f5f5f5' : 'transparent',
+                      border: 'none',
+                      padding: '14px 20px',
+                      textAlign: 'left',
+                      fontSize: '15px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      color: '#1a1a1a',
+                      transition: 'all 0.2s',
+                      borderLeft: openDropdown === link.name ? '4px solid #2196f3' : '4px solid transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!openDropdown || openDropdown !== link.name) {
+                        e.target.style.background = '#f5f5f5';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!openDropdown || openDropdown !== link.name) {
+                        e.target.style.background = 'transparent';
+                      }
+                    }}
+                  >
+                    <span>{translate(link.name, language)}</span>
+                    <span style={{
+                      transition: 'transform 0.3s',
+                      transform: openDropdown === link.name ? 'rotate(180deg)' : 'rotate(0)',
+                      fontSize: '12px'
+                    }}>▼</span>
+                  </button>
+                  {openDropdown === link.name && (
+                    <div style={{ background: '#f8f9fa', borderLeft: '4px solid #2196f3' }}>
+                      {link.dropdown.map((item, j) => (
+                        <Link
+                          key={j}
+                          to={getLinkPath(link.name, item)}
+                          onClick={onClose}
+                          style={{
+                            display: 'block',
+                            padding: '12px 20px 12px 44px',
+                            color: isPathMatch(location.pathname, link.name, item) ? '#2196f3' : '#666',
+                            fontWeight: isPathMatch(location.pathname, link.name, item) ? '600' : 'normal',
+                            fontSize: '14px',
+                            textDecoration: 'none',
+                            background: isPathMatch(location.pathname, link.name, item) ? '#e3f2fd' : 'transparent',
+                            transition: 'all 0.2s',
+                            borderLeft: isPathMatch(location.pathname, link.name, item) ? '3px solid #2196f3' : '3px solid transparent'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isPathMatch(location.pathname, link.name, item)) {
+                              e.target.style.background = '#f0f0f0';
+                              e.target.style.color = '#2196f3';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isPathMatch(location.pathname, link.name, item)) {
+                              e.target.style.background = 'transparent';
+                              e.target.style.color = '#666';
+                            }
+                          }}
+                        >
+                          {translate(item, language)}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  to={link.to}
+                  onClick={onClose}
                   style={{
-                    width: '100%',
-                    background: 'none',
-                    border: 'none',
-                    padding: '12px 20px',
-                    textAlign: 'left',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    color: 'black'
+                    display: 'block',
+                    padding: '14px 20px',
+                    fontSize: '15px',
+                    fontWeight: location.pathname === link.to ? '600' : '500',
+                    color: location.pathname === link.to ? '#2196f3' : '#1a1a1a',
+                    textDecoration: 'none',
+                    background: location.pathname === link.to ? '#e3f2fd' : 'transparent',
+                    borderLeft: location.pathname === link.to ? '4px solid #2196f3' : '4px solid transparent',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (location.pathname !== link.to) {
+                      e.target.style.background = '#f5f5f5';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (location.pathname !== link.to) {
+                      e.target.style.background = 'transparent';
+                    }
                   }}
                 >
                   {translate(link.name, language)}
-                  <span style={{
-                    transition: 'transform 0.3s',
-                    transform: openDropdown === link.name ? 'rotate(180deg)' : 'rotate(0)'
-                  }}>▼</span>
-                </button>
-                {openDropdown === link.name && (
-                  <div style={{ background: '#f0f0f0' }}>
-                    {link.dropdown.map((item, j) => (
-                      <Link
-                        key={j}
-                        to={getLinkPath(link.name, item)}
-                        onClick={onClose}
-                        style={{
-                          display: 'block',
-                          padding: '10px 40px',
-                          color: isPathMatch(location.pathname, link.name, item) ? '#2196f3' : '#666',
-                          fontWeight: isPathMatch(location.pathname, link.name, item) ? 'bold' : 'normal'
-                        }}
-                      >
-                        {translate(item, language)}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                to={link.to}
-                onClick={onClose}
-                style={{
-                  display: 'block',
-                  padding: '12px 20px',
-                  fontSize: '16px',
-                  fontWeight: location.pathname === link.to ? 'bold' : 'normal',
-                  color: location.pathname === link.to ? '#2196f3' : 'black'
-                }}
-              >
-                {translate(link.name, language)}
-              </Link>
-            )}
-          </div>
-        ))}
+                </Link>
+              )}
+            </div>
+          ))}
+        </div>
+        
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+        `}</style>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -607,14 +724,14 @@ const Navbar = () => {
         // Translate page to English (includes static content) - immediate
         await translatePage('mr', 'en');
         
-        // Quick follow-up for Firebase data (reduced delays)
+        // Quick follow-up for Firebase data (minimal delays for speed)
         setTimeout(() => {
           retranslatePage();
-        }, 800); // Reduced from 2000ms
+        }, 200); // Reduced to 200ms for faster response
         
         setTimeout(() => {
           retranslatePage();
-        }, 2000); // Reduced from 4000ms
+        }, 800); // Reduced to 800ms
       } else {
         // Restore original Marathi text
         restoreOriginalText();
@@ -728,29 +845,76 @@ const Navbar = () => {
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          padding: '12px 20px',
-          flexWrap: isMobile ? 'nowrap' : 'wrap'
+          padding: isMobile ? '10px 12px' : '12px 20px',
+          flexWrap: isMobile ? 'nowrap' : 'wrap',
+          gap: isMobile ? '8px' : '0'
         }}>
           {/* Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '12px', textDecoration: 'none', flexShrink: 0 }}>
             <div style={{
-              width: '50px', height: '50px', background: 'linear-gradient(45deg, #3498db, #2196f3)',
+              width: isMobile ? '40px' : '50px', 
+              height: isMobile ? '40px' : '50px', 
+              background: 'linear-gradient(45deg, #3498db, #2196f3)',
               borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontWeight: 'bold', fontSize: '18px', animation: 'pulse 2s infinite'
+              color: 'white', fontWeight: 'bold', fontSize: isMobile ? '16px' : '18px', animation: 'pulse 2s infinite',
+              flexShrink: 0
             }}>🏛️</div>
-            <div>
-              <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'black', margin: 0 }}>{grampanchayatName}</h1>
-              <p style={{ fontSize: '12px', color: '#666', margin: 0, fontWeight: '500' }}>Grampanchayat Name</p>
+            <div style={{ minWidth: 0, flex: isMobile ? 1 : 'auto' }}>
+              <h1 style={{ 
+                fontSize: isMobile ? '14px' : '20px', 
+                fontWeight: 'bold', 
+                color: 'black', 
+                margin: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}>{grampanchayatName}</h1>
+              {!isMobile && (
+                <p style={{ fontSize: '12px', color: '#666', margin: 0, fontWeight: '500' }}>Grampanchayat Name</p>
+              )}
             </div>
           </Link>
 
           {/* Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginLeft: 'auto' }}>
-            <Link to="/admin/login" style={{ textDecoration: 'none' }}>
-               <Button variant="contained" color="primary" sx={{ mr: 2 }}>
-                 Admin Login
-              </Button>
-             </Link>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: isMobile ? '6px' : '15px', 
+            marginLeft: 'auto',
+            flexShrink: 0
+          }}>
+            {!isMobile && (
+              <Link to="/admin/login" style={{ textDecoration: 'none' }}>
+                <Button variant="contained" color="primary" sx={{ mr: 2 }}>
+                  Admin Login
+                </Button>
+              </Link>
+            )}
+            {/* Mobile Search Icon */}
+            {isMobile && (
+              <button
+                onClick={handleSearchToggle}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '44px',
+                  minHeight: '44px',
+                  borderRadius: '50%',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.background = '#f0f0f0'}
+                onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                aria-label="Search"
+              >
+                🔍
+              </button>
+            )}
             {!isMobile && (
               <div style={{
                 position: 'relative', 
@@ -927,22 +1091,46 @@ const Navbar = () => {
                   ? 'linear-gradient(45deg, #999, #bbb)' 
                   : 'linear-gradient(45deg, #2196f3, #21cbf3)', 
                 border: '2px solid transparent', 
-                fontSize: isMobile ? '12px' : '14px', 
+                fontSize: isMobile ? '11px' : '14px', 
                 padding: isMobile ? '6px 12px' : '8px 16px', 
                 borderRadius: '25px', 
                 cursor: isTranslating ? 'wait' : 'pointer', 
                 transition: 'all 0.3s ease', 
                 boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
-                opacity: isTranslating ? 0.7 : 1
+                opacity: isTranslating ? 0.7 : 1,
+                whiteSpace: 'nowrap',
+                minWidth: isMobile ? '50px' : '140px',
+                minHeight: isMobile ? '36px' : 'auto'
               }}
             >
               {isTranslating 
-                ? (language === "mr" ? "Translating..." : "Restoring...") 
-                : (language === "mr" ? "मराठी → English" : "English → मराठी")
+                ? (language === "mr" ? (isMobile ? "..." : "Translating...") : (isMobile ? "..." : "Restoring...")) 
+                : (language === "mr" ? (isMobile ? "EN" : "मराठी → English") : (isMobile ? "MR" : "English → मराठी"))
               }
             </button>
 
-            {isMobile && <button onClick={() => setMobileOpen(!mobileOpen)} className="mobile-menu" style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'black' }}>☰</button>}
+            {isMobile && (
+              <button 
+                onClick={() => setMobileOpen(!mobileOpen)} 
+                className="mobile-menu" 
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  fontSize: '28px', 
+                  cursor: 'pointer', 
+                  color: 'black',
+                  padding: '4px 8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '44px',
+                  minHeight: '44px'
+                }}
+                aria-label="Menu"
+              >
+                ☰
+              </button>
+            )}
           </div>
         </div>
 
@@ -978,6 +1166,153 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       <MobileMenu isOpen={mobileOpen} onClose={() => setMobileOpen(false)} navLinks={navLinks} location={location} language={language} />
+      
+      {/* Mobile Search Overlay */}
+      {isMobile && searchOpen && (
+        <>
+          <div 
+            onClick={handleSearchToggle}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'rgba(0,0,0,0.5)',
+              zIndex: 1998,
+              animation: 'fadeIn 0.3s ease'
+            }}
+          />
+          <div style={{
+            position: 'fixed',
+            top: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '90%',
+            maxWidth: '500px',
+            background: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            zIndex: 1999,
+            padding: '16px',
+            animation: 'slideDown 0.3s ease-out'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              background: '#f5f5f5',
+              borderRadius: '25px',
+              padding: '12px 16px',
+              border: '2px solid #2196f3'
+            }}>
+              <span style={{ fontSize: '20px', color: '#2196f3' }}>🔍</span>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onKeyDown={handleKeyDown}
+                placeholder={translate("शोधा...", language)}
+                style={{
+                  flex: 1,
+                  fontSize: '16px',
+                  color: '#333',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  fontFamily: 'inherit'
+                }}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSearchResults([]);
+                    setSelectedIndex(-1);
+                    searchInputRef.current?.focus();
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '18px',
+                    color: '#999',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: '32px',
+                    minHeight: '32px'
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            
+            {/* Mobile Search Results */}
+            {searchResults.length > 0 && (
+              <div style={{
+                marginTop: '12px',
+                maxHeight: '400px',
+                overflowY: 'auto',
+                borderRadius: '8px',
+                border: '1px solid #e0e0e0'
+              }}>
+                {searchResults.map((result, index) => (
+                  <div
+                    key={index}
+                    onClick={() => handleResultClick(result.path)}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                    style={{
+                      padding: '14px 16px',
+                      cursor: 'pointer',
+                      background: selectedIndex === index ? '#f0f8ff' : 'white',
+                      borderLeft: selectedIndex === index ? '4px solid #2196f3' : '4px solid transparent',
+                      transition: 'all 0.15s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      borderBottom: index < searchResults.length - 1 ? '1px solid #f0f0f0' : 'none'
+                    }}
+                  >
+                    <span style={{ fontSize: '18px', opacity: 0.6 }}>🔍</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ 
+                        fontSize: '15px', 
+                        color: '#333',
+                        fontWeight: selectedIndex === index ? '500' : 'normal',
+                        marginBottom: '4px'
+                      }}>
+                        {translate(result.title, language)}
+                      </div>
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#666'
+                      }}>
+                        {translate(result.category, language)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {searchQuery && searchResults.length === 0 && (
+              <div style={{
+                marginTop: '12px',
+                padding: '20px',
+                textAlign: 'center',
+                color: '#666',
+                fontSize: '14px'
+              }}>
+                {translate("कोणतेही परिणाम सापडले नाहीत", language)}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

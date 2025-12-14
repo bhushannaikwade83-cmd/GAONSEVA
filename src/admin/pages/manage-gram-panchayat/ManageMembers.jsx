@@ -178,15 +178,15 @@ const ManageMembers = () => {
                 <Card 
                   variant="outlined" 
                   sx={{ 
-                    mb: 2,
+                  mb: 2,
                     backgroundColor: '#fafafa',
                     border: '1px solid #e0e0e0',
                     transition: 'all 0.3s',
-                    '&:hover': {
+                  '&:hover': {
                       boxShadow: 4,
                       transform: 'translateY(-4px)',
                       backgroundColor: '#ffffff'
-                    }
+                  }
                   }}
                 >
                   <ListItem>

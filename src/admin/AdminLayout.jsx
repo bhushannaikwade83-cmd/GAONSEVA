@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, CssBaseline, Button, Tooltip } from '@mui/material';
+import { Box, CssBaseline, Button, Tooltip, AppBar, Toolbar, IconButton, Typography, useMediaQuery, useTheme } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import AdminSidebar from './AdminSidebar';
 import { Outlet } from 'react-router-dom';
 import TranslationManager from '../components/TranslationManager';
@@ -7,11 +8,18 @@ import { translatePage, restoreOriginalText, applyStoredTranslations, getTransla
 
 const AdminLayout = () => {
   const drawerWidth = 240;
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [language, setLanguage] = useState(() => {
     const state = getTranslationState();
     return state.currentLanguage || "mr";
   });
   const [isTranslating, setIsTranslating] = useState(false);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
 
   // Initialize translation state on mount
   useEffect(() => {
@@ -36,10 +44,10 @@ const AdminLayout = () => {
         await translatePage('mr', 'en');
         setTimeout(() => {
           retranslatePage();
-        }, 800);
+        }, 200);
         setTimeout(() => {
           retranslatePage();
-        }, 2000);
+        }, 800);
       } else {
         restoreOriginalText();
       }
@@ -53,19 +61,62 @@ const AdminLayout = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', backgroundColor: '#ffffff', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', backgroundColor: '#ffffff', minHeight: '100vh', width: '100%' }}>
       <CssBaseline />
       <TranslationManager />
-      <AdminSidebar drawerWidth={drawerWidth} />
+      
+      {/* Mobile App Bar */}
+      {isMobile && (
+        <AppBar
+          position="fixed"
+          sx={{
+            width: { md: `calc(100% - ${drawerWidth}px)` },
+            ml: { md: `${drawerWidth}px` },
+            backgroundColor: '#ffffff',
+            color: '#1a1a1a',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            zIndex: (theme) => theme.zIndex.drawer + 1
+          }}
+        >
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, color: '#1a1a1a' }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" noWrap component="div" sx={{ color: '#1a1a1a', fontWeight: 600, flexGrow: 1 }}>
+              Admin Panel
+            </Typography>
+          </Toolbar>
+        </AppBar>
+      )}
+
+      <AdminSidebar 
+        drawerWidth={drawerWidth} 
+        mobileOpen={mobileOpen}
+        onMobileClose={handleDrawerToggle}
+      />
+      
       <Box
         component="main"
         sx={{ 
           flexGrow: 1, 
-          p: 3, 
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          p: { xs: 1.5, sm: 2, md: 3 },
+          width: { 
+            xs: '100%',
+            md: `calc(100% - ${drawerWidth}px)` 
+          },
+          mt: { xs: '64px', md: 0 },
           backgroundColor: '#ffffff',
           color: '#1a1a1a',
-          position: 'relative'
+          position: 'relative',
+          minHeight: { xs: 'calc(100vh - 64px)', md: '100vh' },
+          overflowX: 'hidden',
+          pb: { xs: 4, md: 3 }
         }}
       >
         {/* Translation Button - Fixed Top Right */}
@@ -75,8 +126,8 @@ const AdminLayout = () => {
             disabled={isTranslating}
             sx={{
               position: 'fixed',
-              top: 16,
-              right: 16,
+              top: { xs: 72, md: 16 },
+              right: { xs: 12, md: 16 },
               zIndex: 1300,
               fontWeight: 'bold',
               color: 'white',
@@ -84,15 +135,17 @@ const AdminLayout = () => {
                 ? 'linear-gradient(45deg, #999, #bbb)'
                 : 'linear-gradient(45deg, #2196f3, #21cbf3)',
               border: '2px solid transparent',
-              fontSize: '14px',
-              padding: '8px 16px',
+              fontSize: { xs: '11px', md: '14px' },
+              padding: { xs: '6px 12px', md: '8px 16px' },
               borderRadius: '25px',
               cursor: isTranslating ? 'wait' : 'pointer',
               transition: 'all 0.3s ease',
               boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
               opacity: isTranslating ? 0.7 : 1,
-              minWidth: 'auto',
+              minWidth: { xs: '60px', md: 'auto' },
+              minHeight: { xs: '36px', md: 'auto' },
               textTransform: 'none',
+              whiteSpace: 'nowrap',
               '&:hover': {
                 background: isTranslating
                   ? 'linear-gradient(45deg, #999, #bbb)'
@@ -107,8 +160,8 @@ const AdminLayout = () => {
             }}
           >
             {isTranslating
-              ? (language === "mr" ? "Translating..." : "Restoring...")
-              : (language === "mr" ? "मराठी → English" : "English → मराठी")
+              ? (language === "mr" ? (isMobile ? "..." : "Translating...") : (isMobile ? "..." : "Restoring..."))
+              : (language === "mr" ? (isMobile ? "EN" : "मराठी → English") : (isMobile ? "MR" : "English → मराठी"))
             }
           </Button>
         </Tooltip>
