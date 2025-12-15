@@ -1,16 +1,122 @@
-import React from 'react';
-import { Box, Typography, Paper, Grid, Card, CardContent } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Typography, Paper, Grid, Card, CardContent, CircularProgress } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
 import DescriptionIcon from '@mui/icons-material/Description';
 import SettingsIcon from '@mui/icons-material/Settings';
+import { db } from '../firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const AdminPanel = () => {
-  const stats = [
-    { title: 'Total Members', value: '24', icon: <PeopleIcon />, color: '#1976d2' },
-    { title: 'Documents', value: '156', icon: <DescriptionIcon />, color: '#2e7d32' },
-    { title: 'Settings', value: '12', icon: <SettingsIcon />, color: '#ed6c02' },
-  ];
+  const [stats, setStats] = useState([
+    { title: 'Total Members', value: '0', iconType: 'people', color: '#1976d2', loading: true },
+    { title: 'Documents', value: '0', iconType: 'description', color: '#2e7d32', loading: true },
+    { title: 'Pending Complaints', value: '0', iconType: 'settings', color: '#ed6c02', loading: true },
+  ]);
+
+  const getIcon = useCallback((iconType) => {
+    switch (iconType) {
+      case 'people':
+        return <PeopleIcon />;
+      case 'description':
+        return <DescriptionIcon />;
+      case 'settings':
+        return <SettingsIcon />;
+      default:
+        return <PeopleIcon />;
+    }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    let intervalId = null;
+
+    const fetchLiveData = async () => {
+      if (!isMounted) return;
+
+      try {
+        // Fetch Total Members
+        let membersCount = 0;
+        try {
+          const membersRef = collection(db, 'members');
+          const membersSnapshot = await getDocs(membersRef);
+          membersCount = membersSnapshot.size || 0;
+        } catch (error) {
+          console.warn('Error fetching members:', error);
+        }
+
+        // Fetch Documents count from multiple collections
+        const collectionsToCount = [
+          'complaints',
+          'decisions',
+          'awards',
+          'festivals',
+          'facilities',
+          'tourism',
+          'eseva',
+          'programs',
+          'yojana',
+          'batmya',
+        ];
+        
+        let totalDocuments = 0;
+        for (const collName of collectionsToCount) {
+          if (!isMounted) break;
+          try {
+            const collRef = collection(db, collName);
+            const collSnapshot = await getDocs(collRef);
+            totalDocuments += collSnapshot.size || 0;
+          } catch (error) {
+            console.warn(`Error counting ${collName}:`, error);
+          }
+        }
+
+        // Fetch Pending Complaints (filter client-side to avoid composite index)
+        let pendingCount = 0;
+        try {
+          const complaintsRef = collection(db, 'complaints');
+          const allComplaintsSnapshot = await getDocs(complaintsRef);
+          pendingCount = allComplaintsSnapshot.docs.filter(
+            doc => {
+              const data = doc.data();
+              return data && data.status === 'Pending';
+            }
+          ).length;
+        } catch (error) {
+          console.warn('Error fetching complaints:', error);
+        }
+
+        if (isMounted) {
+          setStats([
+            { title: 'Total Members', value: membersCount.toString(), iconType: 'people', color: '#1976d2', loading: false },
+            { title: 'Documents', value: totalDocuments.toString(), iconType: 'description', color: '#2e7d32', loading: false },
+            { title: 'Pending Complaints', value: pendingCount.toString(), iconType: 'settings', color: '#ed6c02', loading: false },
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        if (isMounted) {
+          setStats(prev => prev.map(stat => ({ ...stat, loading: false, value: '0' })));
+        }
+      }
+    };
+
+    // Initial fetch
+    fetchLiveData();
+    
+    // Set up real-time listener - refresh every 30 seconds
+    intervalId = setInterval(() => {
+      if (isMounted) {
+        fetchLiveData();
+      }
+    }, 30000);
+    
+    return () => {
+      isMounted = false;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, []);
 
   return (
     <Box sx={{ p: 4, backgroundColor: '#ffffff', minHeight: '100vh' }}>
@@ -40,9 +146,13 @@ const AdminPanel = () => {
                     <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
                       {stat.title}
                     </Typography>
-                    <Typography variant="h4" sx={{ color: '#1a1a1a', fontWeight: 700 }}>
-                      {stat.value}
-      </Typography>
+                    {stat.loading ? (
+                      <CircularProgress size={24} sx={{ color: stat.color }} />
+                    ) : (
+                      <Typography variant="h4" sx={{ color: '#1a1a1a', fontWeight: 700 }}>
+                        {stat.value}
+                      </Typography>
+                    )}
                   </Box>
                   <Box sx={{ 
                     backgroundColor: `${stat.color}15`,
@@ -53,7 +163,7 @@ const AdminPanel = () => {
                     justifyContent: 'center'
                   }}>
                     <Box sx={{ color: stat.color, fontSize: 32 }}>
-                      {stat.icon}
+                      {getIcon(stat.iconType)}
                     </Box>
                   </Box>
                 </Box>

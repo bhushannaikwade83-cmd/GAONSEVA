@@ -27,6 +27,8 @@ import {
   Divider,
   Tabs,
   Tab,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Add,
@@ -69,6 +71,8 @@ const initialState = {
 };
 
 const ManageComplaints = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -108,10 +112,9 @@ const ManageComplaints = () => {
   const fetchComplaints = async () => {
     setLoading(true);
     try {
-      let q = query(colRef, orderBy('createdAt', 'desc'));
-      if (statusFilter !== 'all') {
-        q = query(colRef, where('status', '==', statusFilter), orderBy('createdAt', 'desc'));
-      }
+      // Always fetch all complaints ordered by createdAt to avoid composite index requirement
+      // Filtering by status is done client-side in filteredComplaints
+      const q = query(colRef, orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
       setComplaints(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     } catch (e) {
@@ -149,32 +152,40 @@ const ManageComplaints = () => {
   };
 
   const handleSave = async () => {
-    if (!current.name.trim() || !current.subject.trim()) {
-      setNotification({ open: true, message: 'नाव आणि विषय आवश्यक आहेत.', severity: 'warning' });
-      return;
+    if (!isEditing) {
+      // For new complaints, validate required fields
+      if (!current.name.trim() || !current.subject.trim()) {
+        setNotification({ open: true, message: 'नाव आणि विषय आवश्यक आहेत.', severity: 'warning' });
+        return;
+      }
     }
 
     try {
-      const payload = {
-        name: current.name,
-        phone: current.phone || '',
-        email: current.email || '',
-        address: current.address || '',
-        category: current.category || '',
-        subject: current.subject,
-        description: current.description || '',
-        status: current.status || 'Pending',
-        priority: current.priority || 'Medium',
-        remarks: current.remarks || '',
-        updatedAt: serverTimestamp(),
-      };
-
       if (!isEditing) {
-        payload.trackingId = generateTrackingId();
-        payload.createdAt = serverTimestamp();
+        // Creating new complaint - save all fields
+        const payload = {
+          name: current.name,
+          phone: current.phone || '',
+          email: current.email || '',
+          address: current.address || '',
+          category: current.category || '',
+          subject: current.subject,
+          description: current.description || '',
+          status: current.status || 'Pending',
+          priority: current.priority || 'Medium',
+          remarks: current.remarks || '',
+          trackingId: generateTrackingId(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        };
         await addDoc(colRef, payload);
         setNotification({ open: true, message: 'तक्रार जोडली गेली.', severity: 'success' });
       } else {
+        // Editing existing complaint - only update status
+        const payload = {
+          status: current.status || 'Pending',
+          updatedAt: serverTimestamp(),
+        };
         await updateDoc(doc(db, 'complaints', current.id), payload);
         setNotification({ open: true, message: 'तक्रार अपडेट झाली.', severity: 'success' });
       }
@@ -254,10 +265,33 @@ const ManageComplaints = () => {
   };
 
   return (
-    <Box sx={{ p: 4, backgroundColor: '#ffffff', minHeight: '100vh' }}>
-      <Paper elevation={2} sx={{ p: 3, backgroundColor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" sx={{ color: '#1a1a1a', fontWeight: 600 }}>
+    <Box sx={{ 
+      p: { xs: 1.5, sm: 2, md: 4 }, 
+      backgroundColor: '#ffffff', 
+      minHeight: '100vh' 
+    }}>
+      <Paper elevation={2} sx={{ 
+        p: { xs: 2, sm: 2.5, md: 3 }, 
+        backgroundColor: '#ffffff', 
+        border: '1px solid #e0e0e0', 
+        borderRadius: 2 
+      }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'flex-start', sm: 'center' }, 
+          mb: { xs: 2, sm: 3 },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 2, sm: 0 }
+        }}>
+          <Typography 
+            variant="h4" 
+            sx={{ 
+              color: '#1a1a1a', 
+              fontWeight: 600,
+              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+            }}
+          >
             तक्रार व्यवस्थापन
           </Typography>
           <Button
@@ -267,6 +301,10 @@ const ManageComplaints = () => {
             sx={{
               backgroundColor: '#1976d2',
               '&:hover': { backgroundColor: '#1565c0' },
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              padding: { xs: '8px 16px', sm: '10px 20px' },
+              minHeight: { xs: '44px', sm: 'auto' },
+              width: { xs: '100%', sm: 'auto' }
             }}
           >
             नवीन तक्रार
@@ -274,50 +312,122 @@ const ManageComplaints = () => {
         </Box>
 
         {/* Stats Cards */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ backgroundColor: '#f5f5f5', border: '1px solid #e0e0e0' }}>
-              <CardContent>
-                <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
+        <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 2, sm: 3 } }}>
+          <Grid item xs={6} sm={6} md={3}>
+            <Card sx={{ 
+              backgroundColor: '#f5f5f5', 
+              border: '1px solid #e0e0e0',
+              height: '100%'
+            }}>
+              <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: '#666', 
+                    mb: 1,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                  }}
+                >
                   एकूण तक्रारी
                 </Typography>
-                <Typography variant="h4" sx={{ color: '#1a1a1a', fontWeight: 700 }}>
+                <Typography 
+                  variant="h4" 
+                  sx={{ 
+                    color: '#1a1a1a', 
+                    fontWeight: 700,
+                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                  }}
+                >
                   {stats.total}
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ backgroundColor: '#fff3e0', border: '1px solid #ffe0b2' }}>
-              <CardContent>
-                <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
+          <Grid item xs={6} sm={6} md={3}>
+            <Card sx={{ 
+              backgroundColor: '#fff3e0', 
+              border: '1px solid #ffe0b2',
+              height: '100%'
+            }}>
+              <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: '#666', 
+                    mb: 1,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                  }}
+                >
                   प्रलंबित
                 </Typography>
-                <Typography variant="h4" sx={{ color: '#f57c00', fontWeight: 700 }}>
+                <Typography 
+                  variant="h4" 
+                  sx={{ 
+                    color: '#f57c00', 
+                    fontWeight: 700,
+                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                  }}
+                >
                   {stats.pending}
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ backgroundColor: '#e3f2fd', border: '1px solid #bbdefb' }}>
-              <CardContent>
-                <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
+          <Grid item xs={6} sm={6} md={3}>
+            <Card sx={{ 
+              backgroundColor: '#e3f2fd', 
+              border: '1px solid #bbdefb',
+              height: '100%'
+            }}>
+              <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: '#666', 
+                    mb: 1,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                  }}
+                >
                   प्रगतीपथावर
                 </Typography>
-                <Typography variant="h4" sx={{ color: '#1976d2', fontWeight: 700 }}>
+                <Typography 
+                  variant="h4" 
+                  sx={{ 
+                    color: '#1976d2', 
+                    fontWeight: 700,
+                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                  }}
+                >
                   {stats.inProgress}
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ backgroundColor: '#e8f5e9', border: '1px solid #c8e6c9' }}>
-              <CardContent>
-                <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
+          <Grid item xs={6} sm={6} md={3}>
+            <Card sx={{ 
+              backgroundColor: '#e8f5e9', 
+              border: '1px solid #c8e6c9',
+              height: '100%'
+            }}>
+              <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: '#666', 
+                    mb: 1,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                  }}
+                >
                   निराकरण झाले
                 </Typography>
-                <Typography variant="h4" sx={{ color: '#2e7d32', fontWeight: 700 }}>
+                <Typography 
+                  variant="h4" 
+                  sx={{ 
+                    color: '#2e7d32', 
+                    fontWeight: 700,
+                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                  }}
+                >
                   {stats.resolved}
                 </Typography>
               </CardContent>
@@ -326,14 +436,27 @@ const ManageComplaints = () => {
         </Grid>
 
         {/* Filter Tabs */}
-        <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ 
+          mb: { xs: 2, sm: 3 }, 
+          borderBottom: 1, 
+          borderColor: 'divider',
+          overflowX: 'auto',
+          '&::-webkit-scrollbar': {
+            height: '4px'
+          }
+        }}>
           <Tabs
             value={statusFilter}
             onChange={(e, newValue) => setStatusFilter(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
             sx={{
               '& .MuiTab-root': {
                 color: '#666',
                 fontWeight: 500,
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                minHeight: { xs: '48px', sm: '64px' },
+                padding: { xs: '8px 12px', sm: '12px 16px' },
                 '&.Mui-selected': {
                   color: '#1976d2',
                   fontWeight: 600,
@@ -369,15 +492,43 @@ const ManageComplaints = () => {
                   },
                 }}
                 secondaryAction={
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <IconButton onClick={() => handleView(complaint)} size="small" sx={{ color: '#1976d2' }}>
-                      <Visibility />
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: { xs: 0.5, sm: 1 },
+                    flexDirection: { xs: 'column', sm: 'row' }
+                  }}>
+                    <IconButton 
+                      onClick={() => handleView(complaint)} 
+                      size="small" 
+                      sx={{ 
+                        color: '#1976d2',
+                        minWidth: { xs: '44px', sm: 'auto' },
+                        minHeight: { xs: '44px', sm: 'auto' }
+                      }}
+                    >
+                      <Visibility fontSize={isMobile ? 'small' : 'medium'} />
                     </IconButton>
-                    <IconButton onClick={() => handleOpen(complaint)} size="small" sx={{ color: '#1976d2' }}>
-                      <Edit />
+                    <IconButton 
+                      onClick={() => handleOpen(complaint)} 
+                      size="small" 
+                      sx={{ 
+                        color: '#1976d2',
+                        minWidth: { xs: '44px', sm: 'auto' },
+                        minHeight: { xs: '44px', sm: 'auto' }
+                      }}
+                    >
+                      <Edit fontSize={isMobile ? 'small' : 'medium'} />
                     </IconButton>
-                    <IconButton onClick={() => handleDelete(complaint.id)} size="small" sx={{ color: '#d32f2f' }}>
-                      <Delete />
+                    <IconButton 
+                      onClick={() => handleDelete(complaint.id)} 
+                      size="small" 
+                      sx={{ 
+                        color: '#d32f2f',
+                        minWidth: { xs: '44px', sm: 'auto' },
+                        minHeight: { xs: '44px', sm: 'auto' }
+                      }}
+                    >
+                      <Delete fontSize={isMobile ? 'small' : 'medium'} />
                     </IconButton>
                   </Box>
                 }
@@ -426,18 +577,40 @@ const ManageComplaints = () => {
       </Paper>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle sx={{ color: '#1a1a1a', fontWeight: 600 }}>
+      <Dialog 
+        open={open} 
+        onClose={() => setOpen(false)} 
+        fullWidth 
+        maxWidth="md"
+        fullScreen={isMobile}
+        PaperProps={{
+          sx: {
+            m: { xs: 0, sm: 2 },
+            maxHeight: { xs: '100vh', sm: '90vh' },
+            borderRadius: { xs: 0, sm: 2 }
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          color: '#1a1a1a', 
+          fontWeight: 600,
+          fontSize: { xs: '1.25rem', sm: '1.5rem' },
+          pb: { xs: 1, sm: 2 }
+        }}>
           {isEditing ? 'तक्रार संपादन' : 'नवीन तक्रार'}
         </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+        <DialogContent sx={{ 
+          px: { xs: 2, sm: 3 },
+          pb: { xs: 2, sm: 3 }
+        }}>
+          <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mt: { xs: 0, sm: 1 } }}>
             <Grid item xs={12} md={6}>
               <TextField
                 label="नाव *"
                 fullWidth
                 value={current.name}
                 onChange={(e) => setCurrent({ ...current, name: e.target.value })}
+                disabled={isEditing}
                 sx={{ mb: 2 }}
               />
             </Grid>
@@ -447,6 +620,7 @@ const ManageComplaints = () => {
                 fullWidth
                 value={current.phone}
                 onChange={(e) => setCurrent({ ...current, phone: e.target.value })}
+                disabled={isEditing}
                 sx={{ mb: 2 }}
               />
             </Grid>
@@ -457,16 +631,18 @@ const ManageComplaints = () => {
                 type="email"
                 value={current.email}
                 onChange={(e) => setCurrent({ ...current, email: e.target.value })}
+                disabled={isEditing}
                 sx={{ mb: 2 }}
               />
             </Grid>
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth sx={{ mb: 2 }}>
+              <FormControl fullWidth sx={{ mb: 2 }} disabled={isEditing}>
                 <InputLabel>श्रेणी</InputLabel>
                 <Select
                   label="श्रेणी"
                   value={current.category}
                   onChange={(e) => setCurrent({ ...current, category: e.target.value })}
+                  disabled={isEditing}
                 >
                   {categories.map((cat) => (
                     <MenuItem key={cat} value={cat}>
@@ -484,6 +660,7 @@ const ManageComplaints = () => {
                 rows={2}
                 value={current.address}
                 onChange={(e) => setCurrent({ ...current, address: e.target.value })}
+                disabled={isEditing}
                 sx={{ mb: 2 }}
               />
             </Grid>
@@ -493,6 +670,7 @@ const ManageComplaints = () => {
                 fullWidth
                 value={current.subject}
                 onChange={(e) => setCurrent({ ...current, subject: e.target.value })}
+                disabled={isEditing}
                 sx={{ mb: 2 }}
               />
             </Grid>
@@ -504,6 +682,7 @@ const ManageComplaints = () => {
                 rows={4}
                 value={current.description}
                 onChange={(e) => setCurrent({ ...current, description: e.target.value })}
+                disabled={isEditing}
                 sx={{ mb: 2 }}
               />
             </Grid>
@@ -524,12 +703,13 @@ const ManageComplaints = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth sx={{ mb: 2 }}>
+              <FormControl fullWidth sx={{ mb: 2 }} disabled={isEditing}>
                 <InputLabel>प्राधान्य</InputLabel>
                 <Select
                   label="प्राधान्य"
                   value={current.priority}
                   onChange={(e) => setCurrent({ ...current, priority: e.target.value })}
+                  disabled={isEditing}
                 >
                   {priorityOptions.map((opt) => (
                     <MenuItem key={opt.value} value={opt.value}>
@@ -558,6 +738,7 @@ const ManageComplaints = () => {
                 rows={3}
                 value={current.remarks || ''}
                 onChange={(e) => setCurrent({ ...current, remarks: e.target.value })}
+                disabled={isEditing}
                 sx={{ mb: 2 }}
                 placeholder="तक्रारीवर टिप्पणी किंवा नोट्स जोडा..."
               />
@@ -582,14 +763,35 @@ const ManageComplaints = () => {
       </Dialog>
 
       {/* View Dialog */}
-      <Dialog open={viewOpen} onClose={() => setViewOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle sx={{ color: '#1a1a1a', fontWeight: 600 }}>
+      <Dialog 
+        open={viewOpen} 
+        onClose={() => setViewOpen(false)} 
+        fullWidth 
+        maxWidth="md"
+        fullScreen={isMobile}
+        PaperProps={{
+          sx: {
+            m: { xs: 0, sm: 2 },
+            maxHeight: { xs: '100vh', sm: '90vh' },
+            borderRadius: { xs: 0, sm: 2 }
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          color: '#1a1a1a', 
+          fontWeight: 600,
+          fontSize: { xs: '1.25rem', sm: '1.5rem' },
+          pb: { xs: 1, sm: 2 }
+        }}>
           तक्रार तपशील
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ 
+          px: { xs: 2, sm: 3 },
+          pb: { xs: 2, sm: 3 }
+        }}>
           {selectedComplaint && (
             <Box>
-              <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mt: { xs: 0, sm: 1 } }}>
                 <Grid item xs={12}>
                   <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                     {getStatusChip(selectedComplaint.status)}

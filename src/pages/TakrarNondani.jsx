@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -21,6 +21,8 @@ import {
   ThemeProvider,
   createTheme,
   InputAdornment,
+  CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import {
   Search,
@@ -34,6 +36,17 @@ import {
   Email,
   LocationOn,
 } from '@mui/icons-material';
+import { db } from '../firebase';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+  limit,
+} from 'firebase/firestore';
 
 const theme = createTheme({
   palette: {
@@ -67,35 +80,14 @@ export default function TakrarNondani() {
   const [trackingId, setTrackingId] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [searchId, setSearchId] = useState('');
-  const [complaints, setComplaints] = useState([
-    {
-      id: 'GP2025001',
-      name: 'रमेश कुमार',
-      category: 'पाणी पुरवठा',
-      subject: 'वॉर्ड ३ मध्ये पाण्याची कमतरता',
-      status: 'प्रगतीपथावर',
-      date: '2025-09-28',
-      priority: 'उच्च'
-    },
-    {
-      id: 'GP2025002',
-      name: 'सुनिता देवी',
-      category: 'रस्ते व पायाभूत सुविधा',
-      subject: 'रस्त्याची दुरुस्ती आवश्यक',
-      status: 'निराकरण झाले',
-      date: '2025-09-25',
-      priority: 'मध्यम'
-    },
-    {
-      id: 'GP2025003',
-      name: 'विजय सिंग',
-      category: 'रस्त्यावरील दिवे',
-      subject: 'रस्त्यावरील दिवे कार्यरत नाहीत',
-      status: 'प्रलंबित',
-      date: '2025-09-30',
-      priority: 'कमी'
-    }
-  ]);
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [trackedComplaint, setTrackedComplaint] = useState(null);
+
+  const complaintsRef = collection(db, 'complaints');
 
   const categories = [
     'पाणी पुरवठा',
@@ -109,37 +101,104 @@ export default function TakrarNondani() {
     'इतर'
   ];
 
-  const handleSubmit = (e) => {
+  // Generate tracking ID
+  const generateTrackingId = () => {
+    const prefix = 'GP';
+    const year = new Date().getFullYear();
+    const random = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${year}${random}`;
+  };
+
+  // Fetch all complaints for public view
+  useEffect(() => {
+    const fetchComplaints = async () => {
+      if (activeTab === 2) {
+        setLoading(true);
+        try {
+          const q = query(complaintsRef, orderBy('createdAt', 'desc'), limit(50));
+          const snapshot = await getDocs(q);
+          const complaintsData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            trackingId: doc.data().trackingId || doc.id,
+            name: doc.data().name || '',
+            category: doc.data().category || '',
+            subject: doc.data().subject || '',
+            description: doc.data().description || '',
+            status: doc.data().status || 'Pending',
+            priority: doc.data().priority || 'Medium',
+            createdAt: doc.data().createdAt,
+            date: doc.data().createdAt?.toDate 
+              ? doc.data().createdAt.toDate().toISOString().split('T')[0]
+              : new Date().toISOString().split('T')[0],
+          }));
+          setComplaints(complaintsData);
+        } catch (error) {
+          console.error('Error fetching complaints:', error);
+          setSnackbar({
+            open: true,
+            message: 'तक्रारी लोड करताना त्रुटी आली',
+            severity: 'error'
+          });
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchComplaints();
+  }, [activeTab]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.phone || !formData.email || !formData.category || !formData.subject || !formData.description) {
-      alert('कृपया सर्व आवश्यक माहिती भरा');
+    if (!formData.name || !formData.phone || !formData.category || !formData.subject || !formData.description) {
+      setSnackbar({
+        open: true,
+        message: 'कृपया सर्व आवश्यक माहिती भरा',
+        severity: 'warning'
+      });
       return;
     }
 
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(formData.phone)) {
-      alert('कृपया १० अंकी मोबाईल नंबर टाका');
+      setSnackbar({
+        open: true,
+        message: 'कृपया १० अंकी मोबाईल नंबर टाका',
+        severity: 'warning'
+      });
       return;
     }
 
-    const newComplaintId = `GP2025${String(complaints.length + 1).padStart(3, '0')}`;
-    
-    const newComplaint = {
-      id: newComplaintId,
-      name: formData.name,
-      category: formData.category,
-      subject: formData.subject,
-      status: 'प्रलंबित',
-      date: new Date().toISOString().split('T')[0],
-      priority: 'मध्यम'
-    };
-    
-    setComplaints([newComplaint, ...complaints]);
-    setTrackingId(newComplaintId);
-    setSubmitted(true);
-    
-    setTimeout(() => {
+    setSubmitting(true);
+    try {
+      const newTrackingId = generateTrackingId();
+      
+      const complaintData = {
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email || '',
+        category: formData.category,
+        subject: formData.subject,
+        description: formData.description,
+        address: formData.address || '',
+        status: 'Pending',
+        priority: 'Medium',
+        trackingId: newTrackingId,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      await addDoc(complaintsRef, complaintData);
+      
+      setTrackingId(newTrackingId);
+      setSubmitted(true);
+      setSnackbar({
+        open: true,
+        message: 'तक्रार यशस्वीरित्या नोंदवली गेली!',
+        severity: 'success'
+      });
+      
+      // Reset form
       setFormData({
         name: '',
         phone: '',
@@ -149,7 +208,16 @@ export default function TakrarNondani() {
         description: '',
         address: ''
       });
-    }, 100);
+    } catch (error) {
+      console.error('Error submitting complaint:', error);
+      setSnackbar({
+        open: true,
+        message: 'तक्रार नोंदवताना त्रुटी आली. कृपया पुन्हा प्रयत्न करा.',
+        severity: 'error'
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -160,35 +228,118 @@ export default function TakrarNondani() {
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    const statusValue = typeof status === 'string' && status.includes('प्रलंबित') ? 'Pending' :
+                        typeof status === 'string' && status.includes('प्रगतीपथावर') ? 'In Progress' :
+                        typeof status === 'string' && status.includes('निराकरण') ? 'Resolved' :
+                        typeof status === 'string' && status.includes('नाकारले') ? 'Rejected' : status;
+    
+    switch(statusValue) {
+      case 'Pending':
       case 'प्रलंबित': return 'warning';
+      case 'In Progress':
       case 'प्रगतीपथावर': return 'info';
+      case 'Resolved':
       case 'निराकरण झाले': return 'success';
+      case 'Rejected':
       case 'नाकारले': return 'error';
       default: return 'default';
     }
   };
 
   const getPriorityColor = (priority) => {
-    switch(priority) {
+    const priorityValue = typeof priority === 'string' && priority.includes('उच्च') ? 'High' :
+                          typeof priority === 'string' && priority.includes('मध्यम') ? 'Medium' :
+                          typeof priority === 'string' && priority.includes('कमी') ? 'Low' : priority;
+    
+    switch(priorityValue) {
+      case 'High':
       case 'उच्च': return 'error';
+      case 'Medium':
       case 'मध्यम': return 'warning';
+      case 'Low':
       case 'कमी': return 'success';
       default: return 'default';
     }
   };
 
-  const trackComplaint = () => {
-    const found = complaints.find(c => c.id === searchId);
-    if (found) {
-      setTrackingId(searchId);
-      setActiveTab(1);
-    } else {
-      alert('तक्रार आयडी सापडला नाही. कृपया तपासून पुन्हा प्रयत्न करा.');
+  const trackComplaint = async () => {
+    if (!searchId.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'कृपया ट्रॅकिंग आयडी टाका',
+        severity: 'warning'
+      });
+      return;
+    }
+
+    setTrackingLoading(true);
+    try {
+      const q = query(complaintsRef, where('trackingId', '==', searchId.toUpperCase()));
+      const snapshot = await getDocs(q);
+      
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        const complaint = {
+          id: doc.id,
+          trackingId: data.trackingId || doc.id,
+          name: data.name || '',
+          phone: data.phone || '',
+          email: data.email || '',
+          category: data.category || '',
+          subject: data.subject || '',
+          description: data.description || '',
+          address: data.address || '',
+          status: data.status || 'Pending',
+          priority: data.priority || 'Medium',
+          createdAt: data.createdAt,
+          date: data.createdAt?.toDate 
+            ? data.createdAt.toDate().toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0],
+        };
+        setTrackedComplaint(complaint);
+        setTrackingId(searchId.toUpperCase());
+        setActiveTab(1);
+      } else {
+        setTrackedComplaint(null);
+        setSnackbar({
+          open: true,
+          message: 'तक्रार आयडी सापडला नाही. कृपया तपासून पुन्हा प्रयत्न करा.',
+          severity: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('Error tracking complaint:', error);
+      setSnackbar({
+        open: true,
+        message: 'तक्रार शोधताना त्रुटी आली',
+        severity: 'error'
+      });
+    } finally {
+      setTrackingLoading(false);
     }
   };
 
-  const trackedComplaint = complaints.find(c => c.id === trackingId);
+  // Map English status to Marathi
+  const getMarathiStatus = (status) => {
+    const statusMap = {
+      'Pending': 'प्रलंबित',
+      'In Progress': 'प्रगतीपथावर',
+      'Resolved': 'निराकरण झाले',
+      'Rejected': 'नाकारले'
+    };
+    return statusMap[status] || status;
+  };
+
+  // Map English priority to Marathi
+  const getMarathiPriority = (priority) => {
+    const priorityMap = {
+      'Low': 'कमी',
+      'Medium': 'मध्यम',
+      'High': 'उच्च'
+    };
+    return priorityMap[priority] || priority;
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -198,57 +349,80 @@ export default function TakrarNondani() {
           sx={{
             background: 'linear-gradient(135deg, #ea580c 0%, #16a34a 100%)',
             color: 'white',
-            py: 6,
-            px: 2,
+            py: { xs: 4, sm: 5, md: 6 },
+            px: { xs: 2, sm: 3 },
             boxShadow: 3,
           }}
         >
           <Container maxWidth="lg">
-            <Typography variant="h3" fontWeight="bold" gutterBottom>
+            <Typography 
+              variant="h3" 
+              fontWeight="bold" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem', md: '3rem' } }}
+            >
               तक्रार नोंदणी व्यवस्था
             </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                opacity: 0.9,
+                fontSize: { xs: '0.9rem', sm: '1rem', md: '1.25rem' }
+              }}
+            >
               आपल्या तक्रारी नोंदवा आणि त्यांचा मागोवा घ्या - २४x७
             </Typography>
           </Container>
         </Box>
 
-        <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 1, sm: 2 } }}>
           {/* Tabs */}
-          <Paper elevation={3} sx={{ mb: 4 }}>
+          <Paper elevation={3} sx={{ mb: { xs: 2, sm: 3, md: 4 }, overflow: 'hidden' }}>
             <Tabs
               value={activeTab}
               onChange={(e, newValue) => setActiveTab(newValue)}
               variant="fullWidth"
               indicatorColor="primary"
               textColor="primary"
+              sx={{
+                '& .MuiTab-root': {
+                  minHeight: { xs: '48px', sm: '64px' },
+                  fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
+                  padding: { xs: '8px 4px', sm: '12px 8px', md: '16px' },
+                }
+              }}
             >
               <Tab 
-                icon={<Description />} 
+                icon={<Description sx={{ fontSize: { xs: '18px', sm: '20px', md: '24px' } }} />} 
                 label="तक्रार नोंदवा" 
                 iconPosition="start"
-                sx={{ py: 2, fontSize: '1rem', fontWeight: 600 }}
+                sx={{ fontWeight: 600 }}
               />
               <Tab 
-                icon={<Search />} 
+                icon={<Search sx={{ fontSize: { xs: '18px', sm: '20px', md: '24px' } }} />} 
                 label="स्थिती तपासा" 
                 iconPosition="start"
-                sx={{ py: 2, fontSize: '1rem', fontWeight: 600 }}
+                sx={{ fontWeight: 600 }}
               />
               <Tab 
                 label="सर्व तक्रारी"
-                sx={{ py: 2, fontSize: '1rem', fontWeight: 600 }}
+                sx={{ fontWeight: 600 }}
               />
             </Tabs>
           </Paper>
 
           {/* Submit Complaint Form */}
           {activeTab === 0 && (
-            <Paper elevation={3} sx={{ p: { xs: 3, md: 5 } }}>
+            <Paper elevation={3} sx={{ p: { xs: 2, sm: 3, md: 5 }, mb: { xs: 2, sm: 3 } }}>
               {submitted ? (
-                <Box textAlign="center" py={6}>
-                  <CheckCircle sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
-                  <Typography variant="h4" fontWeight="bold" gutterBottom>
+                <Box textAlign="center" py={{ xs: 4, sm: 5, md: 6 }}>
+                  <CheckCircle sx={{ fontSize: { xs: 60, sm: 70, md: 80 }, color: 'success.main', mb: 2 }} />
+                  <Typography 
+                    variant="h4" 
+                    fontWeight="bold" 
+                    gutterBottom
+                    sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+                  >
                     तक्रार यशस्वीरित्या नोंदवली गेली!
                   </Typography>
                   <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -258,23 +432,53 @@ export default function TakrarNondani() {
                     elevation={2}
                     sx={{
                       display: 'inline-block',
-                      px: 4,
-                      py: 2,
+                      px: { xs: 2, sm: 3, md: 4 },
+                      py: { xs: 1.5, sm: 2 },
                       my: 2,
                       background: 'linear-gradient(135deg, #fed7aa 0%, #bbf7d0 100%)',
+                      width: { xs: '90%', sm: 'auto' },
+                      maxWidth: '100%',
+                      wordBreak: 'break-word'
                     }}
                   >
-                    <Typography variant="h4" fontWeight="bold" color="primary">
+                    <Typography 
+                      variant="h4" 
+                      fontWeight="bold" 
+                      color="primary"
+                      sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+                    >
                       {trackingId}
                     </Typography>
                   </Paper>
-                  <Typography variant="body1" gutterBottom sx={{ mt: 2 }}>
+                  <Typography 
+                    variant="body1" 
+                    gutterBottom 
+                    sx={{ 
+                      mt: 2,
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
+                      px: { xs: 2, sm: 0 }
+                    }}
+                  >
                     तुम्हाला SMS आणि Email द्वारे अपडेट मिळतील
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ 
+                      mb: 3,
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      px: { xs: 2, sm: 0 }
+                    }}
+                  >
                     कृपया भविष्यात वापरण्यासाठी हा आयडी सेव्ह करा
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: { xs: 1, sm: 2 }, 
+                    justifyContent: 'center', 
+                    flexWrap: 'wrap',
+                    px: { xs: 2, sm: 0 }
+                  }}>
                     <Button
                       variant="contained"
                       size="large"
@@ -283,6 +487,11 @@ export default function TakrarNondani() {
                         setSearchId(trackingId);
                         setActiveTab(1);
                       }}
+                      sx={{
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        padding: { xs: '8px 16px', sm: '10px 20px' },
+                        minWidth: { xs: '140px', sm: 'auto' }
+                      }}
                     >
                       तक्रारीचा मागोवा घ्या
                     </Button>
@@ -290,6 +499,11 @@ export default function TakrarNondani() {
                       variant="outlined"
                       size="large"
                       onClick={() => setSubmitted(false)}
+                      sx={{
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        padding: { xs: '8px 16px', sm: '10px 20px' },
+                        minWidth: { xs: '120px', sm: 'auto' }
+                      }}
                     >
                       नवीन तक्रार
                     </Button>
@@ -297,11 +511,19 @@ export default function TakrarNondani() {
                 </Box>
               ) : (
                 <Box>
-                  <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ mb: 3 }}>
+                  <Typography 
+                    variant="h4" 
+                    fontWeight="bold" 
+                    gutterBottom 
+                    sx={{ 
+                      mb: { xs: 2, sm: 3 },
+                      fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                    }}
+                  >
                     आपली तक्रार नोंदवा
                   </Typography>
                   
-                  <Grid container spacing={3}>
+                  <Grid container spacing={{ xs: 2, sm: 3 }}>
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
@@ -426,13 +648,25 @@ export default function TakrarNondani() {
                     variant="contained"
                     size="large"
                     fullWidth
-                    startIcon={<Send />}
-                    sx={{ mt: 3, py: 1.5, fontSize: '1.1rem' }}
+                    disabled={submitting}
+                    startIcon={submitting ? <CircularProgress size={20} color="inherit" /> : <Send />}
+                    sx={{ 
+                      mt: { xs: 2, sm: 3 }, 
+                      py: { xs: 1.25, sm: 1.5 }, 
+                      fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
+                      minHeight: { xs: '48px', sm: 'auto' }
+                    }}
                   >
-                    तक्रार सबमिट करा
+                    {submitting ? 'सबमिट होत आहे...' : 'तक्रार सबमिट करा'}
                   </Button>
                   
-                  <Alert severity="info" sx={{ mt: 3 }}>
+                  <Alert 
+                    severity="info" 
+                    sx={{ 
+                      mt: { xs: 2, sm: 3 },
+                      fontSize: { xs: '0.875rem', sm: '0.9rem' }
+                    }}
+                  >
                     <strong>सूचना:</strong> तक्रार नोंदवल्यानंतर तुम्हाला ट्रॅकिंग आयडी मिळेल. तुमच्या नोंदणीकृत मोबाईल आणि ईमेलवर अपडेट पाठवले जातील.
                   </Alert>
                 </Box>
@@ -442,12 +676,25 @@ export default function TakrarNondani() {
 
           {/* Track Status */}
           {activeTab === 1 && (
-            <Paper elevation={3} sx={{ p: { xs: 3, md: 5 } }}>
-              <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ mb: 3 }}>
+            <Paper elevation={3} sx={{ p: { xs: 2, sm: 3, md: 5 }, mb: { xs: 2, sm: 3 } }}>
+              <Typography 
+                variant="h4" 
+                fontWeight="bold" 
+                gutterBottom 
+                sx={{ 
+                  mb: { xs: 2, sm: 3 },
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                }}
+              >
                 तक्रारीचा मागोवा घ्या
               </Typography>
               
-              <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                gap: { xs: 1, sm: 2 }, 
+                mb: { xs: 3, sm: 4 },
+                flexDirection: { xs: 'column', sm: 'row' }
+              }}>
                 <TextField
                   fullWidth
                   label="ट्रॅकिंग आयडी"
@@ -455,6 +702,11 @@ export default function TakrarNondani() {
                   onChange={(e) => setSearchId(e.target.value.toUpperCase())}
                   placeholder="उदा. GP2025001"
                   variant="outlined"
+                  sx={{
+                    '& .MuiInputBase-input': {
+                      fontSize: { xs: '16px', sm: '1rem' }
+                    }
+                  }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -466,9 +718,16 @@ export default function TakrarNondani() {
                 <Button
                   variant="contained"
                   onClick={trackComplaint}
-                  sx={{ minWidth: 120, px: 4 }}
+                  disabled={trackingLoading}
+                  sx={{ 
+                    minWidth: { xs: '100%', sm: 120 }, 
+                    px: { xs: 2, sm: 4 },
+                    minHeight: { xs: '48px', sm: 'auto' },
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                  }}
+                  startIcon={trackingLoading ? <CircularProgress size={20} color="inherit" /> : <Search />}
                 >
-                  शोधा
+                  {trackingLoading ? 'शोधत आहे...' : 'शोधा'}
                 </Button>
               </Box>
 
@@ -481,11 +740,11 @@ export default function TakrarNondani() {
                           {trackedComplaint.subject}
                         </Typography>
                         <Typography color="text.secondary">
-                          आयडी: {trackedComplaint.id}
+                          ट्रॅकिंग आयडी: {trackedComplaint.trackingId || trackedComplaint.id}
                         </Typography>
                       </Box>
                       <Chip
-                        label={trackedComplaint.status}
+                        label={getMarathiStatus(trackedComplaint.status)}
                         color={getStatusColor(trackedComplaint.status)}
                         size="medium"
                       />
@@ -518,7 +777,7 @@ export default function TakrarNondani() {
                             प्राधान्यता
                           </Typography>
                           <Chip
-                            label={trackedComplaint.priority}
+                            label={getMarathiPriority(trackedComplaint.priority)}
                             color={getPriorityColor(trackedComplaint.priority)}
                             size="small"
                             sx={{ mt: 0.5 }}
@@ -544,8 +803,8 @@ export default function TakrarNondani() {
                       <Stepper 
                         orientation="vertical" 
                         activeStep={
-                          trackedComplaint.status === 'निराकरण झाले' ? 3 : 
-                          trackedComplaint.status === 'प्रगतीपथावर' ? 1 : 0
+                          trackedComplaint.status === 'Resolved' || trackedComplaint.status === 'निराकरण झाले' ? 3 : 
+                          trackedComplaint.status === 'In Progress' || trackedComplaint.status === 'प्रगतीपथावर' ? 1 : 0
                         }
                       >
                         <Step completed>
@@ -556,7 +815,7 @@ export default function TakrarNondani() {
                             </Typography>
                           </StepContent>
                         </Step>
-                        <Step completed={trackedComplaint.status !== 'प्रलंबित'}>
+                        <Step completed={trackedComplaint.status !== 'Pending' && trackedComplaint.status !== 'प्रलंबित'}>
                           <StepLabel>पुनरावलोकनाधीन</StepLabel>
                           <StepContent>
                             <Typography variant="body2" color="text.secondary">
@@ -564,7 +823,7 @@ export default function TakrarNondani() {
                             </Typography>
                           </StepContent>
                         </Step>
-                        <Step completed={trackedComplaint.status === 'निराकरण झाले'}>
+                        <Step completed={trackedComplaint.status === 'Resolved' || trackedComplaint.status === 'निराकरण झाले'}>
                           <StepLabel>निराकरण झाले</StepLabel>
                           <StepContent>
                             <Typography variant="body2" color="text.secondary">
@@ -598,13 +857,33 @@ export default function TakrarNondani() {
 
           {/* All Complaints */}
           {activeTab === 2 && (
-            <Paper elevation={3} sx={{ p: { xs: 3, md: 5 } }}>
-              <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ mb: 3 }}>
+            <Paper elevation={3} sx={{ p: { xs: 2, sm: 3, md: 5 }, mb: { xs: 2, sm: 3 } }}>
+              <Typography 
+                variant="h4" 
+                fontWeight="bold" 
+                gutterBottom 
+                sx={{ 
+                  mb: { xs: 2, sm: 3 },
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                }}
+              >
                 सर्व तक्रारी
               </Typography>
               
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {complaints.map((complaint) => (
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {complaints.length === 0 ? (
+                    <Box textAlign="center" py={6}>
+                      <Typography variant="h6" color="text.secondary">
+                        अजून कोणतीही तक्रार नोंदवली नाही
+                      </Typography>
+                    </Box>
+                  ) : (
+                    complaints.map((complaint) => (
                   <Card 
                     key={complaint.id} 
                     elevation={2} 
@@ -620,55 +899,83 @@ export default function TakrarNondani() {
                             {complaint.subject}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            आयडी: {complaint.id}
+                            ट्रॅकिंग आयडी: {complaint.trackingId || complaint.id}
                           </Typography>
                         </Box>
                         <Chip
-                          label={complaint.status}
+                          label={getMarathiStatus(complaint.status)}
                           color={getStatusColor(complaint.status)}
                         />
                       </Box>
                       
-                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                      <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ mt: 1 }}>
                         <Grid item xs={6} sm={3}>
-                          <Paper elevation={0} sx={{ p: 1.5, bgcolor: 'grey.100' }}>
-                            <Typography variant="caption" color="text.secondary">
+                          <Paper elevation={0} sx={{ p: { xs: 1, sm: 1.5 }, bgcolor: 'grey.100' }}>
+                            <Typography 
+                              variant="caption" 
+                              color="text.secondary"
+                              sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                            >
                               प्रकार
                             </Typography>
-                            <Typography variant="body2" fontWeight="600">
+                            <Typography 
+                              variant="body2" 
+                              fontWeight="600"
+                              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                            >
                               {complaint.category}
                             </Typography>
                           </Paper>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Paper elevation={0} sx={{ p: 1.5, bgcolor: 'grey.100' }}>
-                            <Typography variant="caption" color="text.secondary">
+                          <Paper elevation={0} sx={{ p: { xs: 1, sm: 1.5 }, bgcolor: 'grey.100' }}>
+                            <Typography 
+                              variant="caption" 
+                              color="text.secondary"
+                              sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                            >
                               तारीख
                             </Typography>
-                            <Typography variant="body2" fontWeight="600">
+                            <Typography 
+                              variant="body2" 
+                              fontWeight="600"
+                              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                            >
                               {complaint.date}
                             </Typography>
                           </Paper>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Paper elevation={0} sx={{ p: 1.5, bgcolor: 'grey.100' }}>
-                            <Typography variant="caption" color="text.secondary">
+                          <Paper elevation={0} sx={{ p: { xs: 1, sm: 1.5 }, bgcolor: 'grey.100' }}>
+                            <Typography 
+                              variant="caption" 
+                              color="text.secondary"
+                              sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                            >
                               प्राधान्यता
                             </Typography>
                             <Chip
-                              label={complaint.priority}
+                              label={getMarathiPriority(complaint.priority)}
                               color={getPriorityColor(complaint.priority)}
                               size="small"
-                              sx={{ mt: 0.5 }}
+                              sx={{ mt: 0.5, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
                             />
                           </Paper>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Paper elevation={0} sx={{ p: 1.5, bgcolor: 'grey.100' }}>
-                            <Typography variant="caption" color="text.secondary">
+                          <Paper elevation={0} sx={{ p: { xs: 1, sm: 1.5 }, bgcolor: 'grey.100' }}>
+                            <Typography 
+                              variant="caption" 
+                              color="text.secondary"
+                              sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                            >
                               तक्रारकर्ता
                             </Typography>
-                            <Typography variant="body2" fontWeight="600">
+                            <Typography 
+                              variant="body2" 
+                              fontWeight="600"
+                              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                            >
                               {complaint.name}
                             </Typography>
                           </Paper>
@@ -676,8 +983,10 @@ export default function TakrarNondani() {
                       </Grid>
                     </CardContent>
                   </Card>
-                ))}
-              </Box>
+                    ))
+                  )}
+                </Box>
+              )}
             </Paper>
           )}
 
@@ -685,16 +994,21 @@ export default function TakrarNondani() {
           <Paper
             elevation={4}
             sx={{
-              mt: 4,
-              p: 4,
+              mt: { xs: 2, sm: 3, md: 4 },
+              p: { xs: 2, sm: 3, md: 4 },
               background: 'linear-gradient(135deg, #ea580c 0%, #16a34a 100%)',
               color: 'white',
             }}
           >
-            <Typography variant="h5" fontWeight="bold" gutterBottom>
+            <Typography 
+              variant="h5" 
+              fontWeight="bold" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' } }}
+            >
               मदतीसाठी संपर्क करा
             </Typography>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mt: 1 }}>
               <Grid item xs={12} md={4}>
                 <Box sx={{ 
                   display: 'flex', 
@@ -759,6 +1073,22 @@ export default function TakrarNondani() {
           </Paper>
         </Container>
       </Box>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </ThemeProvider>
   );
 }

@@ -5,7 +5,8 @@ import {
   Badge, Tooltip, IconButton, Avatar, Chip, useMediaQuery, useTheme
 } from '@mui/material';
 import { signOut } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -65,8 +66,8 @@ const AdminSidebar = ({ drawerWidth, mobileOpen, onMobileClose }) => {
   const [openHome, setOpenHome] = useState(true);
   const [openExtra, setOpenExtra] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [pendingComplaints] = useState(5);
-  const [notifications] = useState(3);
+  const [pendingComplaints, setPendingComplaints] = useState(0);
+  const [notifications, setNotifications] = useState(0);
 
   // Restore persisted open states
   useEffect(() => {
@@ -84,6 +85,53 @@ const AdminSidebar = ({ drawerWidth, mobileOpen, onMobileClose }) => {
     const state = { openGrampanchayat, openNirdeshika, openPrograms, openYojana, openHome, openExtra };
     localStorage.setItem('adminSidebarOpenStates', JSON.stringify(state));
   }, [openGrampanchayat, openNirdeshika, openPrograms, openYojana, openHome, openExtra]);
+
+  // Fetch live data for complaints and notifications
+  useEffect(() => {
+    const fetchLiveData = async () => {
+      try {
+        // Fetch all complaints and filter client-side to avoid composite index requirement
+        const complaintsRef = collection(db, 'complaints');
+        const allComplaintsSnapshot = await getDocs(complaintsRef);
+        const pendingCount = allComplaintsSnapshot.docs.filter(
+          doc => doc.data().status === 'Pending'
+        ).length;
+        setPendingComplaints(pendingCount);
+
+        // Fetch notifications (check if there's a notifications collection, otherwise use messages)
+        try {
+          const notificationsRef = collection(db, 'notifications');
+          const notificationsSnapshot = await getDocs(notificationsRef);
+          // Count unread notifications or all notifications
+          const unreadCount = notificationsSnapshot.docs.filter(
+            doc => !doc.data().read || doc.data().read === false
+          ).length;
+          setNotifications(unreadCount || notificationsSnapshot.size);
+        } catch (error) {
+          // If notifications collection doesn't exist, try messages
+          try {
+            const messagesRef = collection(db, 'home');
+            const messagesDoc = await getDocs(messagesRef);
+            if (!messagesDoc.empty) {
+              // Count new messages or use a default
+              setNotifications(messagesDoc.size);
+            }
+          } catch (err) {
+            console.warn('Could not fetch notifications:', err);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching live data:', error);
+      }
+    };
+
+    fetchLiveData();
+    
+    // Set up real-time listener - refresh every 30 seconds
+    const interval = setInterval(fetchLiveData, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = async () => {
     try {
