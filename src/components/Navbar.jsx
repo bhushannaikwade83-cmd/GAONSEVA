@@ -714,32 +714,40 @@ const Navbar = () => {
   };
 
   const toggleLanguage = async () => {
-    if (isTranslating) return; // Prevent multiple simultaneous translations
+    if (isTranslating) {
+      console.log('Translation already in progress');
+      return; // Prevent multiple simultaneous translations
+    }
     
     setIsTranslating(true);
     const newLanguage = language === "mr" ? "en" : "mr";
     
     try {
+      console.log(`Switching language to: ${newLanguage}`);
       if (newLanguage === "en") {
         // Translate page to English (includes static content) - immediate
+        console.log('Calling translatePage...');
         await translatePage('mr', 'en');
+        console.log('translatePage completed');
         
         // Quick follow-up for Firebase data (minimal delays for speed)
         setTimeout(() => {
           retranslatePage();
-        }, 200); // Reduced to 200ms for faster response
+        }, 500); // Increased to 500ms to allow initial translation to complete
         
         setTimeout(() => {
           retranslatePage();
-        }, 800); // Reduced to 800ms
+        }, 1500); // Increased to 1500ms
       } else {
         // Restore original Marathi text
+        console.log('Restoring original text...');
         restoreOriginalText();
       }
       setLanguage(newLanguage);
+      console.log(`Language switched to: ${newLanguage}`);
     } catch (error) {
       console.error('Language toggle error:', error);
-      alert('Translation failed. Please try again.');
+      alert(`Translation failed: ${error.message || 'Unknown error'}. Please check console for details.`);
     } finally {
       setIsTranslating(false);
     }

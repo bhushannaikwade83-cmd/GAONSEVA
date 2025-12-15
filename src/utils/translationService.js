@@ -46,7 +46,15 @@ let translationState = {
   observer: null,
   checkInterval: null,
   isTranslating: false, // Flag to prevent recursive calls
-  lastTranslationTime: 0 // Track last translation to prevent rapid calls
+  lastTranslationTime: 0, // Track last translation to prevent rapid calls
+  activeRequests: new Set(), // Track active requests for cancellation
+  requestQueue: [], // Queue for managing concurrent requests
+  maxConcurrentRequests: 2, // Reduced to 2 to prevent resource exhaustion
+  requestCache: new Map(), // Cache translations to avoid duplicate requests
+  errorCount: 0, // Track consecutive errors
+  maxErrors: 5, // Stop making requests after 5 consecutive errors
+  circuitBreakerOpen: false, // Circuit breaker to stop requests on too many errors
+  lastErrorTime: 0
 };
 
 // Initialize translation state from localStorage
@@ -83,68 +91,187 @@ const saveTranslationState = () => {
 initTranslationState();
 
 /**
+ * Check if translation API is available
+ * @returns {Promise<boolean>} True if API is available
+ */
+const checkApiHealth = async () => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+    
+    const response = await fetch(`${API_BASE_URL}/api/health`, {
+      method: 'GET',
+      cache: 'no-cache',
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.warn('Translation API health check timeout');
+    } else {
+      console.warn('Translation API health check failed:', error);
+    }
+    return false;
+  }
+};
+
+/**
  * Translate text using the backend API
  * @param {string} text - Text to translate
  * @param {string} sourceLanguage - Source language code (default: 'mr')
  * @param {string} targetLanguage - Target language code (default: 'en')
  * @returns {Promise<string>} Translated text
  */
+// Request queue manager
+const processRequestQueue = async () => {
+  while (translationState.requestQueue.length > 0 && 
+         translationState.activeRequests.size < translationState.maxConcurrentRequests) {
+    const { resolve, reject, requestFn } = translationState.requestQueue.shift();
+    const requestId = Symbol('request');
+    translationState.activeRequests.add(requestId);
+    
+    try {
+      const result = await requestFn();
+      resolve(result);
+    } catch (error) {
+      reject(error);
+    } finally {
+      translationState.activeRequests.delete(requestId);
+      // Process next item in queue
+      if (translationState.requestQueue.length > 0) {
+        processRequestQueue();
+      }
+    }
+  }
+};
+
+// Add request to queue
+const queueRequest = (requestFn) => {
+  return new Promise((resolve, reject) => {
+    // Limit queue size to prevent memory issues
+    const maxQueueSize = 50;
+    if (translationState.requestQueue.length >= maxQueueSize) {
+      console.warn('Translation request queue is full, rejecting request');
+      reject(new Error('Translation queue is full. Please try again later.'));
+      return;
+    }
+    
+    translationState.requestQueue.push({ resolve, reject, requestFn });
+    processRequestQueue();
+  });
+};
+
+// Cancel all active requests
+const cancelAllRequests = () => {
+  translationState.requestQueue = [];
+  // Note: Active requests will complete, but new ones won't start
+};
+
 export const translateText = async (text, sourceLanguage = 'mr', targetLanguage = 'en') => {
   if (!text || text.trim() === '') {
     return text;
   }
 
-  try {
-    // Mobile-specific timeout (longer for slower connections)
-    const timeout = isMobileDevice ? 10000 : 5000;
-    const mobileController = new AbortController();
-    const mobileTimeoutId = setTimeout(() => mobileController.abort(), timeout);
-    
-    const response = await fetch(`${API_BASE_URL}/api/translate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: text.trim(),
-        sourceLanguage,
-        targetLanguage,
-      }),
-      signal: mobileController.signal,
-      // Mobile-specific fetch options
-      cache: 'no-cache',
-      mode: 'cors',
-      credentials: 'omit',
-    });
-    
-    clearTimeout(mobileTimeoutId);
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Translation API error:', errorData);
-      throw new Error(errorData.error || 'Translation failed');
-    }
-
-    const data = await response.json();
-    return data.translatedText || text;
-  } catch (error) {
-    clearTimeout(mobileTimeoutId);
-    if (error.name === 'AbortError') {
-      console.error('Translation request timeout');
-    } else if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
-      console.error('Translation API not reachable. Check if server is running and CORS is configured.');
-      // On mobile, provide more helpful error message
-      if (isMobileDevice) {
-        console.warn('Mobile device detected. API URL:', API_BASE_URL);
-        console.warn('Ensure API server is accessible from mobile network.');
-        console.warn('If testing on mobile, ensure server is running and accessible at:', API_BASE_URL);
-      }
+  // Check circuit breaker
+  if (translationState.circuitBreakerOpen) {
+    const timeSinceLastError = Date.now() - translationState.lastErrorTime;
+    // Reset circuit breaker after 30 seconds
+    if (timeSinceLastError > 30000) {
+      translationState.circuitBreakerOpen = false;
+      translationState.errorCount = 0;
+      console.log('Circuit breaker reset, retrying...');
     } else {
-      console.error('Translation error:', error);
+      console.warn('Circuit breaker is open, skipping translation request');
+      return text; // Return original text
     }
-    // Return original text if translation fails
-    return text;
   }
+
+  // Check cache first
+  const cacheKey = `${text.trim()}_${sourceLanguage}_${targetLanguage}`;
+  if (translationState.requestCache.has(cacheKey)) {
+    return translationState.requestCache.get(cacheKey);
+  }
+
+  // Queue the request to limit concurrency
+  return queueRequest(async () => {
+    try {
+      // Mobile-specific timeout (longer for slower connections)
+      const timeout = isMobileDevice ? 10000 : 5000;
+      const mobileController = new AbortController();
+      const mobileTimeoutId = setTimeout(() => mobileController.abort(), timeout);
+      
+      const response = await fetch(`${API_BASE_URL}/api/translate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text.trim(),
+          sourceLanguage,
+          targetLanguage,
+        }),
+        signal: mobileController.signal,
+        // Mobile-specific fetch options
+        cache: 'no-cache',
+        mode: 'cors',
+        credentials: 'omit',
+      });
+      
+      clearTimeout(mobileTimeoutId);
+
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        console.error('Translation API error:', errorData);
+        throw new Error(errorData.error || 'Translation failed');
+      }
+
+      const data = await response.json();
+      const translated = data.translatedText || text;
+      
+      // Cache the translation
+      translationState.requestCache.set(cacheKey, translated);
+      
+      // Reset error count on success
+      translationState.errorCount = 0;
+      translationState.circuitBreakerOpen = false;
+      
+      return translated;
+    } catch (error) {
+      clearTimeout(mobileTimeoutId);
+      
+      // Increment error count
+      translationState.errorCount++;
+      translationState.lastErrorTime = Date.now();
+      
+      // Open circuit breaker if too many errors
+      if (translationState.errorCount >= translationState.maxErrors) {
+        translationState.circuitBreakerOpen = true;
+        console.error(`Circuit breaker opened after ${translationState.errorCount} consecutive errors. Stopping translation requests for 30 seconds.`);
+        alert('Translation service is experiencing issues. Please try again in a moment.');
+      }
+      
+      if (error.name === 'AbortError') {
+        console.error('Translation request timeout');
+      } else if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('ERR_INSUFFICIENT_RESOURCES'))) {
+        console.error('Translation API not reachable. Check if server is running and CORS is configured.');
+        if (isMobileDevice) {
+          console.warn('Mobile device detected. API URL:', API_BASE_URL);
+        }
+      } else {
+        console.error('Translation error:', error);
+      }
+      
+      // Return original text if translation fails
+      return text;
+    }
+  });
 };
 
 /**
@@ -172,22 +299,42 @@ export const translateBatch = async (texts, sourceLanguage = 'mr', targetLanguag
     // Handle case where separator might be translated slightly differently
     const parts = translated.split(separator);
     
-    // If split didn't work as expected, try individual translation
+    // If split didn't work as expected, try smaller batches instead of individual
     if (parts.length !== texts.length) {
-      console.warn('Batch translation split mismatch, translating individually');
-      return Promise.all(texts.map(text => translateText(text, sourceLanguage, targetLanguage)));
+      console.warn('Batch translation split mismatch, trying smaller batches');
+      // Split into smaller batches of 3 instead of individual
+      const smallBatchSize = 3;
+      const smallBatches = [];
+      for (let i = 0; i < texts.length; i += smallBatchSize) {
+        smallBatches.push(texts.slice(i, i + smallBatchSize));
+      }
+      
+      // Process small batches sequentially to avoid too many requests
+      const results = [];
+      for (const smallBatch of smallBatches) {
+        if (translationState.circuitBreakerOpen) {
+          // Fill remaining with original texts
+          results.push(...smallBatch);
+          break;
+        }
+        try {
+          const smallBatchTranslated = await translateBatch(smallBatch, sourceLanguage, targetLanguage);
+          results.push(...smallBatchTranslated);
+        } catch (err) {
+          // On error, use original texts for this batch
+          results.push(...smallBatch);
+        }
+      }
+      return results;
     }
     
     return parts.map(t => t.trim());
   } catch (error) {
     console.error('Batch translation error:', error);
-    // Fallback to individual translations
-    try {
-      return Promise.all(texts.map(text => translateText(text, sourceLanguage, targetLanguage)));
-    } catch (fallbackError) {
-      console.error('Fallback translation error:', fallbackError);
-      return texts; // Return original texts on error
-    }
+    // Don't fallback to individual translations - return original texts
+    // This prevents creating hundreds of requests
+    console.warn('Returning original texts due to batch translation error');
+    return texts; // Return original texts on error
   }
 };
 
@@ -297,9 +444,28 @@ export const getTranslationState = () => {
  * @returns {Promise<void>}
  */
 export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en') => {
+  // Prevent multiple simultaneous translations
+  if (translationState.isTranslating) {
+    console.log('Translation already in progress, skipping...');
+    return;
+  }
+
+  translationState.isTranslating = true;
+
   try {
+    console.log('Starting translation...');
+    console.log(`API Base URL: ${API_BASE_URL}`);
+    
+    // Check if API is available
+    const apiAvailable = await checkApiHealth();
+    if (!apiAvailable) {
+      throw new Error(`Translation API is not available at ${API_BASE_URL}. Please ensure the server is running on port 5000.`);
+    }
+    console.log('Translation API is available');
+
     // Extract all visible text immediately (including static content)
     const textNodes = extractVisibleText();
+    console.log(`Found ${textNodes.length} text nodes`);
     
     // Filter out text that looks like it's already in English (basic heuristic)
     const marathiTexts = textNodes.filter(({ text }) => {
@@ -313,6 +479,7 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
       // Still set up auto-translation for future content
       translationState.isTranslated = true;
       translationState.currentLanguage = targetLanguage;
+      translationState.isTranslating = false;
       saveTranslationState();
       setupAutoTranslation();
       return;
@@ -347,19 +514,27 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
     // Get unique texts to avoid translating duplicates
     const uniqueTexts = Array.from(new Set(marathiTexts.map(({ text }) => text)));
     
-    // Optimize: Use larger batches and process in parallel for maximum speed
-    // Google Translate API can handle up to ~5000 characters per request efficiently
-    const batchSize = 30; // Larger batch size for fewer API calls
+    // Optimize: Use smaller batches to prevent resource exhaustion
+    // Reduced batch size to prevent too many concurrent requests
+    const batchSize = 10; // Reduced from 30 to prevent resource exhaustion
     const batches = [];
     for (let i = 0; i < uniqueTexts.length; i += batchSize) {
       batches.push(uniqueTexts.slice(i, i + batchSize));
     }
+    
+    console.log(`Processing ${batches.length} batches of ${batchSize} texts each`);
 
     const translations = new Map();
     
-    // Process all batches in parallel with immediate application (streaming)
+    // Process batches sequentially to prevent resource exhaustion
+    // Process 2 batches at a time instead of all at once
     let firstBatchCompleted = false;
-    const batchPromises = batches.map(async (batch, batchIndex) => {
+    const maxConcurrentBatches = 2; // Process only 2 batches at a time
+    
+    // Process batches in chunks to limit concurrency
+    for (let i = 0; i < batches.length; i += maxConcurrentBatches) {
+      const batchChunk = batches.slice(i, i + maxConcurrentBatches);
+      const batchPromises = batchChunk.map(async (batch, batchIndex) => {
       try {
         const translated = await translateBatch(batch, sourceLanguage, targetLanguage);
         const batchTranslations = new Map();
@@ -389,13 +564,48 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
         
         return batchTranslations;
       } catch (error) {
-        console.error(`Batch ${batchIndex} translation error:`, error);
+        console.error(`Batch ${i + batchIndex} translation error:`, error);
+        // If circuit breaker is open, stop processing
+        if (translationState.circuitBreakerOpen) {
+          throw new Error('Circuit breaker is open, stopping translation');
+        }
         return new Map();
       }
-    });
-    
-    // Wait for all batches to complete
-    await Promise.all(batchPromises);
+      });
+      
+      // Wait for current chunk to complete before processing next
+      const chunkResults = await Promise.all(batchPromises);
+      
+      // Merge results
+      chunkResults.forEach(batchTranslations => {
+        batchTranslations.forEach((translated, original) => {
+          translations.set(original, translated);
+        });
+      });
+      
+      // Apply translations as they arrive
+      originalTexts.forEach(({ textNode, originalText }) => {
+        const translated = translations.get(originalText);
+        if (translated && translated !== originalText) {
+          textNode.textContent = translated;
+        }
+      });
+      
+      // Remove loading indicator after first chunk
+      if (!firstBatchCompleted && i === 0) {
+        firstBatchCompleted = true;
+        const loadingEl = document.getElementById('translation-loading');
+        if (loadingEl) {
+          loadingEl.remove();
+        }
+      }
+      
+      // Check if circuit breaker opened during processing
+      if (translationState.circuitBreakerOpen) {
+        console.error('Circuit breaker opened, stopping batch processing');
+        break;
+      }
+    }
     
     // Ensure loading indicator is removed even if first batch didn't complete
     const loadingEl = document.getElementById('translation-loading');
@@ -432,7 +642,16 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
     if (loadingEl) {
       loadingEl.remove();
     }
-    alert('Translation failed. Please try again.');
+    
+    // Show user-friendly error message
+    const errorMsg = error.message || 'Translation failed';
+    if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError')) {
+      alert('Translation service is not available. Please check if the server is running on port 5000.');
+    } else {
+      alert(`Translation failed: ${errorMsg}. Please try again.`);
+    }
+  } finally {
+    translationState.isTranslating = false;
   }
 };
 
@@ -543,28 +762,46 @@ const translateNewContent = async (textNodes) => {
   try {
     if (textNodes.length === 0) return;
 
+    // Check circuit breaker
+    if (translationState.circuitBreakerOpen) {
+      console.warn('Circuit breaker is open, skipping new content translation');
+      return;
+    }
+
     // Get unique texts
     const uniqueTexts = Array.from(new Set(textNodes.map(({ text }) => text)));
     
-    // Translate in parallel batches for speed (larger batches for fewer API calls)
-    const batchSize = 30; // Larger batch size for faster processing
+    // Limit the number of texts to translate at once to prevent resource exhaustion
+    const maxTexts = 20; // Limit to 20 texts at a time
+    const textsToTranslate = uniqueTexts.slice(0, maxTexts);
+    
+    // Translate in smaller batches to prevent resource exhaustion
+    const batchSize = 5; // Reduced batch size
     const batches = [];
-    for (let i = 0; i < uniqueTexts.length; i += batchSize) {
-      batches.push(uniqueTexts.slice(i, i + batchSize));
+    for (let i = 0; i < textsToTranslate.length; i += batchSize) {
+      batches.push(textsToTranslate.slice(i, i + batchSize));
     }
 
     const newTranslations = new Map();
     
-    // Process all batches in parallel
-    const batchPromises = batches.map(async (batch) => {
-      const translated = await translateBatch(batch, 'mr', 'en');
-      return batch.map((text, index) => ({
-        text,
-        translated: translated[index] || text
-      }));
-    });
-    
-    const results = await Promise.all(batchPromises);
+    // Process batches sequentially to prevent resource exhaustion
+    for (const batch of batches) {
+      // Check circuit breaker before each batch
+      if (translationState.circuitBreakerOpen) {
+        console.warn('Circuit breaker opened during new content translation');
+        break;
+      }
+      
+      try {
+        const translated = await translateBatch(batch, 'mr', 'en');
+        batch.forEach((text, index) => {
+          newTranslations.set(text, translated[index] || text);
+        });
+      } catch (error) {
+        console.error('Error translating batch in new content:', error);
+        // Continue with next batch instead of failing completely
+      }
+    }
     
     // Combine all translations
     results.forEach(batchResults => {
@@ -701,6 +938,11 @@ export const stopAutoTranslation = () => {
  */
 export const retranslatePage = async () => {
   if (!translationState.isTranslated) {
+    return;
+  }
+
+  // Don't retranslate if main translation is in progress
+  if (translationState.isTranslating) {
     return;
   }
 
