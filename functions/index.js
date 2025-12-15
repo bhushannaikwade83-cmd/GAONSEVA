@@ -45,9 +45,10 @@ exports.translateText = functions.https.onCall(async (data, context) => {
     const textToTranslate = text.length > maxLength ? text.substring(0, maxLength) : text;
 
     // Get Google Translate API key from environment
-    // Try environment variable first (Firebase Functions v2), then config (v1)
+    // Try environment variable first (Firebase Functions v2), then config (v1), then fallback
     const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY || 
-                   functions.config().google?.translate_api_key;
+                   functions.config().google?.translate_api_key ||
+                   'AIzaSyDKGPiONVptCPAzPhioVh5hnDG2Q5MQTrA'; // Fallback API key
     
     if (!apiKey) {
       throw new functions.https.HttpsError(
@@ -140,9 +141,10 @@ exports.translateBatch = functions.https.onCall(async (data, context) => {
     const textsToTranslate = texts.slice(0, maxBatchSize);
 
     // Get Google Translate API key
-    // Try environment variable first (Firebase Functions v2), then config (v1)
+    // Try environment variable first (Firebase Functions v2), then config (v1), then fallback
     const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY || 
-                   functions.config().google?.translate_api_key;
+                   functions.config().google?.translate_api_key ||
+                   'AIzaSyDKGPiONVptCPAzPhioVh5hnDG2Q5MQTrA'; // Fallback API key
     
     if (!apiKey) {
       throw new functions.https.HttpsError(
@@ -219,6 +221,17 @@ exports.translateBatch = functions.https.onCall(async (data, context) => {
  * Health check endpoint
  */
 exports.health = functions.https.onRequest((req, res) => {
+  // Set CORS headers
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  
   res.json({
     status: 'ok',
     service: 'Translation Cloud Function',

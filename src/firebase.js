@@ -24,6 +24,9 @@ const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app); // Firestore सुरु करा
 const storage = getStorage(app); // Storage सुरु करा
+// Initialize Firebase Functions with default region (us-central1)
+// If your functions are deployed to a different region, specify it here:
+// const functions = getFunctions(app, 'asia-south1');
 const functions = getFunctions(app); // Firebase Functions सुरु करा
 
 export { auth, db, storage, analytics, functions, httpsCallable }; // db, storage, analytics, functions आणि httpsCallable एक्सपोर्ट करा

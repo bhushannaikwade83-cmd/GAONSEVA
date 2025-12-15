@@ -170,6 +170,11 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
         targetLanguage,
       });
       
+      // Check if result and result.data exist
+      if (!result || !result.data) {
+        throw new Error('Invalid response from translation function');
+      }
+      
       const translated = result.data.translatedText || text;
       
       // Cache the translation
@@ -236,15 +241,33 @@ export const translateBatch = async (texts, sourceLanguage = 'mr', targetLanguag
       targetLanguage,
     });
     
+    // Check if result and result.data exist
+    if (!result || !result.data) {
+      console.warn('Invalid response from batch translation function, returning original texts');
+      return texts;
+    }
+    
+    // Ensure result.data is an array
+    if (!Array.isArray(result.data)) {
+      console.warn('Batch translation result is not an array, returning original texts');
+      return texts;
+    }
+    
     return result.data || texts; // Return translated texts or original if failed
   } catch (error) {
     console.error('Batch translation error:', error);
     
     // Handle Firebase Functions errors
     if (error.code === 'functions/unavailable') {
-      console.error('Batch translation function is unavailable');
+      console.error('Batch translation function is unavailable - function may not be deployed');
     } else if (error.code === 'functions/invalid-argument') {
       console.error('Invalid argument passed to batch translation function');
+    } else if (error.code === 'functions/failed-precondition') {
+      console.error('Translation function configuration error - API key may not be set');
+    } else if (error.code === 'functions/internal') {
+      console.error('Internal error in translation function - check function logs');
+    } else if (error.message && error.message.includes('CORS')) {
+      console.error('CORS error - function may not be deployed or configured correctly');
     }
     
     // Return original texts on error
@@ -728,13 +751,6 @@ const translateNewContent = async (textNodes) => {
         // Continue with next batch instead of failing completely
       }
     }
-    
-    // Combine all translations
-    results.forEach(batchResults => {
-      batchResults.forEach(({ text, translated }) => {
-        newTranslations.set(text, translated);
-      });
-    });
 
     // Add new translations to global state
     newTranslations.forEach((en, mr) => {
