@@ -88,36 +88,65 @@ const AdminSidebar = ({ drawerWidth, mobileOpen, onMobileClose }) => {
 
   // Fetch live data for complaints and notifications
   useEffect(() => {
+    let isMounted = true;
+    let intervalId = null;
+
     const fetchLiveData = async () => {
+      if (!isMounted) return;
+
       try {
+        // Add timeout to prevent hanging
+        const fetchWithTimeout = async (promise, timeoutMs = 8000) => {
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Fetch timeout')), timeoutMs)
+          );
+          return Promise.race([promise, timeoutPromise]);
+        };
+
         // Fetch all complaints and filter client-side to avoid composite index requirement
-        const complaintsRef = collection(db, 'complaints');
-        const allComplaintsSnapshot = await getDocs(complaintsRef);
-        const pendingCount = allComplaintsSnapshot.docs.filter(
-          doc => doc.data().status === 'Pending'
-        ).length;
-        setPendingComplaints(pendingCount);
+        try {
+          const complaintsRef = collection(db, 'complaints');
+          const allComplaintsSnapshot = await fetchWithTimeout(getDocs(complaintsRef));
+          if (isMounted) {
+            const pendingCount = allComplaintsSnapshot.docs.filter(
+              doc => {
+                const data = doc.data();
+                return data && data.status === 'Pending';
+              }
+            ).length;
+            setPendingComplaints(pendingCount);
+          }
+        } catch (error) {
+          console.warn('Error fetching complaints:', error);
+        }
 
         // Fetch notifications (check if there's a notifications collection, otherwise use messages)
-        try {
-          const notificationsRef = collection(db, 'notifications');
-          const notificationsSnapshot = await getDocs(notificationsRef);
-          // Count unread notifications or all notifications
-          const unreadCount = notificationsSnapshot.docs.filter(
-            doc => !doc.data().read || doc.data().read === false
-          ).length;
-          setNotifications(unreadCount || notificationsSnapshot.size);
-        } catch (error) {
-          // If notifications collection doesn't exist, try messages
+        if (isMounted) {
           try {
-            const messagesRef = collection(db, 'home');
-            const messagesDoc = await getDocs(messagesRef);
-            if (!messagesDoc.empty) {
-              // Count new messages or use a default
-              setNotifications(messagesDoc.size);
+            const notificationsRef = collection(db, 'notifications');
+            const notificationsSnapshot = await fetchWithTimeout(getDocs(notificationsRef));
+            if (isMounted) {
+              // Count unread notifications or all notifications
+              const unreadCount = notificationsSnapshot.docs.filter(
+                doc => {
+                  const data = doc.data();
+                  return data && (!data.read || data.read === false);
+                }
+              ).length;
+              setNotifications(unreadCount || notificationsSnapshot.size);
             }
-          } catch (err) {
-            console.warn('Could not fetch notifications:', err);
+          } catch (error) {
+            // If notifications collection doesn't exist, try messages
+            try {
+              const messagesRef = collection(db, 'home');
+              const messagesDoc = await fetchWithTimeout(getDocs(messagesRef));
+              if (isMounted && !messagesDoc.empty) {
+                // Count new messages or use a default
+                setNotifications(messagesDoc.size);
+              }
+            } catch (err) {
+              console.warn('Could not fetch notifications:', err);
+            }
           }
         }
       } catch (error) {
@@ -128,9 +157,18 @@ const AdminSidebar = ({ drawerWidth, mobileOpen, onMobileClose }) => {
     fetchLiveData();
     
     // Set up real-time listener - refresh every 30 seconds
-    const interval = setInterval(fetchLiveData, 30000);
+    intervalId = setInterval(() => {
+      if (isMounted) {
+        fetchLiveData();
+      }
+    }, 30000);
     
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, []);
 
   const handleLogout = async () => {

@@ -32,15 +32,16 @@ const TranslationManager = () => {
     }
   }, [location.pathname]);
 
-  // Also set up periodic checks for Firebase data
+  // Also set up periodic checks for Firebase data (less frequent to prevent performance issues)
   useEffect(() => {
     const state = getTranslationState();
     
     if (state.isTranslated && state.currentLanguage === 'en') {
       // Periodic check for new content (Firebase data, lazy-loaded content, etc.)
+      // Increased interval to prevent performance issues
       const interval = setInterval(() => {
         retranslatePage();
-      }, 3000); // Check every 3 seconds
+      }, 5000); // Check every 5 seconds (increased from 3)
 
       return () => clearInterval(interval);
     }

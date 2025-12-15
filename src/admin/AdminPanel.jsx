@@ -34,17 +34,25 @@ const AdminPanel = () => {
       if (!isMounted) return;
 
       try {
+        // Add timeout to prevent hanging (10 seconds max)
+        const fetchWithTimeout = async (promise, timeoutMs = 10000) => {
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Fetch timeout')), timeoutMs)
+          );
+          return Promise.race([promise, timeoutPromise]);
+        };
+
         // Fetch Total Members
         let membersCount = 0;
         try {
           const membersRef = collection(db, 'members');
-          const membersSnapshot = await getDocs(membersRef);
+          const membersSnapshot = await fetchWithTimeout(getDocs(membersRef));
           membersCount = membersSnapshot.size || 0;
         } catch (error) {
           console.warn('Error fetching members:', error);
         }
 
-        // Fetch Documents count from multiple collections
+        // Fetch Documents count from multiple collections (with timeout to prevent hanging)
         const collectionsToCount = [
           'complaints',
           'decisions',
@@ -59,22 +67,29 @@ const AdminPanel = () => {
         ];
         
         let totalDocuments = 0;
-        for (const collName of collectionsToCount) {
-          if (!isMounted) break;
+        // Use Promise.allSettled to fetch in parallel and handle errors gracefully
+        const countPromises = collectionsToCount.map(async (collName) => {
+          if (!isMounted) return 0;
           try {
             const collRef = collection(db, collName);
-            const collSnapshot = await getDocs(collRef);
-            totalDocuments += collSnapshot.size || 0;
+            const collSnapshot = await fetchWithTimeout(getDocs(collRef));
+            return collSnapshot.size || 0;
           } catch (error) {
             console.warn(`Error counting ${collName}:`, error);
+            return 0;
           }
-        }
+        });
+        
+        const results = await Promise.allSettled(countPromises);
+        totalDocuments = results.reduce((sum, result) => {
+          return sum + (result.status === 'fulfilled' ? result.value : 0);
+        }, 0);
 
         // Fetch Pending Complaints (filter client-side to avoid composite index)
         let pendingCount = 0;
         try {
           const complaintsRef = collection(db, 'complaints');
-          const allComplaintsSnapshot = await getDocs(complaintsRef);
+          const allComplaintsSnapshot = await fetchWithTimeout(getDocs(complaintsRef));
           pendingCount = allComplaintsSnapshot.docs.filter(
             doc => {
               const data = doc.data();

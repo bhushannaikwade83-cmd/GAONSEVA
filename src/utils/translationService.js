@@ -44,7 +44,9 @@ let translationState = {
   currentLanguage: 'mr',
   translations: new Map(),
   observer: null,
-  checkInterval: null
+  checkInterval: null,
+  isTranslating: false, // Flag to prevent recursive calls
+  lastTranslationTime: 0 // Track last translation to prevent rapid calls
 };
 
 // Initialize translation state from localStorage
@@ -476,9 +478,23 @@ export const restoreOriginalText = () => {
  * This function is more aggressive and will translate all Marathi text it finds
  */
 export const applyStoredTranslations = () => {
+  // Prevent recursive calls
+  if (translationState.isTranslating) {
+    return;
+  }
+
+  // Throttle: Don't run more than once per 500ms
+  const now = Date.now();
+  if (now - translationState.lastTranslationTime < 500) {
+    return;
+  }
+
   if (!translationState.isTranslated || translationState.translations.size === 0) {
     return;
   }
+
+  translationState.isTranslating = true;
+  translationState.lastTranslationTime = now;
 
   try {
     const textNodes = extractVisibleText();
@@ -488,10 +504,11 @@ export const applyStoredTranslations = () => {
     textNodes.forEach(({ textNode, text }) => {
       // Check if this text has a translation
       const translated = translationState.translations.get(text);
-      if (translated && translated !== text) {
+      if (translated && translated !== text && textNode.textContent === text) {
+        // Only update if content hasn't changed
         textNode.textContent = translated;
         appliedCount++;
-      } else {
+      } else if (!translated) {
         // If this is Marathi text that hasn't been translated yet, add it to queue
         const devanagariRegex = /[\u0900-\u097F]/;
         if (devanagariRegex.test(text) && text.trim().length > 0) {
@@ -500,9 +517,13 @@ export const applyStoredTranslations = () => {
       }
     });
 
-    // If we found new Marathi text that needs translation, translate it
+    // If we found new Marathi text that needs translation, translate it (async, non-blocking)
     if (newTextsToTranslate.length > 0) {
-      translateNewContent(newTextsToTranslate);
+      // Don't await - let it run in background
+      translateNewContent(newTextsToTranslate).finally(() => {
+        translationState.isTranslating = false;
+      });
+      return; // Exit early, let async function handle cleanup
     }
 
     if (appliedCount > 0) {
@@ -510,6 +531,8 @@ export const applyStoredTranslations = () => {
     }
   } catch (error) {
     console.error('Error applying stored translations:', error);
+  } finally {
+    translationState.isTranslating = false;
   }
 };
 
@@ -594,35 +617,43 @@ export const setupAutoTranslation = () => {
 
   // Create MutationObserver to watch for new content
   translationState.observer = new MutationObserver((mutations) => {
+    // Skip if already translating to prevent loops
+    if (translationState.isTranslating) {
+      return;
+    }
+
     let shouldTranslate = false;
+    let hasNewContent = false;
 
     mutations.forEach((mutation) => {
+      // Only trigger on actual new content, not text changes from our own translations
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        // Check if any added nodes contain text
         mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === Node.TEXT_NODE || 
-              (node.nodeType === Node.ELEMENT_NODE && node.textContent.trim().length > 0)) {
-            shouldTranslate = true;
+          // Check if it's a new element with content, not just a text node change
+          if (node.nodeType === Node.ELEMENT_NODE && node.textContent.trim().length > 0) {
+            // Check if this is likely new content (has Marathi characters)
+            const devanagariRegex = /[\u0900-\u097F]/;
+            if (devanagariRegex.test(node.textContent)) {
+              hasNewContent = true;
+            }
           }
         });
       }
-      // Also check for text changes in existing nodes
-      if (mutation.type === 'characterData' || 
-          (mutation.type === 'childList' && mutation.removedNodes.length > 0)) {
-        shouldTranslate = true;
-      }
     });
 
-    if (shouldTranslate) {
+    // Only translate if we have actual new content, not just DOM mutations
+    if (hasNewContent) {
       // Clear existing timer
       if (debounceTimer) {
         clearTimeout(debounceTimer);
       }
       
       // Debounce: longer delay on mobile for better performance
-      const debounceDelay = isMobile ? 150 : 50;
+      const debounceDelay = isMobile ? 500 : 300; // Increased to prevent rapid calls
       debounceTimer = setTimeout(() => {
-        applyStoredTranslations();
+        if (!translationState.isTranslating) {
+          applyStoredTranslations();
+        }
       }, debounceDelay);
     }
   });
@@ -636,12 +667,12 @@ export const setupAutoTranslation = () => {
   });
 
   // Also periodically check for new content (for cases where MutationObserver might miss)
-  // More frequent checks on mobile to catch dynamic content
-  const checkInterval = isMobile ? 2000 : 1000;
+  // Less frequent checks to prevent performance issues
+  const checkInterval = isMobile ? 5000 : 3000; // Increased intervals
   const intervalId = setInterval(() => {
-    if (translationState.isTranslated) {
+    if (translationState.isTranslated && !translationState.isTranslating) {
       applyStoredTranslations();
-    } else {
+    } else if (!translationState.isTranslated) {
       clearInterval(intervalId);
     }
   }, checkInterval);
