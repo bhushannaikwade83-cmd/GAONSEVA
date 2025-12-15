@@ -1,7 +1,42 @@
 // Translation service for frontend
 // This utility handles translation of page content using the backend API
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Detect if we're on mobile or localhost
+const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+// Use appropriate API URL based on environment
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  if (isLocalhost) {
+    return 'http://localhost:5000';
+  }
+  
+  // For mobile devices on same network, use the hostname
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  const port = '5000';
+  
+  // If hostname is an IP address or local network, use it directly
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname) || hostname.includes('192.168') || hostname.includes('10.') || hostname.includes('172.')) {
+    return `${protocol}//${hostname}:${port}`;
+  }
+  
+  // Otherwise try same origin with port
+  return `${protocol}//${hostname}:${port}`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Log API URL for debugging (only in development)
+if (import.meta.env.DEV) {
+  console.log('Translation API URL:', API_BASE_URL);
+  console.log('Is Mobile Device:', isMobileDevice);
+  console.log('Is Localhost:', isLocalhost);
+}
 
 // Global translation state
 let translationState = {
@@ -57,11 +92,12 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
     return text;
   }
 
-  // Use AbortController for timeout (5 seconds max per request)
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-  
   try {
+    // Mobile-specific timeout (longer for slower connections)
+    const timeout = isMobileDevice ? 10000 : 5000;
+    const mobileController = new AbortController();
+    const mobileTimeoutId = setTimeout(() => mobileController.abort(), timeout);
+    
     const response = await fetch(`${API_BASE_URL}/api/translate`, {
       method: 'POST',
       headers: {
@@ -72,10 +108,14 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
         sourceLanguage,
         targetLanguage,
       }),
-      signal: controller.signal,
+      signal: mobileController.signal,
+      // Mobile-specific fetch options
+      cache: 'no-cache',
+      mode: 'cors',
+      credentials: 'omit',
     });
     
-    clearTimeout(timeoutId);
+    clearTimeout(mobileTimeoutId);
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -86,9 +126,17 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
     const data = await response.json();
     return data.translatedText || text;
   } catch (error) {
-    clearTimeout(timeoutId);
+    clearTimeout(mobileTimeoutId);
     if (error.name === 'AbortError') {
       console.error('Translation request timeout');
+    } else if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+      console.error('Translation API not reachable. Check if server is running and CORS is configured.');
+      // On mobile, provide more helpful error message
+      if (isMobileDevice) {
+        console.warn('Mobile device detected. API URL:', API_BASE_URL);
+        console.warn('Ensure API server is accessible from mobile network.');
+        console.warn('If testing on mobile, ensure server is running and accessible at:', API_BASE_URL);
+      }
     } else {
       console.error('Translation error:', error);
     }
@@ -150,6 +198,10 @@ export const extractVisibleText = (rootElement = document.body) => {
   const textNodes = [];
   const processedNodes = new WeakSet(); // Avoid processing same node twice
   
+  // Check if we're on mobile
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   window.innerWidth < 768;
+  
   const walker = document.createTreeWalker(
     rootElement,
     NodeFilter.SHOW_TEXT,
@@ -169,13 +221,21 @@ export const extractVisibleText = (rootElement = document.body) => {
           return NodeFilter.FILTER_REJECT;
         }
         
-        // Check visibility
+        // Check visibility - mobile-specific checks
         const style = window.getComputedStyle(parent);
+        const rect = parent.getBoundingClientRect();
+        
+        // More lenient visibility check for mobile
         if (
           style.display === 'none' ||
           style.visibility === 'hidden' ||
-          parseFloat(style.opacity) === 0
+          (parseFloat(style.opacity) === 0 && !isMobile) // Allow opacity 0 on mobile (might be animated)
         ) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // On mobile, also check if element is actually visible in viewport
+        if (isMobile && rect.width === 0 && rect.height === 0) {
           return NodeFilter.FILTER_REJECT;
         }
         
@@ -189,7 +249,9 @@ export const extractVisibleText = (rootElement = document.body) => {
         }
         
         // Skip very short text that's likely not meaningful (like single characters)
-        if (text.length < 2 && !/[\u0900-\u097F]/.test(text)) {
+        // More lenient on mobile
+        const minLength = isMobile ? 1 : 2;
+        if (text.length < minLength && !/[\u0900-\u097F]/.test(text)) {
           return NodeFilter.FILTER_REJECT;
         }
         
@@ -527,6 +589,8 @@ export const setupAutoTranslation = () => {
   }
 
   let debounceTimer = null;
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   window.innerWidth < 768;
 
   // Create MutationObserver to watch for new content
   translationState.observer = new MutationObserver((mutations) => {
@@ -555,10 +619,11 @@ export const setupAutoTranslation = () => {
         clearTimeout(debounceTimer);
       }
       
-      // Debounce: minimal delay for React/Firebase to finish rendering
+      // Debounce: longer delay on mobile for better performance
+      const debounceDelay = isMobile ? 150 : 50;
       debounceTimer = setTimeout(() => {
         applyStoredTranslations();
-      }, 50); // Reduced to 50ms for faster response
+      }, debounceDelay);
     }
   });
 
@@ -571,13 +636,15 @@ export const setupAutoTranslation = () => {
   });
 
   // Also periodically check for new content (for cases where MutationObserver might miss)
+  // More frequent checks on mobile to catch dynamic content
+  const checkInterval = isMobile ? 2000 : 1000;
   const intervalId = setInterval(() => {
     if (translationState.isTranslated) {
       applyStoredTranslations();
     } else {
       clearInterval(intervalId);
     }
-  }, 1000); // Check every 1 second for faster response
+  }, checkInterval);
 
   // Store interval ID for cleanup
   translationState.checkInterval = intervalId;
