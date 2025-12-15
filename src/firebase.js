@@ -4,6 +4,7 @@ import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore"; // Firestore import करा
 import { getStorage } from "firebase/storage"; // Storage import करा
+import { getFunctions, httpsCallable } from "firebase/functions"; // Firebase Functions import करा
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -23,6 +24,7 @@ const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app); // Firestore सुरु करा
 const storage = getStorage(app); // Storage सुरु करा
+const functions = getFunctions(app); // Firebase Functions सुरु करा
 
-export { auth, db, storage, analytics }; // db, storage आणि analytics एक्सपोर्ट करा
+export { auth, db, storage, analytics, functions, httpsCallable }; // db, storage, analytics, functions आणि httpsCallable एक्सपोर्ट करा
 export default app;

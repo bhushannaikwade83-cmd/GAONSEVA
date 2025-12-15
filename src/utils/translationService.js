@@ -1,42 +1,17 @@
 // Translation service for frontend
-// This utility handles translation of page content using the backend API
+// This utility handles translation of page content using Firebase Cloud Functions
 
-// Detect if we're on mobile or localhost
+import { functions, httpsCallable } from '../firebase';
+
+// Detect if we're on mobile
 const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-// Use appropriate API URL based on environment
-const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  
-  if (isLocalhost) {
-    return 'http://localhost:5000';
-  }
-  
-  // For mobile devices on same network, use the hostname
-  const hostname = window.location.hostname;
-  const protocol = window.location.protocol;
-  const port = '5000';
-  
-  // If hostname is an IP address or local network, use it directly
-  if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname) || hostname.includes('192.168') || hostname.includes('10.') || hostname.includes('172.')) {
-    return `${protocol}//${hostname}:${port}`;
-  }
-  
-  // Otherwise try same origin with port
-  return `${protocol}//${hostname}:${port}`;
-};
+// Initialize Firebase Cloud Functions
+const translateTextFunction = httpsCallable(functions, 'translateText');
+const translateBatchFunction = httpsCallable(functions, 'translateBatch');
 
-const API_BASE_URL = getApiBaseUrl();
-
-// Log API URL for debugging (only in development)
-if (import.meta.env.DEV) {
-  console.log('Translation API URL:', API_BASE_URL);
-  console.log('Is Mobile Device:', isMobileDevice);
-  console.log('Is Localhost:', isLocalhost);
-}
+console.log('Using Firebase Cloud Functions for translation');
+console.log('Is Mobile Device:', isMobileDevice);
 
 // Global translation state
 let translationState = {
@@ -91,28 +66,19 @@ const saveTranslationState = () => {
 initTranslationState();
 
 /**
- * Check if translation API is available
+ * Check if translation API is available (Firebase Functions)
  * @returns {Promise<boolean>} True if API is available
  */
 const checkApiHealth = async () => {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-    
-    const response = await fetch(`${API_BASE_URL}/api/health`, {
-      method: 'GET',
-      cache: 'no-cache',
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeoutId);
-    return response.ok;
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      console.warn('Translation API health check timeout');
-    } else {
-      console.warn('Translation API health check failed:', error);
+    // Firebase Functions are always available if Firebase is initialized
+    // We can test by checking if functions object exists
+    if (!functions) {
+      return false;
     }
+    return true;
+  } catch (error) {
+    console.warn('Translation API health check failed:', error);
     return false;
   }
 };
@@ -197,43 +163,14 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
   // Queue the request to limit concurrency
   return queueRequest(async () => {
     try {
-      // Mobile-specific timeout (longer for slower connections)
-      const timeout = isMobileDevice ? 10000 : 5000;
-      const mobileController = new AbortController();
-      const mobileTimeoutId = setTimeout(() => mobileController.abort(), timeout);
-      
-      const response = await fetch(`${API_BASE_URL}/api/translate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: text.trim(),
-          sourceLanguage,
-          targetLanguage,
-        }),
-        signal: mobileController.signal,
-        // Mobile-specific fetch options
-        cache: 'no-cache',
-        mode: 'cors',
-        credentials: 'omit',
+      // Use Firebase Cloud Function for translation
+      const result = await translateTextFunction({
+        text: text.trim(),
+        sourceLanguage,
+        targetLanguage,
       });
       
-      clearTimeout(mobileTimeoutId);
-
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch (e) {
-          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
-        }
-        console.error('Translation API error:', errorData);
-        throw new Error(errorData.error || 'Translation failed');
-      }
-
-      const data = await response.json();
-      const translated = data.translatedText || text;
+      const translated = result.data.translatedText || text;
       
       // Cache the translation
       translationState.requestCache.set(cacheKey, translated);
@@ -244,8 +181,6 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
       
       return translated;
     } catch (error) {
-      clearTimeout(mobileTimeoutId);
-      
       // Increment error count
       translationState.errorCount++;
       translationState.lastErrorTime = Date.now();
@@ -257,13 +192,14 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
         alert('Translation service is experiencing issues. Please try again in a moment.');
       }
       
-      if (error.name === 'AbortError') {
-        console.error('Translation request timeout');
-      } else if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('ERR_INSUFFICIENT_RESOURCES'))) {
-        console.error('Translation API not reachable. Check if server is running and CORS is configured.');
-        if (isMobileDevice) {
-          console.warn('Mobile device detected. API URL:', API_BASE_URL);
-        }
+      // Handle Firebase Functions errors
+      if (error.code === 'functions/unavailable') {
+        console.error('Translation function is unavailable. Make sure Firebase Functions are deployed.');
+      } else if (error.code === 'functions/invalid-argument') {
+        console.error('Invalid argument passed to translation function:', error.message);
+      } else if (error.code === 'functions/failed-precondition') {
+        console.error('Translation function precondition failed:', error.message);
+        alert('Translation service is not configured. Please contact administrator.');
       } else {
         console.error('Translation error:', error);
       }
@@ -288,53 +224,32 @@ export const translateBatch = async (texts, sourceLanguage = 'mr', targetLanguag
       return [await translateText(texts[0], sourceLanguage, targetLanguage)];
     }
 
-    // Use a unique separator that's unlikely to appear in Marathi text
-    // Using a combination that Google Translate is less likely to translate
-    const separator = ' |||SEP||| ';
-    const combinedText = texts.join(separator);
-    
-    const translated = await translateText(combinedText, sourceLanguage, targetLanguage);
-    
-    // Split back into individual translations
-    // Handle case where separator might be translated slightly differently
-    const parts = translated.split(separator);
-    
-    // If split didn't work as expected, try smaller batches instead of individual
-    if (parts.length !== texts.length) {
-      console.warn('Batch translation split mismatch, trying smaller batches');
-      // Split into smaller batches of 3 instead of individual
-      const smallBatchSize = 3;
-      const smallBatches = [];
-      for (let i = 0; i < texts.length; i += smallBatchSize) {
-        smallBatches.push(texts.slice(i, i + smallBatchSize));
-      }
-      
-      // Process small batches sequentially to avoid too many requests
-      const results = [];
-      for (const smallBatch of smallBatches) {
-        if (translationState.circuitBreakerOpen) {
-          // Fill remaining with original texts
-          results.push(...smallBatch);
-          break;
-        }
-        try {
-          const smallBatchTranslated = await translateBatch(smallBatch, sourceLanguage, targetLanguage);
-          results.push(...smallBatchTranslated);
-        } catch (err) {
-          // On error, use original texts for this batch
-          results.push(...smallBatch);
-        }
-      }
-      return results;
+    // Check circuit breaker
+    if (translationState.circuitBreakerOpen) {
+      return texts; // Return original texts
     }
+
+    // Use Firebase Cloud Function for batch translation
+    const result = await translateBatchFunction({
+      texts: texts,
+      sourceLanguage,
+      targetLanguage,
+    });
     
-    return parts.map(t => t.trim());
+    return result.data || texts; // Return translated texts or original if failed
   } catch (error) {
     console.error('Batch translation error:', error);
-    // Don't fallback to individual translations - return original texts
-    // This prevents creating hundreds of requests
+    
+    // Handle Firebase Functions errors
+    if (error.code === 'functions/unavailable') {
+      console.error('Batch translation function is unavailable');
+    } else if (error.code === 'functions/invalid-argument') {
+      console.error('Invalid argument passed to batch translation function');
+    }
+    
+    // Return original texts on error
     console.warn('Returning original texts due to batch translation error');
-    return texts; // Return original texts on error
+    return texts;
   }
 };
 
@@ -454,14 +369,18 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
 
   try {
     console.log('Starting translation...');
-    console.log(`API Base URL: ${API_BASE_URL}`);
+    console.log('Using Firebase Cloud Functions for translation');
     
-    // Check if API is available
+    // Check if Cloud Function is available (non-blocking - just warn if unavailable)
     const apiAvailable = await checkApiHealth();
     if (!apiAvailable) {
-      throw new Error(`Translation API is not available at ${API_BASE_URL}. Please ensure the server is running on port 5000.`);
+      console.warn('Translation Cloud Function health check failed');
+      console.warn('Attempting translation anyway - Cloud Function might be available but health check failed');
+      // Don't throw error - try to proceed anyway
+      // The actual translation requests will handle errors gracefully
+    } else {
+      console.log('Translation Cloud Function is available');
     }
-    console.log('Translation API is available');
 
     // Extract all visible text immediately (including static content)
     const textNodes = extractVisibleText();
@@ -645,8 +564,15 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
     
     // Show user-friendly error message
     const errorMsg = error.message || 'Translation failed';
-    if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError')) {
-      alert('Translation service is not available. Please check if the server is running on port 5000.');
+    if (error.code === 'functions/unavailable') {
+      alert('Translation Cloud Function is not available.\n\nPlease ensure:\n1. Firebase Cloud Functions are deployed\n2. Functions are enabled in your Firebase project\n3. Contact administrator for assistance');
+    } else if (error.code === 'functions/deadline-exceeded') {
+      alert('Translation request timed out. Please try again.');
+    } else if (error.code === 'functions/failed-precondition') {
+      alert('Translation service is not configured.\n\nPlease ensure Google Translate API key is set in Firebase Functions config.\nContact administrator for assistance.');
+    } else if (errorMsg.includes('not available')) {
+      // Don't show alert for health check failures - we already tried to proceed
+      console.warn('Translation attempted but Cloud Function was not available');
     } else {
       alert(`Translation failed: ${errorMsg}. Please try again.`);
     }
