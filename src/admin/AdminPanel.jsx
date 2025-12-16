@@ -164,9 +164,9 @@ const AdminPanel = () => {
                     {stat.loading ? (
                       <CircularProgress size={24} sx={{ color: stat.color }} />
                     ) : (
-                      <Typography variant="h4" sx={{ color: '#1a1a1a', fontWeight: 700 }}>
-                        {stat.value}
-                      </Typography>
+                    <Typography variant="h4" sx={{ color: '#1a1a1a', fontWeight: 700 }}>
+                      {stat.value}
+      </Typography>
                     )}
                   </Box>
                   <Box sx={{ 

@@ -6,7 +6,6 @@ const Welcome = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [statsVisible, setStatsVisible] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [hoveredStat, setHoveredStat] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fetchedStats, setFetchedStats] = useState(null);
   const [gpName, setGpName] = useState("ग्रामपंचायत");
@@ -171,12 +170,8 @@ const Welcome = () => {
             {fetchedStats.map((item, i) => (
               <div 
                 key={i}
-                onMouseEnter={() => setHoveredStat(i)}
-                onMouseLeave={() => setHoveredStat(null)}
                 style={{
-                  background: hoveredStat === i 
-                    ? 'rgba(255,255,255,0.3)' 
-                    : 'rgba(255,255,255,0.2)',
+                  background: 'rgba(255,255,255,0.3)',
                   padding: isMobile ? '10px 14px' : '15px 25px',
                   borderRadius: '25px',
                   fontSize: isMobile ? '12px' : '14px',
@@ -186,38 +181,31 @@ const Welcome = () => {
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: isMobile ? '4px' : '5px',
-                  cursor: 'pointer',
-                  transform: hoveredStat === i ? 'translateY(-5px) scale(1.05)' : 'translateY(0)',
-                  transition: 'all 0.3s ease',
+                  cursor: 'default',
                   opacity: statsVisible ? 1 : 0,
                   animation: `fadeInUp 0.5s ease-out ${0.6 + i * 0.1}s backwards`,
-                  boxShadow: hoveredStat === i 
-                    ? '0 8px 20px rgba(0,0,0,0.2)' 
-                    : '0 2px 8px rgba(0,0,0,0.1)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                   minWidth: isMobile ? '100px' : '140px',
-                  maxWidth: isMobile ? '140px' : 'none',
-                  touchAction: 'manipulation'
+                  maxWidth: isMobile ? '140px' : 'none'
                 }}
               >
                 <span style={{ 
                   fontSize: isMobile ? '24px' : '28px',
-                  transform: hoveredStat === i ? 'scale(1.2) rotate(10deg)' : 'scale(1)',
-                  transition: 'transform 0.3s ease',
                   display: 'inline-block'
                 }}>
                   {item.icon}
                 </span>
                 <span>{item.text}</span>
-                <span style={{
-                  fontSize: '11px',
-                  opacity: hoveredStat === i ? 1 : 0,
-                  maxHeight: hoveredStat === i ? '20px' : '0',
-                  overflow: 'hidden',
-                  transition: 'all 0.3s ease',
-                  color: '#f0f0f0'
-                }}>
-                  {item.detail}
-                </span>
+                {item.detail && (
+                  <span style={{
+                    fontSize: '11px',
+                    opacity: 1,
+                    color: '#f0f0f0',
+                    textAlign: 'center'
+                  }}>
+                    {item.detail}
+                  </span>
+                )}
               </div>
             ))}
           </div>

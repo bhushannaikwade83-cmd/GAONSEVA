@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 import { db } from "../firebase";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { getTranslationState } from "../utils/translationService";
 
 const Gramjanganna = () => {
   const [rows, setRows] = useState([]);
+  const [language, setLanguage] = useState("mr");
 
   const load = async () => {
     const q = query(collection(db, "census"), orderBy("year", "desc"), limit(10));
@@ -14,7 +16,37 @@ const Gramjanganna = () => {
 
   useEffect(() => {
     load();
+    // Check language on mount and when it changes
+    const checkLanguage = () => {
+      const state = getTranslationState();
+      setLanguage(state.currentLanguage || "mr");
+    };
+    checkLanguage();
+    // Check language periodically
+    const interval = setInterval(checkLanguage, 1000);
+    return () => clearInterval(interval);
   }, []);
+
+  // Table headers based on language
+  const headers = language === "mr" ? {
+    year: "वर्ष",
+    totalPopulation: "एकूण लोकसंख्या",
+    male: "पुरुष",
+    female: "महिला",
+    children: "मुले (18 वर्षाखाली)",
+    seniors: "वृद्ध (60+)",
+    families: "कुटुंब",
+    literacyRate: "साक्षरता दर (%)"
+  } : {
+    year: "Year",
+    totalPopulation: "Total Population",
+    male: "Male",
+    female: "Female",
+    children: "Children (<18)",
+    seniors: "Seniors (60+)",
+    families: "Families",
+    literacyRate: "Literacy Rate (%)"
+  };
 
   return (
     <Box sx={{ p: { xs: 2, sm: 4 }, minHeight: "80vh" }}>
@@ -27,14 +59,14 @@ const Gramjanganna = () => {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Year</TableCell>
-                <TableCell>Total Population</TableCell>
-                <TableCell>Male</TableCell>
-                <TableCell>Female</TableCell>
-                <TableCell>Children (&lt;18)</TableCell>
-                <TableCell>Seniors (60+)</TableCell>
-                <TableCell>Families</TableCell>
-                <TableCell>Literacy Rate (%)</TableCell>
+                <TableCell>{headers.year}</TableCell>
+                <TableCell>{headers.totalPopulation}</TableCell>
+                <TableCell>{headers.male}</TableCell>
+                <TableCell>{headers.female}</TableCell>
+                <TableCell>{headers.children}</TableCell>
+                <TableCell>{headers.seniors}</TableCell>
+                <TableCell>{headers.families}</TableCell>
+                <TableCell>{headers.literacyRate}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

@@ -205,13 +205,13 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
       } else if (error.code === 'functions/failed-precondition') {
         console.error('Translation function precondition failed:', error.message);
         alert('Translation service is not configured. Please contact administrator.');
-      } else {
-        console.error('Translation error:', error);
-      }
-      
-      // Return original text if translation fails
-      return text;
+    } else {
+      console.error('Translation error:', error);
     }
+      
+    // Return original text if translation fails
+    return text;
+  }
   });
 };
 
@@ -513,8 +513,8 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
         }
         return new Map();
       }
-      });
-      
+    });
+    
       // Wait for current chunk to complete before processing next
       const chunkResults = await Promise.all(batchPromises);
       
@@ -742,10 +742,10 @@ const translateNewContent = async (textNodes) => {
       }
       
       try {
-        const translated = await translateBatch(batch, 'mr', 'en');
+      const translated = await translateBatch(batch, 'mr', 'en');
         batch.forEach((text, index) => {
           newTranslations.set(text, translated[index] || text);
-        });
+    });
       } catch (error) {
         console.error('Error translating batch in new content:', error);
         // Continue with next batch instead of failing completely
@@ -831,7 +831,7 @@ export const setupAutoTranslation = () => {
       const debounceDelay = isMobile ? 500 : 300; // Increased to prevent rapid calls
       debounceTimer = setTimeout(() => {
         if (!translationState.isTranslating) {
-          applyStoredTranslations();
+        applyStoredTranslations();
         }
       }, debounceDelay);
     }

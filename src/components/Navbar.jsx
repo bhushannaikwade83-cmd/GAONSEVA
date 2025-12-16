@@ -1090,7 +1090,7 @@ const Navbar = () => {
             )}
 
             <button 
-              onClick={toggleLanguage}
+              onClick={toggleLanguage} 
               onTouchStart={(e) => {
                 // Prevent double-tap zoom on mobile
                 // Don't call toggleLanguage here - onClick will handle it

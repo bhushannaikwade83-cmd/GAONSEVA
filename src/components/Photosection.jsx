@@ -51,113 +51,128 @@ const Photosection = () => {
     <div
       style={{
         width: "100%",
-        height: isMobile ? 250 : 400, // responsive height
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
         position: "relative",
         marginTop: "0px", // below navbar
       }}
     >
-      {loading ? (
-        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: "white" }}>
-          लोड होत आहे...
-        </div>
-      ) : images.length === 0 ? (
-        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: "white" }}>
-          कोणतीही फोटो उपलब्ध नाही
-        </div>
-      ) : (
-        images.map((src, i) => (
-          <img
-            key={i}
-            src={src}
-            alt={`Slide ${i + 1}`}
-            style={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              opacity: i === currentIndex ? 1 : 0,
-              transition: "opacity 0.5s ease-in-out",
-            }}
-          />
-        ))
-      )}
-
-      {/* Navigation Arrows */}
-      <button
-        onClick={prevSlide}
-        style={{
-          position: "absolute",
-          left: isMobile ? "10px" : "20px",
-          top: "50%",
-          transform: "translateY(-50%)",
-          background: "rgba(0,0,0,0.6)",
-          color: "white",
-          border: "none",
-          borderRadius: "50%",
-          width: isMobile ? "35px" : "45px",
-          height: isMobile ? "35px" : "45px",
-          fontSize: isMobile ? "16px" : "20px",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 10,
-        }}
-      >
-        ❮
-      </button>
-
-      <button
-        onClick={nextSlide}
-        style={{
-          position: "absolute",
-          right: isMobile ? "10px" : "20px",
-          top: "50%",
-          transform: "translateY(-50%)",
-          background: "rgba(0,0,0,0.6)",
-          color: "white",
-          border: "none",
-          borderRadius: "50%",
-          width: isMobile ? "35px" : "45px",
-          height: isMobile ? "35px" : "45px",
-          fontSize: isMobile ? "16px" : "20px",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 10,
-        }}
-      >
-        ❯
-      </button>
-
-      {/* Dots Indicator */}
       <div
         style={{
-          position: "absolute",
-          bottom: isMobile ? "15px" : "20px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          gap: isMobile ? "8px" : "12px",
-          zIndex: 10,
+          width: isMobile ? "100%" : "1584px", // Fixed width for laptop: 1584px
+          height: isMobile ? "250px" : "396px", // Fixed height for laptop: 396px
+          maxWidth: isMobile ? "100%" : "1584px",
+          position: "relative",
+          margin: isMobile ? "0" : "0 auto", // Center on laptop
         }}
       >
-        {images.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            style={{
-              width: isMobile ? "10px" : "12px",
-              height: isMobile ? "10px" : "12px",
-              borderRadius: "50%",
-              border: "2px solid white",
-              background: index === currentIndex ? "white" : "transparent",
-              cursor: "pointer",
-              transition: "all 0.3s",
-            }}
-          />
-        ))}
+        {loading ? (
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: "white", zIndex: 5 }}>
+            लोड होत आहे...
+          </div>
+        ) : images.length === 0 ? (
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: "white", zIndex: 5 }}>
+            कोणतीही फोटो उपलब्ध नाही
+          </div>
+        ) : (
+          images.map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt={`Slide ${i + 1}`}
+              style={{
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+                objectFit: isMobile ? "contain" : "cover", // Show full image on mobile, cover on laptop
+                objectPosition: "center",
+                opacity: i === currentIndex ? 1 : 0,
+                transition: "opacity 0.5s ease-in-out",
+                top: 0,
+                left: 0,
+              }}
+            />
+          ))
+        )}
+
+        {/* Navigation Arrows */}
+        <button
+          onClick={prevSlide}
+          style={{
+            position: "absolute",
+            left: isMobile ? "10px" : "20px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "rgba(0,0,0,0.6)",
+            color: "white",
+            border: "none",
+            borderRadius: "50%",
+            width: isMobile ? "35px" : "45px",
+            height: isMobile ? "35px" : "45px",
+            fontSize: isMobile ? "16px" : "20px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10,
+          }}
+        >
+          ❮
+        </button>
+
+        <button
+          onClick={nextSlide}
+          style={{
+            position: "absolute",
+            right: isMobile ? "10px" : "20px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "rgba(0,0,0,0.6)",
+            color: "white",
+            border: "none",
+            borderRadius: "50%",
+            width: isMobile ? "35px" : "45px",
+            height: isMobile ? "35px" : "45px",
+            fontSize: isMobile ? "16px" : "20px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10,
+          }}
+        >
+          ❯
+        </button>
+
+        {/* Dots Indicator */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: isMobile ? "15px" : "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            gap: isMobile ? "8px" : "12px",
+            zIndex: 10,
+          }}
+        >
+          {images.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              style={{
+                width: isMobile ? "10px" : "12px",
+                height: isMobile ? "10px" : "12px",
+                borderRadius: "50%",
+                border: "2px solid white",
+                background: index === currentIndex ? "white" : "transparent",
+                cursor: "pointer",
+                transition: "all 0.3s",
+              }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
