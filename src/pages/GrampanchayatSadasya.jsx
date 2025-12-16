@@ -130,7 +130,7 @@ const GrampanchayatSadasya = () => {
 
                         {generalMembers.length > 0 && (
                             <Box>
-                                <Typography variant="h4" fontWeight={700} gutterBottom sx={{ pl: 1 }}>सदस्य</Typography>
+                                <Typography variant="h4" fontWeight={700} gutterBottom sx={{ pl: 1 }}>ग्रामपंचायत सदस्य</Typography>
                                 <Divider sx={{ mb: 4, borderColor: 'rgba(0, 0, 0, 0.12)', borderWidth: '1px' }} />
                                 <Grid container spacing={4}>
                                     {generalMembers.map((member, index) => <MemberCard key={member.id} member={member} index={index} />)}

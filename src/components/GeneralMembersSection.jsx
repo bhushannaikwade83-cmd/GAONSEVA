@@ -144,7 +144,7 @@ const GeneralMembersSection = () => {
           color: "#2c3e50",
         }}
       >
-        सदस्य
+        ग्रामपंचायत सदस्य
       </Typography>
 
       {members.length === 0 ? (
