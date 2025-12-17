@@ -1,0 +1,767 @@
+[
+  {
+    "marathi_question": "ग्रामपंचायतीचे नाव काय आहे?",
+    "english_question": "What is the name of the Gram Panchayat?",
+    "collectionPath": "grampanchayat/profile",
+    "fields": ["title"]
+  },
+  {
+    "marathi_question": "सरपंच कोण आहेत?",
+    "english_question": "Who is the Sarpanch?",
+    "collectionPath": "members",
+    "fields": ["name", "designation"],
+    "filter": {"designation": "सरपंच"}
+  },
+  {
+    "marathi_question": "उपसरपंच कोण आहेत?",
+    "english_question": "Who is the Upsarpanch?",
+    "collectionPath": "members",
+    "fields": ["name", "designation"],
+    "filter": {"designation": "उपसरपंच"}
+  },
+  {
+    "marathi_question": "ग्रामसेवक कोण आहेत?",
+    "english_question": "Who is the Gram Sevak?",
+    "collectionPath": "members",
+    "fields": ["name", "designation"],
+    "filter": {"designation": "ग्राम सेवक"}
+  },
+  {
+    "marathi_question": "ग्रामपंचायत सदस्यांची नावे सांगा.",
+    "english_question": "Tell me the names of the Gram Panchayat members.",
+    "collectionPath": "members",
+    "fields": ["name", "designation"]
+  },
+  {
+    "marathi_question": "सरपंचांचा संपर्क क्रमांक काय आहे?",
+    "english_question": "What is the contact number of the Sarpanch?",
+    "collectionPath": "members",
+    "fields": ["phone"],
+    "filter": {"designation": "सरपंच"}
+  },
+  {
+    "marathi_question": "ग्रामपंचायत सदस्यांचे फोटो दाखवा.",
+    "english_question": "Show photos of Gram Panchayat members.",
+    "collectionPath": "members",
+    "fields": ["name", "imageURL", "photoURL"]
+  },
+  {
+    "marathi_question": "ग्रामपंचायत माहिती काय आहे?",
+    "english_question": "What is the information about the Gram Panchayat?",
+    "collectionPath": "home/grampanchayat-info",
+    "fields": ["details", "gpName"]
+  },
+  {
+    "marathi_question": "ग्रामपंचायतचे फोटो दाखवा.",
+    "english_question": "Show photos of the Gram Panchayat.",
+    "collectionPath": "home/grampanchayat-info",
+    "fields": ["photos"]
+  },
+  {
+    "marathi_question": "ग्रामपंचायत नकाशा कुठे आहे?",
+    "english_question": "Where is the Gram Panchayat map?",
+    "collectionPath": "grampanchayat/map",
+    "fields": ["url"]
+  },
+  {
+    "marathi_question": "नवीन ग्रामसभा निर्णय कोणते आहेत?",
+    "english_question": "What are the recent Gramsabha decisions?",
+    "collectionPath": "decisions",
+    "fields": ["title", "date", "status"],
+    "orderBy": ["createdAt", "desc"]
+  },
+  {
+    "marathi_question": "ग्रामसभेचे किती निर्णय मंजूर झाले आहेत?",
+    "english_question": "How many Gramsabha decisions have been approved?",
+    "collectionPath": "decisions",
+    "fields": ["title", "status"],
+    "filter": {"status": "Approved"}
+  },
+  {
+    "marathi_question": "ग्रामपंचायतीला कोणते पुरस्कार मिळाले आहेत?",
+    "english_question": "What awards has the Gram Panchayat received?",
+    "collectionPath": "awards",
+    "fields": ["title", "recipient", "date", "type"]
+  },
+  {
+    "marathi_question": "नवीनतम पुरस्कार कोणता आहे?",
+    "english_question": "What is the latest award?",
+    "collectionPath": "awards",
+    "fields": ["title", "recipient", "date"],
+    "orderBy": ["date", "desc"],
+    "limit": 1
+  },
+  {
+    "marathi_question": "गावात कोणते कार्यक्रम/उत्सव आहेत?",
+    "english_question": "What events/festivals are there in the village?",
+    "collectionPath": "festivals",
+    "fields": ["name", "date", "type", "venue"]
+  },
+  {
+    "marathi_question": "पुढील कार्यक्रम कधी आहे?",
+    "english_question": "When is the next event?",
+    "collectionPath": "festivals",
+    "fields": ["name", "date"],
+    "orderBy": ["date", "asc"],
+    "limit": 1
+  },
+  {
+    "marathi_question": "गावात कोणत्या सुविधा उपलब्ध आहेत?",
+    "english_question": "What facilities are available in the village?",
+    "collectionPath": "facilities",
+    "fields": ["name", "type", "location", "timings"]
+  },
+  {
+    "marathi_question": "आरोग्य केंद्राची वेळ काय आहे?",
+    "english_question": "What are the timings for the health center?",
+    "collectionPath": "facilities",
+    "fields": ["timings"],
+    "filter": {"type": "Health"}
+  },
+  {
+    "marathi_question": "शाळा कुठे आहे?",
+    "english_question": "Where is the school?",
+    "collectionPath": "facilities",
+    "fields": ["location"],
+    "filter": {"type": "Education"}
+  },
+  {
+    "marathi_question": "कोणत्या ई-सेवा उपलब्ध आहेत?",
+    "english_question": "Which e-services are available?",
+    "collectionPath": "eseva",
+    "fields": ["name", "type", "link"]
+  },
+  {
+    "marathi_question": "जन्म प्रमाणपत्र कसे मिळवायचे?",
+    "english_question": "How to get a birth certificate?",
+    "collectionPath": "eseva",
+    "fields": ["link", "description"],
+    "filter": {"type": "Certificates"}
+  },
+  {
+    "marathi_question": "गावातील पर्यटन स्थळे कोणती आहेत?",
+    "english_question": "What are the tourist places in the village?",
+    "collectionPath": "tourism",
+    "fields": ["name", "type", "location", "timings"]
+  },
+  {
+    "marathi_question": "मंदिराला भेट देण्याची वेळ काय आहे?",
+    "english_question": "What are the visiting hours for the temple?",
+    "collectionPath": "tourism",
+    "fields": ["timings"],
+    "filter": {"type": "Religious"}
+  },
+  {
+    "marathi_question": "पर्यटन स्थळांचे फोटो दाखवा.",
+    "english_question": "Show photos of tourist places.",
+    "collectionPath": "tourism",
+    "fields": ["name", "imageURL"]
+  },
+  {
+    "marathi_question": "गावाची जनगणना माहिती काय आहे?",
+    "english_question": "What is the census information for the village?",
+    "collectionPath": "census",
+    "fields": ["year", "totalPopulation", "male", "female", "literacyRate"],
+    "orderBy": ["year", "desc"],
+    "limit": 1
+  },
+  {
+    "marathi_question": "गावाची लोकसंख्या किती आहे?",
+    "english_question": "What is the population of the village?",
+    "collectionPath": "census",
+    "fields": ["totalPopulation"],
+    "orderBy": ["year", "desc"],
+    "limit": 1
+  },
+  {
+    "marathi_question": "गावातील साक्षरता दर किती आहे?",
+    "english_question": "What is the literacy rate in the village?",
+    "collectionPath": "census",
+    "fields": ["literacyRate"],
+    "orderBy": ["year", "desc"],
+    "limit": 1
+  },
+  {
+    "marathi_question": "महत्वाचे दूरध्वनी क्रमांक कोणते आहेत?",
+    "english_question": "What are the important contact numbers?",
+    "collectionPath": "contacts",
+    "fields": ["name", "role", "phone", "department"]
+  },
+  {
+    "marathi_question": "पोलीस स्टेशनचा नंबर काय आहे?",
+    "english_question": "What is the police station number?",
+    "collectionPath": "contacts",
+    "fields": ["phone"],
+    "filter": {"department": "Police"}
+  },
+  {
+    "marathi_question": "हेल्पलाईन क्रमांक कोणते आहेत?",
+    "english_question": "What are the helpline numbers?",
+    "collectionPath": "helplines",
+    "fields": ["serviceName", "number", "department"]
+  },
+  {
+    "marathi_question": "आपत्कालीन परिस्थितीत कोणाला संपर्क साधावा?",
+    "english_question": "Whom to contact in case of emergency?",
+    "collectionPath": "helplines",
+    "fields": ["serviceName", "number"],
+    "filter": {"department": "Disaster"} // Example filter
+  },
+  {
+    "marathi_question": "गावातील रुग्णालये कोणती आहेत?",
+    "english_question": "What are the hospitals in the village?",
+    "collectionPath": "hospitals",
+    "fields": ["name", "type", "contact", "address"]
+  },
+  {
+    "marathi_question": "प्राथमिक आरोग्य केंद्राचा पत्ता काय आहे?",
+    "english_question": "What is the address of the Primary Health Center?",
+    "collectionPath": "hospitals",
+    "fields": ["address"],
+    "filter": {"type": "Primary Health Center"}
+  },
+  {
+    "marathi_question": "स्वच्छ गाव उपक्रमाची माहिती काय आहे?",
+    "english_question": "What is the information about the Swachh Gaav program?",
+    "collectionPath": "program/svachhgaav/items",
+    "fields": ["title", "description", "startDate", "endDate", "achievements"]
+  },
+  {
+    "marathi_question": "स्वच्छता मोहिम कधी झाली?",
+    "english_question": "When did the cleanliness drive happen?",
+    "collectionPath": "program/svachhgaav/items",
+    "fields": ["startDate", "endDate"]
+  },
+  {
+    "marathi_question": "विकेल ते पिकेल योजनेअंतर्गत कोणती उत्पादने आहेत?",
+    "english_question": "What products are available under the Vikel te Pikel scheme?",
+    "collectionPath": "program/vikeltepikel/items",
+    "fields": ["title", "productType", "farmerName", "price", "quantity"]
+  },
+  {
+    "marathi_question": "या योजनेत कोणत्या शेतकऱ्यांचा समावेश आहे?",
+    "english_question": "Which farmers are included in this scheme?",
+    "collectionPath": "program/vikeltepikel/items",
+    "fields": ["farmerName"]
+  },
+  {
+    "marathi_question": "माझे कुटुंब माझी जबाबदारी कार्यक्रमात कोणती कुटुंबे आहेत?",
+    "english_question": "Which families are part of the Majhe Kutumb Majhi Jababdari program?",
+    "collectionPath": "program/maajhekutumb/items",
+    "fields": ["familyName", "headOfFamily", "members"]
+  },
+  {
+    "marathi_question": "या कार्यक्रमाचा उद्देश काय आहे?",
+    "english_question": "What is the purpose of this program?",
+    "collectionPath": "program/maajhekutumb/items",
+    "fields": ["description", "responsibilities"]
+  },
+  {
+    "marathi_question": "तंटामुक्त गाव योजनेची माहिती काय आहे?",
+    "english_question": "What is the information about the Tantamukt Gaav scheme?",
+    "collectionPath": "program/tantamuktgaav/items",
+    "fields": ["title", "description", "status"]
+  },
+  {
+    "marathi_question": "गावात कोणते तंटे सोडवले गेले आहेत?",
+    "english_question": "Which disputes have been resolved in the village?",
+    "collectionPath": "program/tantamuktgaav/items",
+    "fields": ["title", "resolution"],
+    "filter": {"status": "resolved"}
+  },
+  {
+    "marathi_question": "जलयुक्त शिवार अंतर्गत कोणते प्रकल्प आहेत?",
+    "english_question": "What projects are under Jalyukt Shivar?",
+    "collectionPath": "program/jalyuktshivar/items",
+    "fields": ["title", "area", "waterSource", "status"]
+  },
+  {
+    "marathi_question": "या प्रकल्पांमुळे किती पाणीसाठा झाला आहे?",
+    "english_question": "How much water storage has been created by these projects?",
+    "collectionPath": "program/jalyuktshivar/items",
+    "fields": ["waterStorage", "irrigationArea"]
+  },
+  {
+    "marathi_question": "तुषार सिंचन योजनेची माहिती काय आहे?",
+    "english_question": "What is the information about the sprinkler irrigation scheme?",
+    "collectionPath": "program/tushargav/items",
+    "fields": ["title", "description", "area", "sprinklerType"]
+  },
+  {
+    "marathi_question": "कोणत्या शेतकऱ्यांनी तुषार सिंचन बसवले आहे?",
+    "english_question": "Which farmers have installed sprinkler irrigation?",
+    "collectionPath": "program/tushargav/items",
+    "fields": ["farmerName"]
+  },
+  {
+    "marathi_question": "रोटी पूरक व्यवसाय योजनेत कोणते व्यवसाय आहेत?",
+    "english_question": "What businesses are included in the Roti Poorak Vyavsay scheme?",
+    "collectionPath": "program/rotipoorak/items",
+    "fields": ["title", "businessType", "entrepreneurName", "location"]
+  },
+  {
+    "marathi_question": "या व्यवसायात किती गुंतवणूक आहे?",
+    "english_question": "How much investment is in these businesses?",
+    "collectionPath": "program/rotipoorak/items",
+    "fields": ["investment"]
+  },
+  {
+    "marathi_question": "गादोली कार्यक्रमात कोणत्या ऍक्टिव्हिटीज आहेत?",
+    "english_question": "What activities are included in the Gadoli program?",
+    "collectionPath": "program/gadoli/items",
+    "fields": ["title", "activityType", "startDate", "endDate"]
+  },
+  {
+    "marathi_question": "हा कार्यक्रम कोणी आयोजित केला?",
+    "english_question": "Who organized this program?",
+    "collectionPath": "program/gadoli/items",
+    "fields": ["organizerName"]
+  },
+  {
+    "marathi_question": "मतदार नोंदणीची प्रक्रिया काय आहे?",
+    "english_question": "What is the process for voter registration?",
+    "collectionPath": "program/matdaarnondani/items",
+    "fields": ["description", "status"] // General description might cover process
+  },
+  {
+    "marathi_question": "नवीन मतदारांची माहिती काय आहे?",
+    "english_question": "What is the information about new voters?",
+    "collectionPath": "program/matdaarnondani/items",
+    "fields": ["voterName", "age", "gender", "address", "registrationDate"],
+    "filter": {"status": "registered"} // Example filter for new ones
+  },
+  {
+    "marathi_question": "सर्व शिक्षा अभियानाची माहिती काय आहे?",
+    "english_question": "What is the information about Sarva Shiksha Abhiyan?",
+    "collectionPath": "program/sarvashiksha/items",
+    "fields": ["title", "description", "status"]
+  },
+  {
+    "marathi_question": "कोणते विद्यार्थी या योजनेत आहेत?",
+    "english_question": "Which students are in this scheme?",
+    "collectionPath": "program/sarvashiksha/items",
+    "fields": ["studentName", "grade", "schoolName"]
+  },
+  {
+    "marathi_question": "गावात कोणती क्रीडा स्पर्धा आयोजित केली आहे?",
+    "english_question": "Which sports competition is organized in the village?",
+    "collectionPath": "program/kreedaspardha/items",
+    "fields": ["title", "sportType", "startDate", "location"]
+  },
+  {
+    "marathi_question": "क्रीडा स्पर्धेत किती जण सहभागी झाले?",
+    "english_question": "How many participated in the sports competition?",
+    "collectionPath": "program/kreedaspardha/items",
+    "fields": ["participants"]
+  },
+  {
+    "marathi_question": "आरोग्य शिबिर कधी आहे?",
+    "english_question": "When is the health camp?",
+    "collectionPath": "program/aarogyashibir/items",
+    "fields": ["campDate", "location"]
+  },
+  {
+    "marathi_question": "आरोग्य शिबिरात कोणत्या सेवा उपलब्ध आहेत?",
+    "english_question": "What services are available at the health camp?",
+    "collectionPath": "program/aarogyashibir/items",
+    "fields": ["services"]
+  },
+  {
+    "marathi_question": "कचरा नियोजनासाठी काय केले जात आहे?",
+    "english_question": "What is being done for waste management?",
+    "collectionPath": "program/kachryacheniyojan/items",
+    "fields": ["title", "description", "disposalMethod"]
+  },
+  {
+    "marathi_question": "कचरा कधी उचलला जातो?",
+    "english_question": "When is the waste collected?",
+    "collectionPath": "program/kachryacheniyojan/items",
+    "fields": ["collectionDate"] // Assuming collectionDate implies schedule
+  },
+  {
+    "marathi_question": "बायोगॅस प्रकल्प कुठे आहेत?",
+    "english_question": "Where are the biogas projects located?",
+    "collectionPath": "program/biogasnirmiti/items",
+    "fields": ["location", "ownerName"]
+  },
+  {
+    "marathi_question": "बायोगॅस प्रकल्पाची क्षमता किती आहे?",
+    "english_question": "What is the capacity of the biogas plant?",
+    "collectionPath": "program/biogasnirmiti/items",
+    "fields": ["capacity", "gasProduction"]
+  },
+  {
+    "marathi_question": "सेंद्रिय खत कसे बनवले जाते?",
+    "english_question": "How is organic fertilizer made?",
+    "collectionPath": "program/sendriyakhat/items",
+    "fields": ["description"] // Description might contain method
+  },
+  {
+    "marathi_question": "सेंद्रिय खत कोठे उपलब्ध आहे?",
+    "english_question": "Where is organic fertilizer available?",
+    "collectionPath": "program/sendriyakhat/items",
+    "fields": ["location", "farmerName"]
+  },
+  {
+    "marathi_question": "राज्य सरकारच्या कोणत्या योजना उपलब्ध आहेत?",
+    "english_question": "Which state government schemes are available?",
+    "collectionPath": "yojana/state/items",
+    "fields": ["title", "department", "benefits", "eligibility"]
+  },
+  {
+    "marathi_question": "शेतीसाठी कोणती राज्य योजना आहे?",
+    "english_question": "Which state scheme is for agriculture?",
+    "collectionPath": "yojana/state/items",
+    "fields": ["title", "benefits"],
+    "filter": {"department": "Agriculture"} // Example filter
+  },
+  {
+    "marathi_question": "केंद्र सरकारच्या कोणत्या योजना उपलब्ध आहेत?",
+    "english_question": "Which central government schemes are available?",
+    "collectionPath": "yojana/central/items",
+    "fields": ["title", "department", "benefits", "eligibility"]
+  },
+  {
+    "marathi_question": "प्रधानमंत्री किसान योजनेची माहिती द्या.",
+    "english_question": "Give information about the Pradhan Mantri Kisan Yojana.",
+    "collectionPath": "yojana/central/items",
+    "fields": ["description", "benefits", "eligibility", "applicationLink"],
+    "filter": {"title": "PM Kisan"} // Example filter
+  },
+  {
+    "marathi_question": "गावातील प्रगत शेतकरी कोण आहेत?",
+    "english_question": "Who are the progressive farmers in the village?",
+    "collectionPath": "extra/pragat-shetkari/items",
+    "fields": ["name", "achievement", "village"]
+  },
+  {
+    "marathi_question": "प्रगत शेतकऱ्यांचे संपर्क तपशील काय आहेत?",
+    "english_question": "What are the contact details of progressive farmers?",
+    "collectionPath": "extra/pragat-shetkari/items",
+    "fields": ["name", "contact"]
+  },
+  {
+    "marathi_question": "ई-शिक्षण संसाधने कोणती आहेत?",
+    "english_question": "What are the e-learning resources?",
+    "collectionPath": "extra/e-shikshan/items",
+    "fields": ["title", "description", "resourceLink"]
+  },
+  {
+    "marathi_question": "शैक्षणिक वेबसाइट्सच्या लिंक्स द्या.",
+    "english_question": "Provide links to educational websites.",
+    "collectionPath": "extra/e-shikshan/items",
+    "fields": ["resourceLink"]
+  },
+  {
+    "marathi_question": "नवीन बातम्या काय आहेत?",
+    "english_question": "What is the latest news?",
+    "collectionPath": "extra/batmya/items",
+    "fields": ["title", "content", "date"],
+    "orderBy": ["date", "desc"]
+  },
+  {
+    "marathi_question": "ग्रामपंचायत संबंधित बातम्या दाखवा.",
+    "english_question": "Show news related to Gram Panchayat.",
+    "collectionPath": "extra/batmya/items",
+    "fields": ["title", "content", "date"]
+  },
+  {
+    "marathi_question": "ग्रामपंचायत कार्यालयाशी संपर्क कसा साधावा?",
+    "english_question": "How to contact the Gram Panchayat office?",
+    "collectionPath": "extra/sampark/items", // Also check 'contacts' collection
+    "fields": ["name", "phone", "email"]
+  },
+  {
+    "marathi_question": "ग्रामपंचायत ईमेल आयडी काय आहे?",
+    "english_question": "What is the Gram Panchayat email ID?",
+    "collectionPath": "extra/sampark/items",
+    "fields": ["email"],
+    "filter": {"name": "Gram Panchayat Office"} // Example filter
+  },
+  {
+    "marathi_question": "होम पेजवरील फोटो कोणते आहेत?",
+    "english_question": "What are the photos on the home page?",
+    "collectionPath": "home/photos",
+    "fields": ["images"]
+  },
+  {
+    "marathi_question": "राज्य गीताचा व्हिडिओ दाखवा.",
+    "english_question": "Show the video of the state anthem.",
+    "collectionPath": "home/rajjyageet",
+    "fields": ["videoUrl"]
+  },
+  {
+    "marathi_question": "राष्ट्रसंत तुकडोजी महाराज यांचे उद्धरण काय आहे?",
+    "english_question": "What is the quote by Rashtrasant Tukdoji Maharaj?",
+    "collectionPath": "home/rajjyageet",
+    "fields": ["quote", "name"]
+  },
+  {
+    "marathi_question": "नवीन संदेश कोणते आहेत?",
+    "english_question": "What are the new messages?",
+    "collectionPath": "home/messages",
+    "fields": ["newMessages"] // Array field
+  },
+  {
+    "marathi_question": "होम पेजवर कोणत्या योजनांची माहिती आहे?",
+    "english_question": "What scheme information is on the home page?",
+    "collectionPath": "home/messages",
+    "fields": ["yojana"] // Array field
+  },
+  {
+    "marathi_question": "नवीन निविदा कोणत्या आहेत?",
+    "english_question": "What are the new tenders?",
+    "collectionPath": "home/messages",
+    "fields": ["tenders"] // Array field
+  },
+  {
+    "marathi_question": "पदाधिकाऱ्यांची माहिती द्या.",
+    "english_question": "Give information about the office bearers.",
+    "collectionPath": "members",
+    "fields": ["name", "designation", "imageURL"],
+    "filter": {"designation": ["सरपंच", "उपसरपंच", "ग्राम सेवक"]} // Example multi-value filter (logic needs adjustment)
+  },
+  {
+    "marathi_question": "ग्रामपंचायतच्या बँक खात्याचा तपशील काय आहे?",
+    "english_question": "What are the bank account details of the Gram Panchayat?",
+    "collectionPath": "home/grampanchayat-info",
+    "fields": ["bankName", "accountNumber", "IFSC", "bankAddress"]
+  },
+  {
+    "marathi_question": "आठवडी बाजार कधी असतो?",
+    "english_question": "When is the weekly market held?",
+    "collectionPath": "home/grampanchayat-info/weeklyMarkets",
+    "fields": ["day", "address"]
+  },
+  {
+    "marathi_question": "ग्रामपंचायत वेबसाइटवर कसे पोहोचाल?",
+    "english_question": "How to reach the Gram Panchayat website?",
+    "collectionPath": "home/grampanchayat-info/howToReach",
+    "fields": ["method", "description"] // Assuming method describes how to reach
+  },
+  {
+    "marathi_question": "निरोगी सवयी कोणत्या आहेत?",
+    "english_question": "What are the healthy habits?",
+    "collectionPath": "home/grampanchayat-info/healthyHabits",
+    "fields": ["habitName", "habitDescription"]
+  },
+  {
+    "marathi_question": "डिजिटल घोषवाक्य काय आहेत?",
+    "english_question": "What are the digital slogans?",
+    "collectionPath": "digitalSlogans",
+    "fields": ["marathi", "english"]
+  },
+  {
+    "marathi_question": "शासकीय लोगो कोणते आहेत?",
+    "english_question": "What are the government logos?",
+    "collectionPath": "govLogos",
+    "fields": ["title", "src", "link"]
+  },
+  {
+    "marathi_question": "डिजिटल इंडिया लोगो दाखवा.",
+    "english_question": "Show the Digital India logo.",
+    "collectionPath": "govLogos",
+    "fields": ["src"],
+    "filter": {"title": "Digital India"} // Example filter
+  },
+   {
+    "marathi_question": "तक्रार कशी नोंदवायची?",
+    "english_question": "How to register a complaint?",
+    "collectionPath": null, // No specific collection, provide general info or link to TakrarNondani page
+    "fields": ["general_info"]
+  },
+  {
+    "marathi_question": "माझ्या तक्रारीची स्थिती काय आहे?",
+    "english_question": "What is the status of my complaint?",
+    "collectionPath": null, // Needs tracking ID, handled by TakrarNondani logic
+    "fields": ["general_info"]
+  },
+  {
+    "marathi_question": "ग्रामपंचायत बद्दल सामान्य माहिती द्या.",
+    "english_question": "Give general information about the Gram Panchayat.",
+    "collectionPath": "home/grampanchayat-info",
+    "fields": ["area", "population", "literacy", "schools", "banks", "hospitals"]
+  },
+  {
+    "marathi_question": "फोटो गॅलरी दाखवा.",
+    "english_question": "Show the photo gallery.",
+    "collectionPath": "home/grampanchayat-info/gallery",
+    "fields": ["url"]
+  },
+    {
+    "marathi_question": "ग्रामपंचायत निवडणूक कधी आहे?",
+    "english_question": "When is the Gram Panchayat election?",
+    "collectionPath": null, // Likely external info, search needed
+    "fields": ["external_search"]
+  },
+  {
+    "marathi_question": "नवीन पाणी कनेक्शनसाठी अर्ज कसा करावा?",
+    "english_question": "How to apply for a new water connection?",
+    "collectionPath": "eseva", // Search within eseva for relevant service
+    "fields": ["name", "link", "description"]
+  },
+  {
+    "marathi_question": "रस्त्यांच्या दुरुस्तीसाठी काय निर्णय घेतला आहे?",
+    "english_question": "What decision has been taken for road repairs?",
+    "collectionPath": "decisions", // Search decisions for keywords like 'road', 'repair'
+    "fields": ["title", "description", "date", "status"]
+  },
+  {
+    "marathi_question": "गावात वाय-फाय आहे का?",
+    "english_question": "Is there Wi-Fi in the village?",
+    "collectionPath": "facilities", // Search facilities for 'Wi-Fi'
+    "fields": ["name", "location", "status"] // Assuming status indicates availability
+  },
+  {
+    "marathi_question": "शेती विषयक योजना कोणत्या आहेत?",
+    "english_question": "What are the agriculture-related schemes?",
+    "collectionPath": "yojana", // Search both state and central yojana for agriculture
+    "fields": ["title", "description", "benefits"]
+  },
+  {
+    "marathi_question": "ग्रामपंचायत बजेट किती आहे?",
+    "english_question": "What is the Gram Panchayat budget?",
+    "collectionPath": null, // Needs specific data source, maybe decisions or external
+    "fields": ["external_search_or_specific_doc"]
+  },
+  {
+    "marathi_question": "आपत्कालीन मदत क्रमांक काय आहे?",
+    "english_question": "What is the emergency helpline number?",
+    "collectionPath": "helplines",
+    "fields": ["number"],
+    "filter": {"department": "Disaster"} // Filter for disaster or general emergency
+  },
+  {
+    "marathi_question": "गावातील शाळांची नावे सांगा.",
+    "english_question": "Tell the names of schools in the village.",
+    "collectionPath": "facilities",
+    "fields": ["name"],
+    "filter": {"type": "Education"}
+  },
+  {
+    "marathi_question": "ग्रामपंचायत कार्यालयाची वेळ काय आहे?",
+    "english_question": "What are the Gram Panchayat office timings?",
+    "collectionPath": "facilities", // Assuming office is a facility
+    "fields": ["timings"],
+    "filter": {"name": "Gram Panchayat Office"} // Example filter
+  },
+   {
+    "marathi_question": "नवीनतम बातमी कोणती आहे?",
+    "english_question": "What is the latest news?",
+    "collectionPath": "extra/batmya/items",
+    "fields": ["title", "date", "content"],
+    "orderBy": ["date", "desc"],
+    "limit": 1
+  },
+  {
+    "marathi_question": "ग्रामपंचायतच्या फेसबुक पेजची लिंक काय आहे?",
+    "english_question": "What is the link to the Gram Panchayat's Facebook page?",
+    "collectionPath": "home/grampanchayat-info", // Check if stored here or in contacts/profile
+    "fields": ["facebookLink"] // Assuming a field named facebookLink exists
+  },
+  {
+    "marathi_question": "गावातील पाणीपुरवठा वेळापत्रक काय आहे?",
+    "english_question": "What is the water supply schedule in the village?",
+    "collectionPath": "facilities", // Or a dedicated collection/document
+    "fields": ["timings", "description"], // Check description or timings field
+    "filter": {"type": "Water Supply"}
+  },
+  {
+    "marathi_question": "ग्रामपंचायत सदस्य पदासाठी पात्रता काय आहे?",
+    "english_question": "What is the eligibility for becoming a Gram Panchayat member?",
+    "collectionPath": null, // General knowledge or external search
+    "fields": ["external_search"]
+  },
+  {
+    "marathi_question": "रस्ता सुरक्षा संबंधित काय उपाययोजना आहेत?",
+    "english_question": "What measures are in place for road safety?",
+    "collectionPath": "decisions", // Check decisions or a specific program
+    "fields": ["title", "description"]
+  },
+  {
+    "marathi_question": "गावात क्रीडांगण आहे का? कुठे आहे?",
+    "english_question": "Is there a playground in the village? Where is it?",
+    "collectionPath": "facilities",
+    "fields": ["name", "location"],
+    "filter": {"type": "Sports"}
+  },
+  {
+    "marathi_question": "माझी मिळकत प्रमाणपत्र अर्ज कसा करावा?",
+    "english_question": "How to apply for my income certificate?",
+    "collectionPath": "eseva",
+    "fields": ["name", "link", "description"],
+    "filter": {"type": "Certificates"} // Search for "Income Certificate" within this type
+  },
+  {
+    "marathi_question": "गावातील महिला बचत गट कोणते आहेत?",
+    "english_question": "What are the women's self-help groups in the village?",
+    "collectionPath": "program/rotipoorak/items", // Maybe under roti poorak or a dedicated collection
+    "fields": ["title", "entrepreneurName"],
+    "filter": {"businessType": "Self-Help Group"} // Example filter
+  },
+    {
+    "marathi_question": "ग्रामपंचायतीचा इतिहास काय आहे?",
+    "english_question": "What is the history of the Gram Panchayat?",
+    "collectionPath": "home/grampanchayat-info", // Check 'details' field
+    "fields": ["details"]
+  },
+  {
+    "marathi_question": "नवीनतम ग्रामसभा कधी झाली?",
+    "english_question": "When was the last Gram Sabha held?",
+    "collectionPath": "decisions", // Check latest decision date
+    "fields": ["date"],
+    "orderBy": ["date", "desc"],
+    "limit": 1
+  },
+  {
+    "marathi_question": "सौर ऊर्जेसाठी कोणती योजना आहे?",
+    "english_question": "Is there any scheme for solar energy?",
+    "collectionPath": "yojana", // Search state/central yojana for 'solar'
+    "fields": ["title", "description", "benefits"]
+  },
+  {
+    "marathi_question": "ग्रामपंचायत कार्यालयाचा फोटो दाखवा.",
+    "english_question": "Show a photo of the Gram Panchayat office.",
+    "collectionPath": "facilities", // Assuming office is a facility with photo
+    "fields": ["imageURL"],
+    "filter": {"name": "Gram Panchayat Office"}
+  },
+  {
+    "marathi_question": "गावातील एकूण रस्त्यांची लांबी किती आहे?",
+    "english_question": "What is the total length of roads in the village?",
+    "collectionPath": "home/grampanchayat-info", // Check overview data if available
+    "fields": ["roadLength"] // Assuming such a field exists
+  },
+    {
+    "marathi_question": "पशुसंवर्धनासाठी कोणती योजना आहे?",
+    "english_question": "Is there any scheme for animal husbandry?",
+    "collectionPath": "yojana",
+    "fields": ["title", "benefits", "department"],
+    "keywords": ["पशु", "animal"] // Keywords to search within yojana data
+  },
+  {
+    "marathi_question": "ग्रामपंचायत कर भरण्याची अंतिम तारीख काय आहे?",
+    "english_question": "What is the last date to pay Gram Panchayat tax?",
+    "collectionPath": "home/messages", // Check 'newMessages' or a dedicated notice section
+    "fields": ["title", "date"] // Search for tax related messages
+  },
+  {
+    "marathi_question": "गावात ग्रंथालय आहे का?",
+    "english_question": "Is there a library in the village?",
+    "collectionPath": "facilities",
+    "fields": ["name", "location"],
+    "filter": {"type": "Education"} // Or check name for 'ग्रंथालय'/'Library'
+  },
+    {
+    "marathi_question": "ग्रामपंचायत वेबसाइट कोणी विकसित केली?",
+    "english_question": "Who developed the Gram Panchayat website?",
+    "collectionPath": null, // Likely not stored, general knowledge
+    "fields": ["general_knowledge"]
+  },
+  {
+    "marathi_question": "पाणी तपासणी अहवाल उपलब्ध आहे का?",
+    "english_question": "Is the water testing report available?",
+    "collectionPath": "decisions", // Check decisions or a dedicated 'reports' section
+    "fields": ["title", "docURL", "date"] // Search for 'water test' or 'पाणी तपासणी'
+  }
+]
