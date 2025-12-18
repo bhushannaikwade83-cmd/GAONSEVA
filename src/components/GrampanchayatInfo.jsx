@@ -11,6 +11,8 @@ import {
   ListItem,
   CircularProgress,
   Alert,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -24,6 +26,9 @@ import {
 } from "firebase/firestore";
 
 const GrampanchayatInfo = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   // State for dynamic data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -51,14 +56,91 @@ const GrampanchayatInfo = () => {
   const [healthyHabits, setHealthyHabits] = useState([]);
   const [mapUrl, setMapUrl] = useState('');
 
+  // Custom Arrow Components
+  const CustomPrevArrow = ({ onClick }) => (
+    <Box
+      onClick={onClick}
+      sx={{
+        position: 'absolute',
+        left: { xs: -30, md: -45 },
+        top: '50%',
+        transform: 'translateY(-50%)',
+        zIndex: 2,
+        cursor: 'pointer',
+        backgroundColor: 'rgba(25, 118, 210, 0.9)',
+        borderRadius: '50%',
+        width: { xs: 36, md: 44 },
+        height: { xs: 36, md: 44 },
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontSize: { xs: 18, md: 22 },
+        fontWeight: 'bold',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          backgroundColor: '#1565c0',
+          transform: 'translateY(-50%) scale(1.15)',
+          boxShadow: '0 6px 20px rgba(25, 118, 210, 0.4)',
+        },
+        '&:active': {
+          transform: 'translateY(-50%) scale(0.95)',
+        }
+      }}
+    >
+      ❮
+    </Box>
+  );
+
+  const CustomNextArrow = ({ onClick }) => (
+    <Box
+      onClick={onClick}
+      sx={{
+        position: 'absolute',
+        right: { xs: -30, md: -45 },
+        top: '50%',
+        transform: 'translateY(-50%)',
+        zIndex: 2,
+        cursor: 'pointer',
+        backgroundColor: 'rgba(25, 118, 210, 0.9)',
+        borderRadius: '50%',
+        width: { xs: 36, md: 44 },
+        height: { xs: 36, md: 44 },
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontSize: { xs: 18, md: 22 },
+        fontWeight: 'bold',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          backgroundColor: '#1565c0',
+          transform: 'translateY(-50%) scale(1.15)',
+          boxShadow: '0 6px 20px rgba(25, 118, 210, 0.4)',
+        },
+        '&:active': {
+          transform: 'translateY(-50%) scale(0.95)',
+        }
+      }}
+    >
+      ❯
+    </Box>
+  );
+
   const sliderSettings = {
     dots: true,
-    infinite: true,
+    infinite: galleryImages.length > 1,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    autoplay: true,
-    arrows: true,
+    autoplay: galleryImages.length > 1,
+    autoplaySpeed: 4000,
+    arrows: galleryImages.length > 1,
+    prevArrow: <CustomPrevArrow />,
+    nextArrow: <CustomNextArrow />,
+    dotsClass: "slick-dots custom-dots",
   };
 
   // Function to add default E-Services if none exist
@@ -294,97 +376,306 @@ const GrampanchayatInfo = () => {
 
   return (
     <>
-      {/* First Section - Pink Background */}
+      {/* First Section - Government Blue Background */}
       <Box
         sx={{
           width: "100%",
-          bgcolor: "rgba(250, 0, 87, 1)",
+          background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 50%, #42a5f5 100%)',
           color: "white",
-          py: 4,
+          py: { xs: 4, md: 6 },
+          borderTop: '4px solid #FFD700',
         }}
       >
         <Container maxWidth="lg">
-          <Grid container spacing={2}>
-            {/* Column 1 - ग्रामपंचायत */}
+          <Grid container spacing={{ xs: 2, md: 3 }}>
+            {/* Column 1 - Overview */}
             <Grid item xs={12} md={4}>
               <Paper
-                elevation={3}
+                elevation={0}
                 sx={{
-                  p: 2,
-                  bgcolor: "rgba(255,255,255,0.05)",
-                  color: "white",
-                  borderRadius: 2,
+                  p: { xs: 2.5, md: 3 },
+                  bgcolor: "rgba(255,255,255,0.95)",
+                  color: "#212121",
+                  borderRadius: 3,
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+                  }
                 }}
               >
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  दृष्टीक्षेपात ग्रामपंचायत
-                </Typography>
-                <List dense>
-                  <ListItem disablePadding>क्षेत्र: {overview.area || '___'} sq km</ListItem>
-                  <ListItem disablePadding>लोकसंख्या: {overview.population || '______'}</ListItem>
-                  <ListItem disablePadding>साक्षरतेचे प्रमाण: {overview.literacy || '__'}</ListItem>
-                  <ListItem disablePadding>शाळा: {overview.schools || '______'}</ListItem>
-                  <ListItem disablePadding>बँक: {overview.banks || '______'}</ListItem>
-                  <ListItem disablePadding>रुग्णालये: {overview.hospitals || '______'}</ListItem>
-                  <ListItem disablePadding>स्वच्छतागृहे: {overview.toilets || '______'}</ListItem>
-                  <ListItem disablePadding>पोस्ट ऑफिस: {overview.postOffice || '______'}</ListItem>
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 2.5,
+                  pb: 2,
+                  borderBottom: '3px solid #FFD700'
+                }}>
+                  <Typography 
+                    variant={isMobile ? "h5" : "h4"} 
+                    fontWeight="bold" 
+                    sx={{
+                      color: '#1976d2',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      mb: 0.5
+                    }}
+                  >
+                    दृष्टीक्षेपात ग्रामपंचायत
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#757575',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Overview
+                  </Typography>
+                </Box>
+                <List dense sx={{ mt: 1 }}>
+                  {[
+                    { label: 'क्षेत्र', value: overview.area || '___', unit: 'चौ. कि.मी.' },
+                    { label: 'लोकसंख्या', value: overview.population || '______' },
+                    { label: 'साक्षरतेचे प्रमाण', value: overview.literacy || '__', unit: '%' },
+                    { label: 'शाळा', value: overview.schools || '______' },
+                    { label: 'बँक', value: overview.banks || '______' },
+                    { label: 'रुग्णालये', value: overview.hospitals || '______' },
+                    { label: 'स्वच्छतागृहे', value: overview.toilets || '______' },
+                    { label: 'पोस्ट ऑफिस', value: overview.postOffice || '______' },
+                  ].map((item, index) => (
+                    <ListItem 
+                      key={index} 
+                      disablePadding
+                      sx={{
+                        py: 1,
+                        borderBottom: index < 7 ? '1px solid #e0e0e0' : 'none',
+                        '&:hover': {
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: 1,
+                        }
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 0.5 }}>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            fontWeight: 600,
+                            color: '#757575',
+                            fontFamily: '"Roboto", "Arial", sans-serif',
+                            fontSize: '0.75rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5
+                          }}
+                        >
+                          {item.label}
+                        </Typography>
+                        <Typography 
+                          variant="body1" 
+                          sx={{ 
+                            fontWeight: 700,
+                            color: '#1976d2',
+                            fontFamily: '"Roboto", "Arial", sans-serif',
+                            fontSize: '1rem'
+                          }}
+                        >
+                          {item.value} {item.unit || ''}
+                        </Typography>
+                      </Box>
+                    </ListItem>
+                  ))}
                 </List>
               </Paper>
             </Grid>
 
-            {/* Column 2 - बँक तपशील */}
+            {/* Column 2 - Bank Details */}
             <Grid item xs={12} md={4}>
               <Paper
-                elevation={3}
+                elevation={0}
                 sx={{
-                  p: 2,
-                  bgcolor: "rgba(255,255,255,0.05)",
-                  color: "white",
-                  borderRadius: 2,
+                  p: { xs: 2.5, md: 3 },
+                  bgcolor: "rgba(255,255,255,0.95)",
+                  color: "#212121",
+                  borderRadius: 3,
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+                  }
                 }}
               >
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  ग्रामपंचायत बँक तपशील
-                </Typography>
-                <List dense>
-                  <ListItem disablePadding>बँकेचे नाव: {bankDetails.name || '______'}</ListItem>
-                  <ListItem disablePadding>
-                    बँक खाते क्रमांक: {bankDetails.accountNumber || '______'}
-                  </ListItem>
-                  <ListItem disablePadding>IFSC कोड: {bankDetails.IFSC || '______'}</ListItem>
-                  <ListItem disablePadding>बँकेचा पत्ता: {bankDetails.address || '______'}</ListItem>
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 2.5,
+                  pb: 2,
+                  borderBottom: '3px solid #FFD700'
+                }}>
+                  <Typography 
+                    variant={isMobile ? "h5" : "h4"} 
+                    fontWeight="bold" 
+                    sx={{
+                      color: '#1976d2',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      mb: 0.5
+                    }}
+                  >
+                    ग्रामपंचायत बँक तपशील
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#757575',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Bank Details
+                  </Typography>
+                </Box>
+                <List dense sx={{ mt: 1 }}>
+                  {[
+                    { label: 'बँकेचे नाव', value: bankDetails.name || '______' },
+                    { label: 'बँक खाते क्रमांक', value: bankDetails.accountNumber || '______' },
+                    { label: 'IFSC कोड', value: bankDetails.IFSC || '______' },
+                    { label: 'बँकेचा पत्ता', value: bankDetails.address || '______' },
+                  ].map((item, index) => (
+                    <ListItem 
+                      key={index} 
+                      disablePadding
+                      sx={{
+                        py: 1,
+                        borderBottom: index < 3 ? '1px solid #e0e0e0' : 'none',
+                        '&:hover': {
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: 1,
+                        }
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 0.5 }}>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            fontWeight: 600,
+                            color: '#757575',
+                            fontFamily: '"Roboto", "Arial", sans-serif',
+                            fontSize: '0.75rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5
+                          }}
+                        >
+                          {item.label}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            fontWeight: 600,
+                            color: '#1976d2',
+                            fontFamily: '"Roboto", "Arial", sans-serif',
+                            wordBreak: 'break-word'
+                          }}
+                        >
+                          {item.value}
+                        </Typography>
+                      </Box>
+                    </ListItem>
+                  ))}
                 </List>
-                <Typography mt={2} fontWeight="bold">
-                  जिल्ह्याचे संकेतस्थळ
-                </Typography>
               </Paper>
             </Grid>
 
-            {/* Column 3 - ई-सेवा */}
+            {/* Column 3 - E-Services */}
             <Grid item xs={12} md={4}>
               <Paper
-                elevation={3}
+                elevation={0}
                 sx={{
-                  p: 2,
-                  bgcolor: "rgba(255,255,255,0.05)",
-                  color: "white",
-                  borderRadius: 2,
+                  p: { xs: 2.5, md: 3 },
+                  bgcolor: "rgba(255,255,255,0.95)",
+                  color: "#212121",
+                  borderRadius: 3,
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+                  }
                 }}
               >
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  ई-सेवा
-                </Typography>
-                {console.log('E-Services in render:', eServices)}
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 2.5,
+                  pb: 2,
+                  borderBottom: '3px solid #FFD700'
+                }}>
+                  <Typography 
+                    variant={isMobile ? "h5" : "h4"} 
+                    fontWeight="bold" 
+                    sx={{
+                      color: '#1976d2',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      mb: 0.5
+                    }}
+                  >
+                    ई-सेवा
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#757575',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    E-Services
+                  </Typography>
+                </Box>
                 {eServices.length > 0 ? (
                   <List dense>
                     {eServices.map((service, index) => (
-                      <ListItem key={service.id || index} disablePadding>
+                      <ListItem 
+                        key={service.id || index} 
+                        disablePadding
+                        sx={{
+                          py: 0.75,
+                          borderBottom: index < eServices.length - 1 ? '1px solid #e0e0e0' : 'none',
+                          '&:hover': {
+                            backgroundColor: '#e3f2fd',
+                            borderRadius: 1,
+                          }
+                        }}
+                      >
                         <Link
                           href={service.serviceUrl || "https://aaplesarkar.maharashtra.gov.in/en/"}
                           target="_blank"
                           rel="noopener noreferrer"
-                          sx={{ color: "white", textDecoration: "none" }}
+                          sx={{ 
+                            color: "#1976d2", 
+                            textDecoration: "none",
+                            fontWeight: 600,
+                            fontFamily: '"Roboto", "Arial", sans-serif',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            width: '100%',
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              color: '#1565c0',
+                              transform: 'translateX(4px)',
+                            }
+                          }}
                         >
+                          <Box
+                            sx={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: '50%',
+                              backgroundColor: '#1976d2',
+                              flexShrink: 0
+                            }}
+                          />
                           {service.serviceName}
                         </Link>
                       </ListItem>
@@ -394,13 +685,47 @@ const GrampanchayatInfo = () => {
                   <List dense>
                     {["पुरवठा", "न्यायालयीन", "महसूल", "देयक", "प्रमाणपत्रे"].map(
                       (item, index) => (
-                        <ListItem key={index} disablePadding>
+                        <ListItem 
+                          key={index} 
+                          disablePadding
+                          sx={{
+                            py: 0.75,
+                            borderBottom: index < 4 ? '1px solid #e0e0e0' : 'none',
+                            '&:hover': {
+                              backgroundColor: '#e3f2fd',
+                              borderRadius: 1,
+                            }
+                          }}
+                        >
                           <Link
                             href="https://aaplesarkar.maharashtra.gov.in/en/"
                             target="_blank"
                             rel="noopener noreferrer"
-                            sx={{ color: "white", textDecoration: "none" }}
+                            sx={{ 
+                              color: "#1976d2", 
+                              textDecoration: "none",
+                              fontWeight: 600,
+                              fontFamily: '"Roboto", "Arial", sans-serif',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              width: '100%',
+                              transition: 'all 0.2s ease',
+                              '&:hover': {
+                                color: '#1565c0',
+                                transform: 'translateX(4px)',
+                              }
+                            }}
                           >
+                            <Box
+                              sx={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: '50%',
+                                backgroundColor: '#1976d2',
+                                flexShrink: 0
+                              }}
+                            />
                             {item}
                           </Link>
                         </ListItem>
@@ -414,137 +739,532 @@ const GrampanchayatInfo = () => {
         </Container>
       </Box>
 
-      {/* Second Section - Blue Background */}
+      {/* Second Section - Light Background */}
       <Box
         sx={{
           width: "100%",
-          bgcolor: "rgba(30, 129, 175, 1)",
-          color: "white",
-          py: 4,
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%)',
+          py: { xs: 4, md: 6 },
         }}
       >
         <Container maxWidth="lg">
-          <Grid container spacing={2}>
-            {/* आठवडे बाजार */}
+          <Grid container spacing={{ xs: 2, md: 3 }}>
+            {/* Weekly Markets */}
             <Grid item xs={12} md={3}>
               <Paper
+                elevation={0}
                 sx={{
-                  p: 2,
-                  bgcolor: "rgba(255,255,255,0.05)",
-                  color: "white",
-                  borderRadius: 2,
+                  p: { xs: 2.5, md: 3 },
+                  bgcolor: "white",
+                  color: "#212121",
+                  borderRadius: 3,
+                  border: '1px solid #e0e0e0',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  transition: 'all 0.3s ease',
+                  height: '100%',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 24px rgba(25, 118, 210, 0.15)',
+                    borderColor: '#1976d2',
+                  }
                 }}
               >
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  आठवडे बाजार
-                </Typography>
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 2.5,
+                  pb: 2,
+                  borderBottom: '3px solid #FFD700'
+                }}>
+                  <Typography 
+                    variant={isMobile ? "h5" : "h6"} 
+                    fontWeight="bold" 
+                    sx={{
+                      color: '#1976d2',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      mb: 0.5
+                    }}
+                  >
+                    आठवडे बाजार
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#757575',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    Weekly Markets
+                  </Typography>
+                </Box>
                 {weeklyMarkets.length > 0 ? (
                   <List dense>
                     {weeklyMarkets.map((market, index) => (
-                      <ListItem key={market.id || index} disablePadding>
-                        <Typography variant="body2">
-                          {market.day} | {market.address}
-                        </Typography>
+                      <ListItem 
+                        key={market.id || index} 
+                        disablePadding
+                        sx={{
+                          py: 1,
+                          borderBottom: index < weeklyMarkets.length - 1 ? '1px solid #e0e0e0' : 'none',
+                          '&:hover': {
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: 1,
+                          }
+                        }}
+                      >
+                        <Box sx={{ width: '100%' }}>
+                          <Typography 
+                            variant="body2" 
+                            sx={{
+                              fontWeight: 700,
+                              color: '#1976d2',
+                              fontFamily: '"Roboto", "Arial", sans-serif',
+                              mb: 0.5
+                            }}
+                          >
+                            {market.day}
+                          </Typography>
+                          <Typography 
+                            variant="caption" 
+                            sx={{
+                              color: '#616161',
+                              fontFamily: '"Roboto", "Arial", sans-serif',
+                              fontSize: '0.8rem',
+                              display: 'block',
+                              lineHeight: 1.4
+                            }}
+                          >
+                            {market.address}
+                          </Typography>
+                        </Box>
                       </ListItem>
                     ))}
                   </List>
                 ) : (
-                  <Typography variant="body2">कोणतेही बाजार उपलब्ध नाहीत</Typography>
+                  <Box sx={{ 
+                    py: 3,
+                    textAlign: 'center'
+                  }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{
+                        color: '#9e9e9e',
+                        fontFamily: '"Roboto", "Arial", sans-serif'
+                      }}
+                    >
+                      कोणतेही बाजार उपलब्ध नाहीत
+                    </Typography>
+                  </Box>
                 )}
               </Paper>
             </Grid>
 
-            {/* पर्यटन स्थळे */}
+            {/* Tourism Places */}
             <Grid item xs={12} md={3}>
               <Paper
+                elevation={0}
                 sx={{
-                  p: 2,
-                  bgcolor: "rgba(255,255,255,0.05)",
-                  color: "white",
-                  borderRadius: 2,
+                  p: { xs: 2.5, md: 3 },
+                  bgcolor: "white",
+                  color: "#212121",
+                  borderRadius: 3,
+                  border: '1px solid #e0e0e0',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  transition: 'all 0.3s ease',
+                  height: '100%',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 24px rgba(25, 118, 210, 0.15)',
+                    borderColor: '#1976d2',
+                  }
                 }}
               >
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  पर्यटन स्थळे
-                </Typography>
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 2.5,
+                  pb: 2,
+                  borderBottom: '3px solid #FFD700'
+                }}>
+                  <Typography 
+                    variant={isMobile ? "h5" : "h6"} 
+                    fontWeight="bold" 
+                    sx={{
+                      color: '#1976d2',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      mb: 0.5
+                    }}
+                  >
+                    पर्यटन स्थळे
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#757575',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    Tourist Places
+                  </Typography>
+                </Box>
                 {tourismPlaces.length > 0 ? (
                   <List dense>
                     {tourismPlaces.map((place, index) => (
-                      <ListItem key={place.id || index} disablePadding>
-                        <Typography variant="body2">
-                          {index + 1}. {place.name}
-                        </Typography>
+                      <ListItem 
+                        key={place.id || index} 
+                        disablePadding
+                        sx={{
+                          py: 1,
+                          borderBottom: index < tourismPlaces.length - 1 ? '1px solid #e0e0e0' : 'none',
+                          '&:hover': {
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: 1,
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+                          <Box
+                            sx={{
+                              minWidth: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              backgroundColor: '#1976d2',
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              flexShrink: 0
+                            }}
+                          >
+                            {index + 1}
+                          </Box>
+                          <Typography 
+                            variant="body2" 
+                            sx={{
+                              fontWeight: 600,
+                              color: '#424242',
+                              fontFamily: '"Roboto", "Arial", sans-serif',
+                              flex: 1
+                            }}
+                          >
+                            {place.name}
+                          </Typography>
+                        </Box>
                       </ListItem>
                     ))}
                   </List>
                 ) : (
-                  <Typography variant="body2">कोणतीही पर्यटन स्थळे उपलब्ध नाहीत</Typography>
+                  <Box sx={{ 
+                    py: 3,
+                    textAlign: 'center'
+                  }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{
+                        color: '#9e9e9e',
+                        fontFamily: '"Roboto", "Arial", sans-serif'
+                      }}
+                    >
+                      कोणतीही पर्यटन स्थळे उपलब्ध नाहीत
+                    </Typography>
+                  </Box>
                 )}
               </Paper>
             </Grid>
 
-            {/* कसे पोहोचाल ? */}
+            {/* How to Reach */}
             <Grid item xs={12} md={3}>
               <Paper
+                elevation={0}
                 sx={{
-                  p: 2,
-                  bgcolor: "rgba(255,255,255,0.05)",
-                  color: "white",
-                  borderRadius: 2,
+                  p: { xs: 2.5, md: 3 },
+                  bgcolor: "white",
+                  color: "#212121",
+                  borderRadius: 3,
+                  border: '1px solid #e0e0e0',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  transition: 'all 0.3s ease',
+                  height: '100%',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 24px rgba(25, 118, 210, 0.15)',
+                    borderColor: '#1976d2',
+                  }
                 }}
               >
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  कसे पोहोचाल ?
-                </Typography>
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 2.5,
+                  pb: 2,
+                  borderBottom: '3px solid #FFD700'
+                }}>
+                  <Typography 
+                    variant={isMobile ? "h5" : "h6"} 
+                    fontWeight="bold" 
+                    sx={{
+                      color: '#1976d2',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      mb: 0.5
+                    }}
+                  >
+                    कसे पोहोचाल ?
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#757575',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    How to Reach
+                  </Typography>
+                </Box>
                 {howToReach.length > 0 ? (
                   <List dense>
                     {howToReach.map((method, index) => (
-                      <ListItem key={method.id || index} disablePadding>
-                        <Typography variant="body2">
-                          {index + 1}) {method.method}
-                        </Typography>
+                      <ListItem 
+                        key={method.id || index} 
+                        disablePadding
+                        sx={{
+                          py: 1,
+                          borderBottom: index < howToReach.length - 1 ? '1px solid #e0e0e0' : 'none',
+                          '&:hover': {
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: 1,
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+                          <Box
+                            sx={{
+                              minWidth: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              backgroundColor: '#1976d2',
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              flexShrink: 0
+                            }}
+                          >
+                            {index + 1}
+                          </Box>
+                          <Typography 
+                            variant="body2" 
+                            sx={{
+                              fontWeight: 600,
+                              color: '#424242',
+                              fontFamily: '"Roboto", "Arial", sans-serif',
+                              flex: 1
+                            }}
+                          >
+                            {method.method}
+                          </Typography>
+                        </Box>
                       </ListItem>
                     ))}
                   </List>
                 ) : (
                   <List dense>
-                    <ListItem disablePadding>१) रस्त्याद्वारे</ListItem>
-                    <ListItem disablePadding>२) रेल्वेने</ListItem>
-                    <ListItem disablePadding>३) हवाई मार्ग</ListItem>
+                    {["रस्त्याद्वारे", "रेल्वेने", "हवाई मार्ग"].map((item, index) => (
+                      <ListItem 
+                        key={index} 
+                        disablePadding
+                        sx={{
+                          py: 1,
+                          borderBottom: index < 2 ? '1px solid #e0e0e0' : 'none',
+                          '&:hover': {
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: 1,
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+                          <Box
+                            sx={{
+                              minWidth: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              backgroundColor: '#1976d2',
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              flexShrink: 0
+                            }}
+                          >
+                            {index + 1}
+                          </Box>
+                          <Typography 
+                            variant="body2" 
+                            sx={{
+                              fontWeight: 600,
+                              color: '#424242',
+                              fontFamily: '"Roboto", "Arial", sans-serif',
+                              flex: 1
+                            }}
+                          >
+                            {item}
+                          </Typography>
+                        </Box>
+                      </ListItem>
+                    ))}
                   </List>
                 )}
               </Paper>
             </Grid>
 
-            {/* निरोगी आरोग्य सवयी */}
+            {/* Healthy Habits */}
             <Grid item xs={12} md={3}>
               <Paper
+                elevation={0}
                 sx={{
-                  p: 2,
-                  bgcolor: "rgba(255,255,255,0.05)",
-                  color: "white",
-                  borderRadius: 2,
+                  p: { xs: 2.5, md: 3 },
+                  bgcolor: "white",
+                  color: "#212121",
+                  borderRadius: 3,
+                  border: '1px solid #e0e0e0',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  transition: 'all 0.3s ease',
+                  height: '100%',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 24px rgba(25, 118, 210, 0.15)',
+                    borderColor: '#1976d2',
+                  }
                 }}
               >
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  निरोगी आरोग्य सवयी
-                </Typography>
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 2.5,
+                  pb: 2,
+                  borderBottom: '3px solid #FFD700'
+                }}>
+                  <Typography 
+                    variant={isMobile ? "h5" : "h6"} 
+                    fontWeight="bold" 
+                    sx={{
+                      color: '#1976d2',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      mb: 0.5
+                    }}
+                  >
+                    निरोगी आरोग्य सवयी
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#757575',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    Healthy Habits
+                  </Typography>
+                </Box>
                 {healthyHabits.length > 0 ? (
                   <List dense>
                     {healthyHabits.map((habit, index) => (
-                      <ListItem key={habit.id || index} disablePadding>
-                        <Typography variant="body2">
-                          {index + 1}) {habit.habitName}
-                        </Typography>
+                      <ListItem 
+                        key={habit.id || index} 
+                        disablePadding
+                        sx={{
+                          py: 1,
+                          borderBottom: index < healthyHabits.length - 1 ? '1px solid #e0e0e0' : 'none',
+                          '&:hover': {
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: 1,
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+                          <Box
+                            sx={{
+                              minWidth: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              backgroundColor: '#4caf50',
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              flexShrink: 0
+                            }}
+                          >
+                            ✓
+                          </Box>
+                          <Typography 
+                            variant="body2" 
+                            sx={{
+                              fontWeight: 600,
+                              color: '#424242',
+                              fontFamily: '"Roboto", "Arial", sans-serif',
+                              flex: 1
+                            }}
+                          >
+                            {habit.habitName}
+                          </Typography>
+                        </Box>
                       </ListItem>
                     ))}
                   </List>
                 ) : (
                   <List dense>
-                    <ListItem disablePadding>१) नियमित व्यायाम</ListItem>
-                    <ListItem disablePadding>२) संतुलित आहार</ListItem>
-                    <ListItem disablePadding>३) पुरेसा झोप</ListItem>
-                    <ListItem disablePadding>४) ताण व्यवस्थापन</ListItem>
+                    {["नियमित व्यायाम", "संतुलित आहार", "पुरेसा झोप"].map((item, index) => (
+                      <ListItem 
+                        key={index} 
+                        disablePadding
+                        sx={{
+                          py: 1,
+                          borderBottom: index < 2 ? '1px solid #e0e0e0' : 'none',
+                          '&:hover': {
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: 1,
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+                          <Box
+                            sx={{
+                              minWidth: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              backgroundColor: '#4caf50',
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              flexShrink: 0
+                            }}
+                          >
+                            ✓
+                          </Box>
+                          <Typography 
+                            variant="body2" 
+                            sx={{
+                              fontWeight: 600,
+                              color: '#424242',
+                              fontFamily: '"Roboto", "Arial", sans-serif',
+                              flex: 1
+                            }}
+                          >
+                            {item}
+                          </Typography>
+                        </Box>
+                      </ListItem>
+                    ))}
                   </List>
                 )}
               </Paper>
@@ -554,52 +1274,151 @@ const GrampanchayatInfo = () => {
       </Box>
 
       {/* Gallery + Map Section - Below Blue */}
-      <Box sx={{ width: "100%", bgcolor: "#f9f9f9", py: 4 }}>
+      <Box sx={{ 
+        width: "100%", 
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%)',
+        py: { xs: 4, md: 6 }
+      }}>
         <Container maxWidth="lg">
-          <Grid container spacing={2}>
-            {/* Slider */}
+          <Grid container spacing={{ xs: 2, md: 3 }}>
+            {/* Photo Gallery */}
             <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, borderRadius: 2 }}>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  gutterBottom
-                  textAlign="center"
-                >
-                  छायाचित्र दालन
-                </Typography>
+              <Paper 
+                elevation={0}
+                sx={{ 
+                  p: { xs: 2, md: 3 }, 
+                  borderRadius: 3,
+                  background: 'white',
+                  border: '1px solid #e0e0e0',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    boxShadow: '0 8px 24px rgba(25, 118, 210, 0.15)',
+                    borderColor: '#1976d2',
+                  }
+                }}
+              >
+                {/* Header */}
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 3,
+                  pb: 2,
+                  borderBottom: '3px solid #FFD700'
+                }}>
+                  <Typography
+                    variant={isMobile ? "h5" : "h4"}
+                    fontWeight="bold"
+                    sx={{
+                      color: '#1976d2',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      mb: 1
+                    }}
+                  >
+                    छायाचित्र दालन
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#757575',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Photo Gallery
+                  </Typography>
+                </Box>
+
+                {/* Gallery Slider */}
                 {galleryImages.length > 0 ? (
-                  <Slider {...sliderSettings}>
-                    {galleryImages.map((image, index) => (
-                      <Box key={image.id || index} sx={{ height: 300 }}>
-                        <img
-                          src={image.url}
-                          alt={`ग्रामपंचायत छायाचित्र ${index + 1}`}
-                          loading="lazy"
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            borderRadius: 8,
+                  <Box sx={{ 
+                    position: 'relative',
+                    mb: 5
+                  }}>
+                    <Slider {...sliderSettings}>
+                      {galleryImages.map((image, index) => (
+                        <Box 
+                          key={image.id || index} 
+                          sx={{ 
+                            height: { xs: 250, md: 320 },
+                            position: 'relative',
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                           }}
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                          }}
-                        />
-                      </Box>
-                    ))}
-                  </Slider>
+                        >
+                          <img
+                            src={image.url}
+                            alt={`ग्रामपंचायत छायाचित्र ${index + 1}`}
+                            loading="lazy"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              borderRadius: 8,
+                              transition: 'transform 0.3s ease',
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.transform = 'scale(1.05)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.transform = 'scale(1)';
+                            }}
+                          />
+                          {/* Image Counter Overlay */}
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              bottom: 12,
+                              right: 12,
+                              backgroundColor: 'rgba(0,0,0,0.6)',
+                              color: 'white',
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: 2,
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              backdropFilter: 'blur(10px)',
+                            }}
+                          >
+                            {index + 1} / {galleryImages.length}
+                          </Box>
+                        </Box>
+                      ))}
+                    </Slider>
+                  </Box>
                 ) : (
                   <Box sx={{ 
-                    height: 300, 
+                    height: { xs: 250, md: 320 }, 
                     display: 'flex', 
+                    flexDirection: 'column',
                     alignItems: 'center', 
                     justifyContent: 'center',
                     bgcolor: '#f5f5f5',
-                    borderRadius: 2
+                    borderRadius: 2,
+                    border: '2px dashed #e0e0e0'
                   }}>
-                    <Typography variant="body1" color="text.secondary">
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        color: '#9e9e9e',
+                        mb: 1,
+                        fontFamily: '"Roboto", "Arial", sans-serif'
+                      }}
+                    >
                       कोणतीही छायाचित्रे उपलब्ध नाहीत
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: '#bdbdbd',
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      No photos available
                     </Typography>
                   </Box>
                 )}
@@ -608,38 +1427,111 @@ const GrampanchayatInfo = () => {
 
             {/* Map */}
             <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, borderRadius: 2 }}>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  gutterBottom
-                  textAlign="center"
-                >
-                  नकाशा
-                </Typography>
-                <Box sx={{ width: "100%", height: 300 }}>
+              <Paper 
+                elevation={0}
+                sx={{ 
+                  p: { xs: 2, md: 3 }, 
+                  borderRadius: 3,
+                  background: 'white',
+                  border: '1px solid #e0e0e0',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    boxShadow: '0 8px 24px rgba(25, 118, 210, 0.15)',
+                    borderColor: '#1976d2',
+                  }
+                }}
+              >
+                {/* Header */}
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  mb: 3,
+                  pb: 2,
+                  borderBottom: '3px solid #FFD700'
+                }}>
+                  <Typography
+                    variant={isMobile ? "h5" : "h4"}
+                    fontWeight="bold"
+                    sx={{
+                      color: '#1976d2',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      mb: 1
+                    }}
+                  >
+                    नकाशा
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#757575',
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Location Map
+                  </Typography>
+                </Box>
+
+                {/* Map Container */}
+                <Box sx={{ 
+                  width: "100%", 
+                  height: { xs: 250, md: 320 },
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  border: '2px solid #e0e0e0',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  position: 'relative',
+                  '&:hover': {
+                    borderColor: '#1976d2',
+                    boxShadow: '0 6px 16px rgba(25, 118, 210, 0.2)',
+                  }
+                }}>
                   {mapUrl ? (
                     <iframe
                       title="ग्रामपंचायत नकाशा"
                       width="100%"
                       height="100%"
-                      style={{ border: 0, borderRadius: 8 }}
+                      style={{ 
+                        border: 0, 
+                        borderRadius: 8,
+                        display: 'block'
+                      }}
                       loading="lazy"
                       allowFullScreen
                       referrerPolicy="no-referrer-when-downgrade"
                       src={mapUrl}
-                    ></iframe>
+                    />
                   ) : (
                     <Box sx={{ 
-                      height: 300, 
+                      height: '100%', 
                       display: 'flex', 
+                      flexDirection: 'column',
                       alignItems: 'center', 
                       justifyContent: 'center',
                       bgcolor: '#f5f5f5',
                       borderRadius: 2
                     }}>
-                      <Typography variant="body1" color="text.secondary">
+                      <CircularProgress sx={{ color: '#1976d2', mb: 2 }} size={40} />
+                      <Typography 
+                        variant="body1" 
+                        sx={{ 
+                          color: '#757575',
+                          fontFamily: '"Roboto", "Arial", sans-serif',
+                          fontWeight: 500
+                        }}
+                      >
                         नकाशा लोड होत आहे...
+                      </Typography>
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: '#bdbdbd',
+                          mt: 0.5,
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        Loading Map...
                       </Typography>
                     </Box>
                   )}
@@ -649,6 +1541,38 @@ const GrampanchayatInfo = () => {
           </Grid>
         </Container>
       </Box>
+
+      {/* Custom Styles for Slider */}
+      <style>{`
+        .slick-dots {
+          bottom: -45px !important;
+        }
+        .slick-dots li button:before {
+          font-size: 12px !important;
+          color: #1976d2 !important;
+          opacity: 0.4 !important;
+        }
+        .slick-dots li.slick-active button:before {
+          color: #1976d2 !important;
+          opacity: 1 !important;
+        }
+        .slick-dots li button:hover:before {
+          color: #42a5f5 !important;
+          opacity: 0.8 !important;
+        }
+        .slick-prev,
+        .slick-next {
+          z-index: 3 !important;
+        }
+        @media (max-width: 768px) {
+          .slick-prev {
+            left: -25px !important;
+          }
+          .slick-next {
+            right: -25px !important;
+          }
+        }
+      `}</style>
     </>
   );
 };

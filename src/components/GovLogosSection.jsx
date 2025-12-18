@@ -83,17 +83,20 @@ const GovLogosSection = () => {
           position: "relative",
           width: "100%",
           minHeight: 200,
-          background: "linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%)",
+          background: "linear-gradient(135deg, #1565c0 0%, #1976d2 50%, #42a5f5 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           px: { xs: 2, sm: 4, lg: 6 },
           py: { xs: 4, lg: 6 },
+          borderTop: '4px solid #FFD700',
         }}
       >
         <Box sx={{ textAlign: 'center', color: 'white' }}>
           <CircularProgress sx={{ color: 'white', mb: 2 }} />
-          <Typography variant="h6">लोगो आणत आहे...</Typography>
+          <Typography variant="h6" sx={{ fontFamily: '"Roboto", "Arial", sans-serif', fontWeight: 500 }}>
+            लोगो आणत आहे...
+          </Typography>
         </Box>
       </Box>
     );
@@ -107,15 +110,16 @@ const GovLogosSection = () => {
           position: "relative",
           width: "100%",
           minHeight: 200,
-          background: "linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%)",
+          background: "linear-gradient(135deg, #1565c0 0%, #1976d2 50%, #42a5f5 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           px: { xs: 2, sm: 4, lg: 6 },
           py: { xs: 4, lg: 6 },
+          borderTop: '4px solid #FFD700',
         }}
       >
-        <Alert severity="error" sx={{ color: 'white', backgroundColor: 'rgba(255,255,255,0.1)' }}>
+        <Alert severity="error" sx={{ backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 2 }}>
           {error}
         </Alert>
       </Box>
@@ -130,15 +134,24 @@ const GovLogosSection = () => {
           position: "relative",
           width: "100%",
           minHeight: 200,
-          background: "linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%)",
+          background: "linear-gradient(135deg, #1565c0 0%, #1976d2 50%, #42a5f5 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           px: { xs: 2, sm: 4, lg: 6 },
           py: { xs: 4, lg: 6 },
+          borderTop: '4px solid #FFD700',
         }}
       >
-        <Typography variant="h6" sx={{ color: 'white', textAlign: 'center' }}>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            color: 'white', 
+            textAlign: 'center',
+            fontFamily: '"Roboto", "Arial", sans-serif',
+            fontWeight: 500
+          }}
+        >
           कोणतेही लोगो उपलब्ध नाहीत
         </Typography>
       </Box>
@@ -151,7 +164,7 @@ const GovLogosSection = () => {
         position: "relative",
         width: "100%",
         minHeight: 200,
-        background: "linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%)",
+        background: "linear-gradient(135deg, #1565c0 0%, #1976d2 50%, #42a5f5 100%)",
         overflow: "hidden",
         display: "flex",
         alignItems: "center",
@@ -160,6 +173,7 @@ const GovLogosSection = () => {
         py: { xs: 4, lg: 6 },
         boxSizing: "border-box",
         gap: 2,
+        borderTop: '4px solid #FFD700',
         "&::before": {
           content: '""',
           position: "absolute",
@@ -168,31 +182,31 @@ const GovLogosSection = () => {
           right: 0,
           bottom: 0,
           background: `
-            radial-gradient(circle at 10% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
+            radial-gradient(circle at 10% 20%, rgba(255,255,255,0.08) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(255,255,255,0.08) 0%, transparent 50%),
             radial-gradient(circle at 40% 40%, rgba(255,255,255,0.05) 0%, transparent 50%)
           `,
           pointerEvents: "none",
         }
       }}
     >
-      {/* Animated particles */}
-      {[...Array(15)].map((_, i) => (
+      {/* Subtle animated particles */}
+      {[...Array(10)].map((_, i) => (
         <Box
           key={i}
           sx={{
             position: "absolute",
-            width: 8,
-            height: 8,
-            backgroundColor: "rgba(255,255,255,0.2)",
+            width: 6,
+            height: 6,
+            backgroundColor: "rgba(255,255,255,0.15)",
             borderRadius: "50%",
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
-            animation: `float ${2 + Math.random() * 3}s ease-in-out infinite`,
+            animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
             animationDelay: `${Math.random() * 2}s`,
             "@keyframes float": {
-              "0%, 100%": { transform: "translateY(0px)" },
-              "50%": { transform: "translateY(-20px)" }
+              "0%, 100%": { transform: "translateY(0px) translateX(0px)" },
+              "50%": { transform: "translateY(-15px) translateX(10px)" }
             }
           }}
         />
@@ -203,7 +217,7 @@ const GovLogosSection = () => {
         sx={{
           flexShrink: 0,
           zIndex: 1,
-          display: { xs: 'none', md: 'flex' },
+          display: { xs: 'none', lg: 'flex' },
           pointerEvents: "none",
         }}
       >
@@ -211,12 +225,13 @@ const GovLogosSection = () => {
           variant="h2"
           sx={{
             color: "white",
-            fontWeight: "bold",
-            fontSize: { md: "3rem", lg: "4rem" },
+            fontWeight: 700,
+            fontSize: { lg: "3rem", xl: "4rem" },
             lineHeight: 1.2,
-            textShadow: "0 4px 8px rgba(0,0,0,0.3)",
-            fontFamily: "'Arial Rounded MT Bold', Arial, sans-serif",
+            textShadow: "0 4px 12px rgba(0,0,0,0.3), 0 0 20px rgba(0,0,0,0.2)",
+            fontFamily: '"Roboto", "Arial", sans-serif',
             whiteSpace: "nowrap",
+            letterSpacing: 1,
           }}
         >
           शासकीय
@@ -243,16 +258,18 @@ const GovLogosSection = () => {
             onClick={handlePrev}
             sx={{
               p: { xs: 1.5, lg: 2 },
-              backgroundColor: "rgba(255,255,255,0.2)",
+              backgroundColor: "rgba(255,255,255,0.15)",
               backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,0.3)",
+              border: "2px solid rgba(255,255,255,0.3)",
               color: "white",
               transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               zIndex: 10,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.3)",
+                backgroundColor: "rgba(255,255,255,0.25)",
+                borderColor: "rgba(255,255,255,0.5)",
                 transform: "scale(1.1) translateX(-4px)",
-                boxShadow: "0 8px 25px rgba(0,0,0,0.2)"
+                boxShadow: "0 8px 25px rgba(0,0,0,0.25)"
               },
               "&:active": {
                 transform: "scale(0.95)"
@@ -270,8 +287,8 @@ const GovLogosSection = () => {
               sx={{
                 position: "relative",
                 p: { xs: 2, lg: 3 },
-                width: { xs: 200, lg: 250 },
-                height: { xs: 120, lg: 150 },
+                width: { xs: 220, lg: 280 },
+                height: { xs: 140, lg: 170 },
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -279,11 +296,13 @@ const GovLogosSection = () => {
                 cursor: "pointer",
                 backgroundColor: "white",
                 borderRadius: 3,
-                boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
-                transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                border: '2px solid rgba(25, 118, 210, 0.1)',
+                boxShadow: "0 8px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)",
+                transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {
-                  transform: "scale(1.05) rotate(2deg)",
-                  boxShadow: "0 30px 50px rgba(0,0,0,0.3)",
+                  transform: "scale(1.08) translateY(-4px)",
+                  boxShadow: "0 16px 40px rgba(25, 118, 210, 0.25), 0 0 0 2px rgba(25, 118, 210, 0.2)",
+                  borderColor: "rgba(25, 118, 210, 0.3)",
                   "&::after": {
                     opacity: 1
                   }
@@ -292,7 +311,7 @@ const GovLogosSection = () => {
                   content: '""',
                   position: "absolute",
                   inset: 0,
-                  background: "linear-gradient(135deg, rgba(249,115,22,0.1), rgba(220,38,38,0.1))",
+                  background: "linear-gradient(135deg, rgba(25, 118, 210, 0.05), rgba(66, 165, 245, 0.05))",
                   borderRadius: 3,
                   opacity: 0,
                   transition: "opacity 0.3s ease"
@@ -302,15 +321,16 @@ const GovLogosSection = () => {
               <Box
                 sx={{
                   width: "100%",
-                  height: { xs: 80, lg: 100 },
+                  height: { xs: 90, lg: 110 },
                   backgroundColor: "#f8fafc",
                   borderRadius: 2,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  mb: 1,
+                  mb: 1.5,
                   position: "relative",
                   overflow: "hidden",
+                  border: '1px solid #e0e0e0',
                   "&::before": {
                     content: '""',
                     position: "absolute",
@@ -318,8 +338,8 @@ const GovLogosSection = () => {
                     left: "-100%",
                     width: "100%",
                     height: "100%",
-                    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)",
-                    animation: "shimmer 2s ease-in-out infinite",
+                    background: "linear-gradient(90deg, transparent, rgba(25, 118, 210, 0.1), transparent)",
+                    animation: "shimmer 3s ease-in-out infinite",
                     "@keyframes shimmer": {
                       "0%": { left: "-100%" },
                       "100%": { left: "100%" }
@@ -331,22 +351,25 @@ const GovLogosSection = () => {
                   <Typography
                     variant="caption"
                     sx={{
-                      color: "#64748b",
-                      fontSize: "12px",
-                      fontWeight: 500,
-                      textAlign: "center"
+                      color: "#1976d2",
+                      fontSize: { xs: "10px", lg: "12px" },
+                      fontWeight: 600,
+                      textAlign: "center",
+                      fontFamily: '"Roboto", "Arial", sans-serif',
+                      px: 1
                     }}
                   >
-                    {logos[currentIndex].alt}
+                    {logos[currentIndex].alt || logos[currentIndex].title}
                   </Typography>
                 ) : (
                   <img
                     src={logos[currentIndex].src}
-                    alt={logos[currentIndex].alt}
+                    alt={logos[currentIndex].alt || logos[currentIndex].title}
                     style={{ 
-                      maxWidth: "90%", 
-                      maxHeight: "90%",
-                      objectFit: "contain"
+                      maxWidth: "85%", 
+                      maxHeight: "85%",
+                      objectFit: "contain",
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
                     }}
                     onError={() => handleImageError(currentIndex)}
                   />
@@ -356,14 +379,18 @@ const GovLogosSection = () => {
               <Typography
                 variant="caption"
                 sx={{
-                  fontSize: { xs: 10, lg: 12 },
+                  fontSize: { xs: "11px", lg: "13px" },
                   fontWeight: 600,
-                  color: "#374151",
+                  color: "#1976d2",
                   textAlign: "center",
-                  zIndex: 1
+                  zIndex: 1,
+                  fontFamily: '"Roboto", "Arial", sans-serif',
+                  textTransform: 'capitalize',
+                  lineHeight: 1.3,
+                  px: 1
                 }}
               >
-                {logos[currentIndex].title}
+                {logos[currentIndex].title || logos[currentIndex].alt}
               </Typography>
             </Paper>
 
@@ -371,12 +398,13 @@ const GovLogosSection = () => {
             <Box
               sx={{
                 position: "absolute",
-                bottom: -24,
+                bottom: -28,
                 left: "50%",
                 transform: "translateX(-50%)",
                 display: "flex",
-                gap: 1,
+                gap: 1.5,
                 zIndex: 10,
+                alignItems: 'center',
               }}
             >
               {logos.map((logo, index) => (
@@ -389,15 +417,17 @@ const GovLogosSection = () => {
                     setTimeout(() => setIsAutoPlaying(true), 5000);
                   }}
                   sx={{
-                    width: index === currentIndex ? 32 : 8,
-                    height: 8,
-                    borderRadius: 4,
-                    border: "none",
-                    backgroundColor: index === currentIndex ? "white" : "rgba(255,255,255,0.5)",
+                    width: index === currentIndex ? 36 : 10,
+                    height: 10,
+                    borderRadius: 5,
+                    border: index === currentIndex ? "2px solid white" : "2px solid rgba(255,255,255,0.5)",
+                    backgroundColor: index === currentIndex ? "white" : "rgba(255,255,255,0.4)",
                     cursor: "pointer",
                     transition: "all 0.3s ease",
+                    boxShadow: index === currentIndex ? "0 2px 8px rgba(0,0,0,0.2)" : "none",
                     "&:hover": {
-                      backgroundColor: "rgba(255,255,255,0.8)"
+                      backgroundColor: "rgba(255,255,255,0.8)",
+                      width: index === currentIndex ? 36 : 14,
                     }
                   }}
                 />
@@ -410,16 +440,18 @@ const GovLogosSection = () => {
             onClick={handleNext}
             sx={{
               p: { xs: 1.5, lg: 2 },
-              backgroundColor: "rgba(255,255,255,0.2)",
+              backgroundColor: "rgba(255,255,255,0.15)",
               backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,0.3)",
+              border: "2px solid rgba(255,255,255,0.3)",
               color: "white",
               transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               zIndex: 10,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.3)",
+                backgroundColor: "rgba(255,255,255,0.25)",
+                borderColor: "rgba(255,255,255,0.5)",
                 transform: "scale(1.1) translateX(4px)",
-                boxShadow: "0 8px 25px rgba(0,0,0,0.2)"
+                boxShadow: "0 8px 25px rgba(0,0,0,0.25)"
               },
               "&:active": {
                 transform: "scale(0.95)"
@@ -436,7 +468,7 @@ const GovLogosSection = () => {
         sx={{
           flexShrink: 0,
           zIndex: 1,
-          display: { xs: 'none', md: 'flex' },
+          display: { xs: 'none', lg: 'flex' },
           pointerEvents: "none",
         }}
       >
@@ -444,12 +476,13 @@ const GovLogosSection = () => {
           variant="h2"
           sx={{
             color: "white",
-            fontWeight: "bold",
-            fontSize: { md: "3rem", lg: "4rem" },
+            fontWeight: 700,
+            fontSize: { lg: "3rem", xl: "4rem" },
             lineHeight: 1.2,
-            textShadow: "0 4px 8px rgba(0,0,0,0.3)",
-            fontFamily: "'Arial Rounded MT Bold', Arial, sans-serif",
+            textShadow: "0 4px 12px rgba(0,0,0,0.3), 0 0 20px rgba(0,0,0,0.2)",
+            fontFamily: '"Roboto", "Arial", sans-serif',
             whiteSpace: "nowrap",
+            letterSpacing: 1,
           }}
         >
           संकेतस्थळे
@@ -464,17 +497,18 @@ const GovLogosSection = () => {
           left: 0,
           width: "100%",
           overflow: "hidden",
-          zIndex: 0
+          zIndex: 0,
+          opacity: 0.6
         }}
       >
         <svg
-          style={{ display: "block", width: "100%", height: 48 }}
+          style={{ display: "block", width: "100%", height: 40 }}
           viewBox="0 0 1200 120"
           preserveAspectRatio="none"
         >
           <path
             d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
-            fill="rgba(255,255,255,0.1)"
+            fill="rgba(255,255,255,0.15)"
           />
         </svg>
       </Box>
