@@ -1,17 +1,14 @@
 // Translation service for frontend
-// This utility handles translation of page content using Firebase Cloud Functions
+// Client-side translation using dictionary - NO API KEYS REQUIRED
 
-import { functions, httpsCallable } from '../firebase';
+import { translateText as dictTranslateText, translateBatch as dictTranslateBatch, learnWord, addTranslation } from './translationDictionary';
 
 // Detect if we're on mobile
 const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-// Initialize Firebase Cloud Functions
-const translateTextFunction = httpsCallable(functions, 'translateText');
-const translateBatchFunction = httpsCallable(functions, 'translateBatch');
-
-console.log('Using Firebase Cloud Functions for translation');
-console.log('Is Mobile Device:', isMobileDevice);
+console.log('✅ Client-Side Translation Service Initialized');
+console.log('🌐 Translation Method: Dictionary-Based (No API Keys Required)');
+console.log('📱 Is Mobile Device:', isMobileDevice);
 
 // Global translation state
 let translationState = {
@@ -65,23 +62,7 @@ const saveTranslationState = () => {
 // Initialize on module load
 initTranslationState();
 
-/**
- * Check if translation API is available (Firebase Functions)
- * @returns {Promise<boolean>} True if API is available
- */
-const checkApiHealth = async () => {
-  try {
-    // Firebase Functions are always available if Firebase is initialized
-    // We can test by checking if functions object exists
-    if (!functions) {
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.warn('Translation API health check failed:', error);
-    return false;
-  }
-};
+// Dictionary-based translation - no API health check needed
 
 /**
  * Translate text using the backend API
@@ -135,23 +116,10 @@ const cancelAllRequests = () => {
   // Note: Active requests will complete, but new ones won't start
 };
 
+// Dictionary-based translation with auto-learning (NO API REQUIRED)
 export const translateText = async (text, sourceLanguage = 'mr', targetLanguage = 'en') => {
   if (!text || text.trim() === '') {
     return text;
-  }
-
-  // Check circuit breaker
-  if (translationState.circuitBreakerOpen) {
-    const timeSinceLastError = Date.now() - translationState.lastErrorTime;
-    // Reset circuit breaker after 30 seconds
-    if (timeSinceLastError > 30000) {
-      translationState.circuitBreakerOpen = false;
-      translationState.errorCount = 0;
-      console.log('Circuit breaker reset, retrying...');
-    } else {
-      console.warn('Circuit breaker is open, skipping translation request');
-      return text; // Return original text
-    }
   }
 
   // Check cache first
@@ -160,59 +128,25 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
     return translationState.requestCache.get(cacheKey);
   }
 
-  // Queue the request to limit concurrency
-  return queueRequest(async () => {
-    try {
-      // Use Firebase Cloud Function for translation
-      const result = await translateTextFunction({
-        text: text.trim(),
-        sourceLanguage,
-        targetLanguage,
-      });
-      
-      // Check if result and result.data exist
-      if (!result || !result.data) {
-        throw new Error('Invalid response from translation function');
-      }
-      
-      const translated = result.data.translatedText || text;
-      
-      // Cache the translation
-      translationState.requestCache.set(cacheKey, translated);
-      
-      // Reset error count on success
-      translationState.errorCount = 0;
-      translationState.circuitBreakerOpen = false;
-      
-      return translated;
-    } catch (error) {
-      // Increment error count
-      translationState.errorCount++;
-      translationState.lastErrorTime = Date.now();
-      
-      // Open circuit breaker if too many errors
-      if (translationState.errorCount >= translationState.maxErrors) {
-        translationState.circuitBreakerOpen = true;
-        console.error(`Circuit breaker opened after ${translationState.errorCount} consecutive errors. Stopping translation requests for 30 seconds.`);
-        alert('Translation service is experiencing issues. Please try again in a moment.');
-      }
-      
-      // Handle Firebase Functions errors
-      if (error.code === 'functions/unavailable') {
-        console.error('Translation function is unavailable. Make sure Firebase Functions are deployed.');
-      } else if (error.code === 'functions/invalid-argument') {
-        console.error('Invalid argument passed to translation function:', error.message);
-      } else if (error.code === 'functions/failed-precondition') {
-        console.error('Translation function precondition failed:', error.message);
-        alert('Translation service is not configured. Please contact administrator.');
-    } else {
-      console.error('Translation error:', error);
+  // Use dictionary-based translation (instant, no API calls)
+  try {
+    const translated = dictTranslateText(text, sourceLanguage, targetLanguage);
+    
+    // If translation didn't change and it's Marathi text, it means word not in dictionary
+    // The dictionary function will auto-learn it if possible
+    if (translated === text && /[\u0900-\u097F]/.test(text)) {
+      // Word not found - will be handled by dictionary's auto-learn
+      console.log(`New word detected: "${text}" - will be learned if translation available`);
     }
-      
-    // Return original text if translation fails
-    return text;
+    
+    // Cache the translation
+    translationState.requestCache.set(cacheKey, translated);
+    
+    return translated;
+  } catch (error) {
+    console.error('Dictionary translation error:', error);
+    return text; // Return original text if translation fails
   }
-  });
 };
 
 /**
@@ -222,57 +156,17 @@ export const translateText = async (text, sourceLanguage = 'mr', targetLanguage 
  * @param {string} targetLanguage - Target language code
  * @returns {Promise<string[]>} Array of translated texts
  */
+// Dictionary-based batch translation (NO API REQUIRED)
 export const translateBatch = async (texts, sourceLanguage = 'mr', targetLanguage = 'en') => {
   try {
     if (texts.length === 0) return [];
-    if (texts.length === 1) {
-      return [await translateText(texts[0], sourceLanguage, targetLanguage)];
-    }
-
-    // Check circuit breaker
-    if (translationState.circuitBreakerOpen) {
-      return texts; // Return original texts
-    }
-
-    // Use Firebase Cloud Function for batch translation
-    const result = await translateBatchFunction({
-      texts: texts,
-      sourceLanguage,
-      targetLanguage,
-    });
     
-    // Check if result and result.data exist
-    if (!result || !result.data) {
-      console.warn('Invalid response from batch translation function, returning original texts');
-      return texts;
-    }
-    
-    // Ensure result.data is an array
-    if (!Array.isArray(result.data)) {
-      console.warn('Batch translation result is not an array, returning original texts');
-      return texts;
-    }
-    
-    return result.data || texts; // Return translated texts or original if failed
+    // Use dictionary-based batch translation (instant, no API calls)
+    const translated = dictTranslateBatch(texts, sourceLanguage, targetLanguage);
+    return translated;
   } catch (error) {
     console.error('Batch translation error:', error);
-    
-    // Handle Firebase Functions errors
-    if (error.code === 'functions/unavailable') {
-      console.error('Batch translation function is unavailable - function may not be deployed');
-    } else if (error.code === 'functions/invalid-argument') {
-      console.error('Invalid argument passed to batch translation function');
-    } else if (error.code === 'functions/failed-precondition') {
-      console.error('Translation function configuration error - API key may not be set');
-    } else if (error.code === 'functions/internal') {
-      console.error('Internal error in translation function - check function logs');
-    } else if (error.message && error.message.includes('CORS')) {
-      console.error('CORS error - function may not be deployed or configured correctly');
-    }
-    
-    // Return original texts on error
-    console.warn('Returning original texts due to batch translation error');
-    return texts;
+    return texts; // Return original texts on any error
   }
 };
 
@@ -392,18 +286,7 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
 
   try {
     console.log('Starting translation...');
-    console.log('Using Firebase Cloud Functions for translation');
-    
-    // Check if Cloud Function is available (non-blocking - just warn if unavailable)
-    const apiAvailable = await checkApiHealth();
-    if (!apiAvailable) {
-      console.warn('Translation Cloud Function health check failed');
-      console.warn('Attempting translation anyway - Cloud Function might be available but health check failed');
-      // Don't throw error - try to proceed anyway
-      // The actual translation requests will handle errors gracefully
-    } else {
-      console.log('Translation Cloud Function is available');
-    }
+    console.log('Using Dictionary-Based Translation (No API Required)');
 
     // Extract all visible text immediately (including static content)
     const textNodes = extractVisibleText();
@@ -433,7 +316,7 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
       originalText: text,
     }));
 
-    // Show loading indicator
+    // Show loading indicator (brief, since dictionary translation is fast)
     const loadingIndicator = document.createElement('div');
     loadingIndicator.id = 'translation-loading';
     loadingIndicator.style.cssText = `
@@ -441,7 +324,7 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(33, 150, 243, 0.9);
+      background: rgba(25, 118, 210, 0.9);
       color: white;
       padding: 20px 40px;
       border-radius: 8px;
@@ -456,100 +339,42 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
     // Get unique texts to avoid translating duplicates
     const uniqueTexts = Array.from(new Set(marathiTexts.map(({ text }) => text)));
     
-    // Optimize: Use smaller batches to prevent resource exhaustion
-    // Reduced batch size to prevent too many concurrent requests
-    const batchSize = 10; // Reduced from 30 to prevent resource exhaustion
+    console.log(`Translating ${uniqueTexts.length} unique texts using dictionary...`);
+
+    const translations = new Map();
+    
+    // Dictionary-based translation is instant - process all at once
+    // Use larger batch size since no API calls are needed
+    const batchSize = 100; // Can process more since it's instant
     const batches = [];
     for (let i = 0; i < uniqueTexts.length; i += batchSize) {
       batches.push(uniqueTexts.slice(i, i + batchSize));
     }
     
-    console.log(`Processing ${batches.length} batches of ${batchSize} texts each`);
-
-    const translations = new Map();
-    
-    // Process batches sequentially to prevent resource exhaustion
-    // Process 2 batches at a time instead of all at once
-    let firstBatchCompleted = false;
-    const maxConcurrentBatches = 2; // Process only 2 batches at a time
-    
-    // Process batches in chunks to limit concurrency
-    for (let i = 0; i < batches.length; i += maxConcurrentBatches) {
-      const batchChunk = batches.slice(i, i + maxConcurrentBatches);
-      const batchPromises = batchChunk.map(async (batch, batchIndex) => {
+    // Process all batches (dictionary translation is instant, no need to limit concurrency)
+    for (const batch of batches) {
       try {
         const translated = await translateBatch(batch, sourceLanguage, targetLanguage);
-        const batchTranslations = new Map();
         
         batch.forEach((text, index) => {
           const translatedText = translated[index] || text;
-          batchTranslations.set(text, translatedText);
           translations.set(text, translatedText);
         });
         
-        // Apply translations immediately as they arrive (streaming approach)
+        // Apply translations immediately
         originalTexts.forEach(({ textNode, originalText }) => {
-          const translated = batchTranslations.get(originalText);
+          const translated = translations.get(originalText);
           if (translated && translated !== originalText) {
             textNode.textContent = translated;
           }
         });
-        
-        // Remove loading indicator after first batch completes
-        if (!firstBatchCompleted && batchIndex === 0) {
-          firstBatchCompleted = true;
-          const loadingEl = document.getElementById('translation-loading');
-          if (loadingEl) {
-            loadingEl.remove();
-          }
-        }
-        
-        return batchTranslations;
       } catch (error) {
-        console.error(`Batch ${i + batchIndex} translation error:`, error);
-        // If circuit breaker is open, stop processing
-        if (translationState.circuitBreakerOpen) {
-          throw new Error('Circuit breaker is open, stopping translation');
-        }
-        return new Map();
-      }
-    });
-    
-      // Wait for current chunk to complete before processing next
-      const chunkResults = await Promise.all(batchPromises);
-      
-      // Merge results
-      chunkResults.forEach(batchTranslations => {
-        batchTranslations.forEach((translated, original) => {
-          translations.set(original, translated);
-        });
-      });
-      
-      // Apply translations as they arrive
-      originalTexts.forEach(({ textNode, originalText }) => {
-        const translated = translations.get(originalText);
-        if (translated && translated !== originalText) {
-          textNode.textContent = translated;
-        }
-      });
-      
-      // Remove loading indicator after first chunk
-      if (!firstBatchCompleted && i === 0) {
-        firstBatchCompleted = true;
-        const loadingEl = document.getElementById('translation-loading');
-        if (loadingEl) {
-          loadingEl.remove();
-        }
-      }
-      
-      // Check if circuit breaker opened during processing
-      if (translationState.circuitBreakerOpen) {
-        console.error('Circuit breaker opened, stopping batch processing');
-        break;
+        console.error('Batch translation error:', error);
+        // Continue with next batch
       }
     }
     
-    // Ensure loading indicator is removed even if first batch didn't complete
+    // Remove loading indicator
     const loadingEl = document.getElementById('translation-loading');
     if (loadingEl) {
       loadingEl.remove();
@@ -587,17 +412,10 @@ export const translatePage = async (sourceLanguage = 'mr', targetLanguage = 'en'
     
     // Show user-friendly error message
     const errorMsg = error.message || 'Translation failed';
-    if (error.code === 'functions/unavailable') {
-      alert('Translation Cloud Function is not available.\n\nPlease ensure:\n1. Firebase Cloud Functions are deployed\n2. Functions are enabled in your Firebase project\n3. Contact administrator for assistance');
-    } else if (error.code === 'functions/deadline-exceeded') {
-      alert('Translation request timed out. Please try again.');
-    } else if (error.code === 'functions/failed-precondition') {
-      alert('Translation service is not configured.\n\nPlease ensure Google Translate API key is set in Firebase Functions config.\nContact administrator for assistance.');
-    } else if (errorMsg.includes('not available')) {
-      // Don't show alert for health check failures - we already tried to proceed
-      console.warn('Translation attempted but Cloud Function was not available');
-    } else {
-      alert(`Translation failed: ${errorMsg}. Please try again.`);
+    console.error('Translation error:', errorMsg);
+    // Dictionary-based translation rarely fails, but if it does, show a simple message
+    if (errorMsg && !errorMsg.includes('Dictionary')) {
+      console.warn('Translation completed with some errors. Some text may not be translated.');
     }
   } finally {
     translationState.isTranslating = false;
@@ -687,6 +505,15 @@ export const applyStoredTranslations = () => {
 
     // If we found new Marathi text that needs translation, translate it (async, non-blocking)
     if (newTextsToTranslate.length > 0) {
+      // Auto-learn new words that appear on the page
+      newTextsToTranslate.forEach(({ text }) => {
+        // If it's a single word or short phrase, try to learn it
+        if (text.split(/\s+/).length <= 3) {
+          // The dictionary will handle learning automatically
+          console.log(`Auto-learning new word: "${text}"`);
+        }
+      });
+      
       // Don't await - let it run in background
       translateNewContent(newTextsToTranslate).finally(() => {
         translationState.isTranslating = false;
@@ -711,21 +538,15 @@ const translateNewContent = async (textNodes) => {
   try {
     if (textNodes.length === 0) return;
 
-    // Check circuit breaker
-    if (translationState.circuitBreakerOpen) {
-      console.warn('Circuit breaker is open, skipping new content translation');
-      return;
-    }
-
     // Get unique texts
     const uniqueTexts = Array.from(new Set(textNodes.map(({ text }) => text)));
     
-    // Limit the number of texts to translate at once to prevent resource exhaustion
-    const maxTexts = 20; // Limit to 20 texts at a time
+    // Dictionary translation is instant - can process more at once
+    const maxTexts = 100; // Increased since no API calls
     const textsToTranslate = uniqueTexts.slice(0, maxTexts);
     
-    // Translate in smaller batches to prevent resource exhaustion
-    const batchSize = 5; // Reduced batch size
+    // Translate in batches (larger batches since it's instant)
+    const batchSize = 50;
     const batches = [];
     for (let i = 0; i < textsToTranslate.length; i += batchSize) {
       batches.push(textsToTranslate.slice(i, i + batchSize));
@@ -733,22 +554,16 @@ const translateNewContent = async (textNodes) => {
 
     const newTranslations = new Map();
     
-    // Process batches sequentially to prevent resource exhaustion
+    // Process batches (dictionary translation is instant)
     for (const batch of batches) {
-      // Check circuit breaker before each batch
-      if (translationState.circuitBreakerOpen) {
-        console.warn('Circuit breaker opened during new content translation');
-        break;
-      }
-      
       try {
-      const translated = await translateBatch(batch, 'mr', 'en');
+        const translated = await translateBatch(batch, 'mr', 'en');
         batch.forEach((text, index) => {
           newTranslations.set(text, translated[index] || text);
-    });
+        });
       } catch (error) {
         console.error('Error translating batch in new content:', error);
-        // Continue with next batch instead of failing completely
+        // Continue with next batch
       }
     }
 
@@ -769,7 +584,7 @@ const translateNewContent = async (textNodes) => {
     });
 
     if (appliedCount > 0) {
-      console.log(`Translated ${appliedCount} new text nodes from Firebase/static data`);
+      console.log(`Translated ${appliedCount} new text nodes using dictionary`);
     }
   } catch (error) {
     console.error('Error translating new content:', error);

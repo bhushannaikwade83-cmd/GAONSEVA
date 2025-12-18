@@ -1137,13 +1137,13 @@ const Navbar = () => {
               }}
               disabled={isTranslating}
               style={{ 
-                fontWeight: '600', 
-                color: 'white', 
+                fontWeight: '700', 
+                color: '#FFFFFF', 
                 background: isTranslating 
                   ? '#757575' 
                   : '#1976d2', 
                 border: '1px solid #1565c0', 
-                fontSize: isMobile ? '11px' : '13px', 
+                fontSize: isMobile ? '11px' : '14px', 
                 padding: isMobile ? '6px 12px' : '8px 16px', 
                 borderRadius: '3px', 
                 cursor: isTranslating ? 'wait' : 'pointer', 
@@ -1155,14 +1155,25 @@ const Navbar = () => {
                 minHeight: isMobile ? '44px' : 'auto',
                 WebkitTapHighlightColor: 'transparent',
                 touchAction: 'manipulation',
-                fontFamily: '"Roboto", "Arial", sans-serif'
+                fontFamily: '"Roboto", "Arial", sans-serif',
+                textShadow: '0 1px 2px rgba(0,0,0,0.2)'
               }}
               onMouseEnter={(e) => {
-                if (!isTranslating) e.target.style.background = '#1565c0';
+                if (!isTranslating) {
+                  e.target.style.background = '#1565c0';
+                  e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+                }
               }}
               onMouseLeave={(e) => {
-                if (!isTranslating) e.target.style.background = '#1976d2';
+                if (!isTranslating) {
+                  e.target.style.background = '#1976d2';
+                  e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
+                }
               }}
+              title={isTranslating 
+                ? (language === "mr" ? "Translating to English..." : "Restoring Marathi...")
+                : (language === "mr" ? "Click to translate to English" : "Click to restore Marathi")
+              }
             >
               {isTranslating 
                 ? (language === "mr" ? (isMobile ? "..." : "Translating...") : (isMobile ? "..." : "Restoring...")) 
